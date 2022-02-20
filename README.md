@@ -51,6 +51,7 @@ Just like with real-world data, the examples will contend with complications lik
 * behavior-therapy classics
 * computerized reaction-time tasks (e.g., Stroop)
 * COVID-19
+* education
 * HIV/AIDS trials
 * large-scale replications
 * multi-site trials
