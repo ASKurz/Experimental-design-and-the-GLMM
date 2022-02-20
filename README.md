@@ -24,7 +24,7 @@ The primary purpose of this repository is to collect suggestions for studies wit
 * quasi-experiment variants of all of the above
 * single-group posttest-only designs
 * single-group pretest-posttest designs
-* multiple baseline designs (primarilly across persons, but also across settings or behaviors)
+* multiple baseline designs (primarily across persons, but also across settings or behaviors)
 * AB designs
 * ABA designs
 * BAB designs
