@@ -55,6 +55,7 @@ Just like with real-world data, the examples will contend with complications lik
 * HIV/AIDS trials
 * large-scale replications
 * multi-site trials
+* non-human animal research (dogs, rats, chicks...)
 * PTSD trials
 * sex research
 * substance use trials
