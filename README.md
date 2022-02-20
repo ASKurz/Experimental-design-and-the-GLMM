@@ -56,3 +56,17 @@ Just like with real-world data, the examples will contend with complications lik
 * sex research
 * substance use trials
 
+## Things the book will contain
+
+* data sets saved as external files for all analyses in the book
+* code for all analyses in the book
+* discussions on topics like 
+  - effect sizes,
+  - simulation-based power analyses, 
+  - common pitfalls like Simpson’s paradox and the ecological fallacy
+* discussions on priors, such as 
+  - weakly-informative priors, 
+  - weakly-regularizing reference priors, 
+  - priors based on previous research, 
+  - prior-predictive simulations
+
