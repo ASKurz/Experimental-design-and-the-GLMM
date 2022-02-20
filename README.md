@@ -8,7 +8,7 @@ I should unpack a couple terms. I’m using *GLMM* in an expansive way to includ
 
 Books of this kind often use examples from the scientific literature, and this will too. However, I intend to go further and want to provide students with data sets from or based on the examples. If you’re going to learn how to analyze data from a randomized controlled trial, then why not practice with data resembling one of those trials? Which brings me to my main point:
 
-**You can help me write this book.**
+**You can help me write this book!**
 
 The primary purpose of this repository is to collect suggestions for studies with data you would want to learn how to analyze. I am particularly eager to include studies whose authors used open science practices, such as open data. Yet since these practices aren’t widespread in the social sciences, studies using older closed practices are also of interest.
 
