@@ -10,6 +10,6 @@ Books of this kind often use examples from the scientific literature, and this w
 
 **You can help me write this book.**
 
-The primary purpose of this repository is to collect suggestions for studies with data you would want to learn how to analyze. I am particularly eager to include studies whose authors used open science practices, such as open data. Yet since these practices aren’t widespread in the social sciences, studies using older closed practices are alto of interest.
+The primary purpose of this repository is to collect suggestions for studies with data you would want to learn how to analyze. I am particularly eager to include studies whose authors used open science practices, such as open data. Yet since these practices aren’t widespread in the social sciences, studies using older closed practices are also of interest.
 
 Here are some of the research designs I’d like to include:
