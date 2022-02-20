@@ -26,6 +26,8 @@ The primary purpose of this repository is to collect suggestions for studies wit
 * BAB designs
 * ABAC designs
 
+A collaborator and I are in the early-stages of a study that will use an encouragement design and will leverage the instrumental variable approach in the analytic strategy. Kristoffer Magnusson has [written interesting things](https://rpsychologist.com/therapists-effects-longitudinal) on the perils of ignoring therapist effects. I’m open to studies that range from methodically simple to intimidating.
+
 ## Some of the data types I’d like to explore fitting:
 
 * approximately-continuous data with the Gaussian and Student-t likelihoods
