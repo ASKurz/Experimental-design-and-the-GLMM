@@ -18,15 +18,19 @@ The primary purpose of this repository is to collect suggestions for studies wit
 * pretest-posttest control group designs
 * Solomon four-group designs
 * factorial designs
+* crossover designs
 * control-group designs with many measurement occasions
 * post-test only designs with a large number of conditions
 * quasi-experiment variants of all of the above
 * single-group posttest-only designs
-* multiple baseline designs
+* single-group pretest-posttest designs
+* multiple baseline designs (primarilly across persons, but also across settings or behaviors)
 * AB designs
-* ABAB designs
+* ABA designs
 * BAB designs
-* ABAC designs
+* ABAB designs (ABABAB, ...)
+* multiple-treatment designs (ABAC, ABCBCA, ...)
+* changing-criterion designs
 
 A collaborator and I are in the early-stages of a study that will use an encouragement design and will leverage the instrumental variable approach in the analytic strategy. Kristoffer Magnusson has [written interesting things](https://rpsychologist.com/therapists-effects-longitudinal) on the perils of ignoring therapist effects. Which is all to say, I’m open to including studies that range from methodically simple to intimidating.
 
@@ -49,9 +53,10 @@ Just like with real-world data, the examples will contend with complications lik
 ## Content areas I’d love to get study suggestions from:
 
 * behavior-therapy classics
+* cognitive/developmental interventions
 * computerized reaction-time tasks (e.g., Stroop)
 * COVID-19
-* education
+* education (e.g., DARE)
 * HIV/AIDS trials
 * large-scale replications
 * multi-site trials
@@ -75,3 +80,14 @@ Just like with real-world data, the examples will contend with complications lik
   - prior-predictive simulations
 
 I'm leaning towards including light discussions of the potential-outcomes framework. I'm also thinking about using DAGs to (we'll see).
+
+## Things this book will aviod or minimze
+
+* Bayes factors
+* finite mixture models (e.g., growth mixture models)
+  - I will include mixtures in the form of zero-inflated likelihoods and so on.
+* introductory statistics
+* latent variables
+* NHST
+* the type I/type II error framework
+
