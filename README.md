@@ -1,6 +1,6 @@
 # Experimental-design-and-the-GLMM
 
-A while back, I [announced on twitter](https://twitter.com/SolomonKurz/status/1464274116341641228) that I wanted to put together a book showing how to use strategies from the generalized linear mixed model (GLMM) to analyze experimental data. This is the public-facing home for that project. 
+A while back, I [announced on twitter](https://twitter.com/SolomonKurz/status/1464274116341641228) that I wanted to put together a book showing how to use strategies from the generalized linear mixed model (GLMM) to analyze experimental data. This is the public-facing home for that project.
 
 Welcome.
 
@@ -8,7 +8,7 @@ I should unpack a couple terms. I’m using *GLMM* in an expansive way to includ
 
 Books of this kind often use examples from the scientific literature, and this will too. However, I intend to go further and want to provide students with data sets from or based on the examples. If you’re going to learn how to analyze data from a randomized controlled trial, then why not practice with data resembling one of those trials? Which brings me to my main point:
 
-You can help me write this book. 
+**You can help me write this book.**
 
 The primary purpose of this repository is to collect suggestions for studies with data you would want to learn how to analyze. I am particularly eager to include studies whose authors used open science practices, such as open data. Yet since these practices aren’t widespread in the social sciences, studies using older closed practices are alto of interest.
 
