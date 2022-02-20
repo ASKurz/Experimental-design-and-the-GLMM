@@ -20,13 +20,14 @@ The primary purpose of this repository is to collect suggestions for studies wit
 * factorial designs
 * control-group designs with many measurement occasions
 * quasi-experiment variants of all of the above
+* single-group posttest-only designs
 * multiple baseline designs
 * AB designs
 * ABAB designs
 * BAB designs
 * ABAC designs
 
-A collaborator and I are in the early-stages of a study that will use an encouragement design and will leverage the instrumental variable approach in the analytic strategy. Kristoffer Magnusson has [written interesting things](https://rpsychologist.com/therapists-effects-longitudinal) on the perils of ignoring therapist effects. I’m open to studies that range from methodically simple to intimidating.
+A collaborator and I are in the early-stages of a study that will use an encouragement design and will leverage the instrumental variable approach in the analytic strategy. Kristoffer Magnusson has [written interesting things](https://rpsychologist.com/therapists-effects-longitudinal) on the perils of ignoring therapist effects. Which is all to say, I’m open to including studies that range from methodically simple to intimidating.
 
 ## Some of the data types I’d like to explore fitting:
 
