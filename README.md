@@ -39,7 +39,7 @@ The primary purpose of this repository is to collect suggestions for studies wit
 Just like with real-world data, the examples will contend with complications like
 * missing data
 * multiple sources of nesting
-* unequal variances
+* unequal variances (by group, persons, or both)
 * zero inflation
 
 ## Content areas I’d love to get study suggestions from:
