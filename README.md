@@ -63,10 +63,11 @@ Just like with real-world data, the examples will contend with complications lik
 * discussions on topics like 
   - effect sizes,
   - simulation-based power analyses, 
-  - common pitfalls like Simpson’s paradox and the ecological fallacy
+  - common pitfalls like Simpson’s paradox, the ecological fallacy, and the table 1 fallacy
 * discussions on priors, such as 
   - weakly-informative priors, 
   - weakly-regularizing reference priors, 
   - priors based on previous research, 
   - prior-predictive simulations
 
+I'm leaning towards including light discussions of the potential-outcomes framework. I'm also thinking about using DAGs to (we'll see).
