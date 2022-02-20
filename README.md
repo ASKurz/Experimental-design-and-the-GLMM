@@ -12,4 +12,44 @@ Books of this kind often use examples from the scientific literature, and this w
 
 The primary purpose of this repository is to collect suggestions for studies with data you would want to learn how to analyze. I am particularly eager to include studies whose authors used open science practices, such as open data. Yet since these practices aren’t widespread in the social sciences, studies using older closed practices are also of interest.
 
-Here are some of the research designs I’d like to include:
+## Some of the research designs I’d like to include:
+
+* posttest-only control group designs
+* pretest-posttest control group designs
+* Solomon four-group designs
+* factorial designs
+* control-group designs with many measurement occasions
+* quasi-experiment variants of all of the above
+* multiple baseline designs
+* AB designs
+* ABAB designs
+* BAB designs
+* ABAC designs
+
+## Some of the data types I’d like to explore fitting:
+
+* Approximately-continuous data with the Gaussian and Student-t likelihoods
+* Bounded count data with the binomial likelihood
+* Unbounded counts with the Poisson and negative-binomial likelihoods
+* Non-negative continuous data with the lognormal, exponential, gamma, or Weibull likelihoods
+* Continuous data with clear lower and upper limits with the zero-one-inflated beta likelihood
+* Nominal data with the softmax approach
+* Ordinal data with the cumulative probit
+
+Just like with real-world data, the examples will contend with complications like
+* missing data
+* multiple sources of nesting
+* unequal variances
+* zero inflation
+
+## Content areas I’d love to get study suggestions from:
+
+* behavior-therapy classics
+* COVID-19
+* HIV/AIDS trials
+* large-scale replications
+* multi-site trials
+* PTSD trials
+* Sex research
+* Substance use trials
+
