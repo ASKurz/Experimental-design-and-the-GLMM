@@ -85,7 +85,7 @@ I'm leaning towards including light discussions of the potential-outcomes framew
 
 * Bayes factors
 * finite mixture models (e.g., growth mixture models)
-  - I will include mixtures in the form of zero-inflated likelihoods and so on.
+  - I will, however, include mixtures in the form of zero-inflated likelihoods and so on.
 * introductory statistics
 * latent variables
 * NHST
