@@ -68,7 +68,7 @@ Just like with real-world data, the examples will contend with complications lik
 ## Things the book will contain:
 
 * data sets saved as external files for all analyses in the book
-* code for all analyses in the book
+* code for all analyses and figures in the book
 * discussions on topics like 
   - effect sizes,
   - simulation-based power analyses, 
@@ -86,6 +86,7 @@ I'm leaning towards including light discussions of the potential-outcomes framew
 * Bayes factors
 * finite mixture models (e.g., growth mixture models)
   - I will, however, include mixtures in the form of zero-inflated likelihoods and so on.
+* introductory programming
 * introductory statistics
 * latent variables
 * NHST
