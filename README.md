@@ -16,7 +16,7 @@ The primary purpose of this repository is to collect suggestions for studies wit
 
 * posttest-only control group designs
 * pretest-posttest control group designs
-* Solomon four-group designs
+* Solomon four-group designs (possibly the three-group variant, too)
 * factorial designs
 * crossover designs
 * control-group designs with many measurement occasions
@@ -89,5 +89,5 @@ I'm leaning towards including light discussions of the potential-outcomes framew
 * introductory statistics
 * latent variables
 * NHST
-* the type I/type II error framework
+* the type-I/type-II error framework
 
