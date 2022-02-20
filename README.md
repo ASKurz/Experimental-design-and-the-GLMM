@@ -1,4 +1,4 @@
-# Experimental-design-and-the-GLMM
+# Experimental design and the GLMM
 
 A while back, I [announced on twitter](https://twitter.com/SolomonKurz/status/1464274116341641228) that I wanted to put together a book showing how to use strategies from the generalized linear mixed model (GLMM) to analyze experimental data. This is the public-facing home for that project.
 
