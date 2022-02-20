@@ -65,7 +65,7 @@ Just like with real-world data, the examples will contend with complications lik
 * sex research
 * substance use trials
 
-## Things the book will contain:
+## Other things the book will contain:
 
 * data sets saved as external files for all analyses in the book
 * code for all analyses and figures in the book
