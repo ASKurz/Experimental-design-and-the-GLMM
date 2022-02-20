@@ -28,13 +28,13 @@ The primary purpose of this repository is to collect suggestions for studies wit
 
 ## Some of the data types I’d like to explore fitting:
 
-* Approximately-continuous data with the Gaussian and Student-t likelihoods
-* Bounded count data with the binomial likelihood
-* Unbounded counts with the Poisson and negative-binomial likelihoods
-* Non-negative continuous data with the lognormal, exponential, gamma, or Weibull likelihoods
-* Continuous data with clear lower and upper limits with the zero-one-inflated beta likelihood
-* Nominal data with the softmax approach
-* Ordinal data with the cumulative probit
+* approximately-continuous data with the Gaussian and Student-t likelihoods
+* bounded count data with the binomial likelihood
+* unbounded counts with the Poisson and negative-binomial likelihoods
+* non-negative continuous data with the lognormal, exponential, gamma, or Weibull likelihoods
+* continuous data with clear lower and upper limits with the zero-one-inflated beta likelihood
+* nominal data with the softmax approach
+* ordinal data with the cumulative probit
 
 Just like with real-world data, the examples will contend with complications like
 * missing data
@@ -45,11 +45,12 @@ Just like with real-world data, the examples will contend with complications lik
 ## Content areas I’d love to get study suggestions from:
 
 * behavior-therapy classics
+* computerized reaction-time tasks (e.g., Stroop)
 * COVID-19
 * HIV/AIDS trials
 * large-scale replications
 * multi-site trials
 * PTSD trials
-* Sex research
-* Substance use trials
+* sex research
+* substance use trials
 
