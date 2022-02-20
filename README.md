@@ -65,7 +65,7 @@ Just like with real-world data, the examples will contend with complications lik
 * sex research
 * substance use trials
 
-## Things the book will contain
+## Things the book will contain:
 
 * data sets saved as external files for all analyses in the book
 * code for all analyses in the book
@@ -81,7 +81,7 @@ Just like with real-world data, the examples will contend with complications lik
 
 I'm leaning towards including light discussions of the potential-outcomes framework. I'm also thinking about using DAGs to (we'll see).
 
-## Things this book will aviod or minimze
+## Things this book will aviod or minimze:
 
 * Bayes factors
 * finite mixture models (e.g., growth mixture models)
