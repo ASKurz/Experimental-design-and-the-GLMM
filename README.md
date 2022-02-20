@@ -13,4 +13,3 @@ You can help me write this book.
 The primary purpose of this repository is to collect suggestions for studies with data you would want to learn how to analyze. I am particularly eager to include studies whose authors used open science practices, such as open data. Yet since these practices aren’t widespread in the social sciences, studies using older closed practices are alto of interest.
 
 Here are some of the research designs I’d like to include:
-![image](https://user-images.githubusercontent.com/19917004/154849725-5bb5540e-32fb-4b8e-8fa2-b99e290765ca.png)
