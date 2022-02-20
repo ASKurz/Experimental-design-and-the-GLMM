@@ -19,6 +19,7 @@ The primary purpose of this repository is to collect suggestions for studies wit
 * Solomon four-group designs
 * factorial designs
 * control-group designs with many measurement occasions
+* post-test only designs with a large number of conditions
 * quasi-experiment variants of all of the above
 * single-group posttest-only designs
 * multiple baseline designs
