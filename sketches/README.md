@@ -1,1 +1,1 @@
-These files contain content sketches. They aren’t necessarily full chapters or sections, but contain the origins of the sections and chapters that will eventually define the book.![image](https://user-images.githubusercontent.com/19917004/155022117-30fc812c-7968-4ba1-b043-3a0360026932.png)
+These files contain content sketches. They aren’t necessarily full chapters or sections, but contain the origins of the sections and chapters that will eventually define the book.
