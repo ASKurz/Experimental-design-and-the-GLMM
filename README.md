@@ -56,10 +56,12 @@ Just like with real-world data, the examples will contend with complications lik
 * cognitive/developmental interventions
 * computerized reaction-time tasks (e.g., Stroop)
 * COVID-19
-* education (e.g., DARE)
+* data vis
+* education interventions (e.g., DARE)
 * HIV/AIDS trials
 * large-scale replications
 * marriage and other relationships
+* meta-science
 * multi-site trials
 * non-human animal research (dogs, rats, chicks...)
 * PTSD trials
