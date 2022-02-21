@@ -59,6 +59,7 @@ Just like with real-world data, the examples will contend with complications lik
 * education (e.g., DARE)
 * HIV/AIDS trials
 * large-scale replications
+* marriage and other relationships
 * multi-site trials
 * non-human animal research (dogs, rats, chicks...)
 * PTSD trials
