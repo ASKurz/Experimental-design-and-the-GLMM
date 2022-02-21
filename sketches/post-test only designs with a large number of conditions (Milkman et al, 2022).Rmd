@@ -1,0 +1,151 @@
+---
+title: "Post-test only designs with a large number of conditions: Milkman et al (2022)"
+author: "A Solomon Kurz"
+date: "`r format(Sys.Date())`"
+output: github_document
+---
+
+Using a post-test only design, Milkman et al (2022) randomly assigned $689{,}693$ Walmart pharmacy patients into one of 23 conditions. Participants in 22 of the conditions received one of the 22 text-message reminders designed to encourage Walmart flu vaccination. Participants in the business-as-usual control condition received no such messages. The primary outcome was the proportion of persons in each condition who received the flu vaccine at Walmart by December 31st, 2020.
+
+Milkman et al (2022) kindly made a subset of their data public on the OSF at https://osf.io/rn8tw/?view_only=546ed2d8473f4978b95948a52712a3c5. The purpose of this file is to show how to analyze their main results, similar to how they were presented in Figure 1 (p. 3).
+
+Load the data and the primary **R** packages.
+
+```{r, warning = F, message = F}
+# packages
+library(tidyverse)
+library(brms)
+
+# load the data
+d <- readxl::read_excel("data/aggregate_data.xlsx") %>% 
+  set_names(c("condition", "total", "dec", "oct")) %>% 
+  mutate(nudge = factor(22:0))
+```
+
+Here's a look at the data.
+
+```{r}
+glimpse(d)
+```
+
+The number of persons in each condition who were vaccinated at Walmart by December 31st, 2020, is listed in the `dec` column. The total number of persons in each condition is in the `total` column. The experimental conditions are listed in the `condition` column. The `nudge` column contains the same information as `condition`, but arranged as an index variable.
+
+If we divide `dec` by `total`, we get the proportion vaccinated in each condition. Here's a quick descriptive plot of those values.
+
+```{r, fig.width = 8, fig.height = 3.5}
+d %>% 
+  mutate(p = dec / total) %>% 
+  
+  ggplot(aes(x = p, y = reorder(condition, p))) +
+  geom_point(aes(size = total),
+             alpha = 1/2) +
+  scale_size_continuous(limits = c(0, NA)) +
+  scale_x_continuous("% vaccinated", breaks = 29:32 / 100, labels = 29:32) +
+  ylab(NULL) +
+  theme(axis.text.y = element_text(size = 7),
+        panel.grid = element_blank())
+```
+
+For our statistical inference, we can model these data with a multilevel binomial model 
+
+$$
+\begin{align*}
+\text{dec}_i & \sim \operatorname{Binomial}(n_i, p_i) \\
+\operatorname{logit}(p_i) & = \beta_0 + \zeta_{0i} \\
+\zeta_{0i} & \sim \operatorname{Normal}(0, \sigma) \\
+\beta_0 & \sim \operatorname{Normal}(0, 1) \\
+\sigma & \sim \operatorname{Exopnential}(1),
+\end{align*}
+$$
+
+where $p_i$ is the vaccine probability in each of the $i$ `nudge` conditions and and $n_i$ is the `total` number of persons within each level of `nudge`. Here's the model in **brms**.
+
+```{r}
+fit1 <- brm(
+  data = d,
+  family = binomial,
+  dec | trials(total) ~ 1 + (1 | nudge),
+  prior = c(prior(normal(0, 1), class = Intercept),
+            prior(exponential(1), class = sd)),
+  cores = 4,
+  seed = 1,
+  file = "fits/fit1.milkman2022.01"
+)
+```
+
+Check the model.
+
+```{r}
+print(fit1)
+```
+
+It will be easiest to understand the results through a plot. Here's a version of Figure 1, as presented in the original paper.
+
+```{r, fig.width = 8, fig.height = 3.5}
+nd <- d %>% 
+  select(nudge, condition, total)
+
+fitted(fit1,
+       newdata = nd,
+       scale = "linear",
+       summary = F) %>% 
+  data.frame() %>% 
+  set_names(d %>% pull(nudge)) %>% 
+  mutate_all(inv_logit_scaled) %>% 
+  pivot_longer(`22`:`1`) %>% 
+  mutate(contrast = value - `0`) %>% 
+  group_by(name) %>% 
+  tidybayes::mean_qi(contrast) %>% 
+  arrange(desc(as.double(name))) %>% 
+  bind_cols(nd %>% filter(nudge != "0")) %>% 
+  mutate(group = factor(condition, ordered = TRUE)) %>% 
+  
+  ggplot(aes(x = contrast)) +
+  geom_pointrange(aes(xmin = .lower, xmax = .upper, y = reorder(group, contrast)),
+                  fatten = 1.5) +
+  geom_vline(xintercept = 0, linetype = 2, size = 1/4) +
+  geom_text(data = . %>% 
+              filter(name == "13") %>% 
+              mutate(contrast = 0.001, 
+                     label = "business as usual control: 29.7 95% CI [29.1, 30.2]"),
+            aes(y = group, label = label),
+            angle = 90, size = 2.5) +
+  scale_x_continuous("% point increase in vaccination", breaks = 0:3 / 100, labels = 0:3) +
+  labs(title = "Contrasts of all experimental conditions minus the business as usual control condition",
+       y = NULL) +
+  coord_cartesian(xlim = c(0.00, 0.035)) +
+  theme(axis.text.y = element_text(size = 7),
+        panel.grid = element_blank(),
+        plot.title.position = "plot")
+```
+
+Here's a variant of that plot, which more clearly expressed the posterior for the control condition.
+
+```{r, fig.width = 8, fig.height = 3.5}
+fitted(fit1,
+       newdata = nd,
+       scale = "linear") %>%
+  data.frame() %>% 
+  mutate_all(inv_logit_scaled) %>% 
+  bind_cols(nd) %>% 
+  arrange(nudge) %>% 
+  mutate(group = factor(condition, ordered = TRUE)) %>% 
+  
+  ggplot(aes(x = Estimate, xmin = Q2.5, xmax = Q97.5, y = reorder(group, Estimate))) +
+  geom_pointrange(aes(color = condition == "Business As Usual Control"),
+                  fatten = 1.5) +
+  scale_color_manual(values = c("black", "red4"), breaks = NULL) +
+  scale_x_continuous("% vaccinated", breaks = 29:32 / 100, labels = 29:32) +
+  labs(title = "Flu vaccination percentages for all experimental conditions (even the business as usual control)",
+       y = NULL) +
+  theme(axis.text.y = element_text(size = 7),
+        panel.grid = element_blank(),
+        plot.title.position = "plot")
+```
+
+## Session information
+
+```{r}
+sessionInfo()
+```
+
