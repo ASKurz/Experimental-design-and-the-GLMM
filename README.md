@@ -68,7 +68,7 @@ Just like with real-world data, the examples will contend with complications lik
 * sex research
 * substance use trials
 
-Other interesting topic areas are okay, too.
+Other interesting topic areas are okay, too. For any of these topic areas, the studies could gold-star examples of their method, or have substantial flaws. They could have large effect sizes, or they could show little difference among conditions.
 
 ## Other things the book will contain:
 
