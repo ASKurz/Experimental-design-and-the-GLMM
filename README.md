@@ -97,3 +97,5 @@ I'm leaning towards including light discussions of the potential-outcomes framew
 * NHST
 * the type-I/type-II error framework
 
+I’m not necessarily saying these things are bad. They’re just not going to be the focus of this book.
+
