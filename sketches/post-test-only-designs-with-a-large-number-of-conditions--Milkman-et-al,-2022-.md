@@ -2,7 +2,7 @@ Post-test only designs with a large number of conditions: Milkman et al
 (2022)
 ================
 A Solomon Kurz
-2022-02-21
+2022-02-22
 
 Using a post-test only design, Milkman et al (2022) randomly assigned
 689, 693 Walmart pharmacy patients into one of 23 conditions.
@@ -69,7 +69,7 @@ d %>%
         panel.grid = element_blank())
 ```
 
-![](post-test-only-designs-with-a-large-number-of-conditions--Milkman-et-al,-2022-_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+<img src="post-test-only-designs-with-a-large-number-of-conditions--Milkman-et-al,-2022-_files/figure-gfm/unnamed-chunk-4-1.png" width="768" />
 
 For our statistical inference, we can model these data with a multilevel
 binomial model
@@ -97,7 +97,7 @@ fit1 <- brm(
             prior(exponential(1), class = sd)),
   cores = 4,
   seed = 1,
-  file = "fits/fit1.milkman2022.01"
+  file = "fits/fit1.milkman2022"
 )
 ```
 
@@ -168,7 +168,7 @@ fitted(fit1,
         plot.title.position = "plot")
 ```
 
-![](post-test-only-designs-with-a-large-number-of-conditions--Milkman-et-al,-2022-_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+<img src="post-test-only-designs-with-a-large-number-of-conditions--Milkman-et-al,-2022-_files/figure-gfm/unnamed-chunk-7-1.png" width="768" />
 
 Here’s a variant of that plot, which more clearly expressed the
 posterior for the control condition.
@@ -195,7 +195,7 @@ fitted(fit1,
         plot.title.position = "plot")
 ```
 
-![](post-test-only-designs-with-a-large-number-of-conditions--Milkman-et-al,-2022-_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+<img src="post-test-only-designs-with-a-large-number-of-conditions--Milkman-et-al,-2022-_files/figure-gfm/unnamed-chunk-8-1.png" width="768" />
 
 ## Session information
 
@@ -238,31 +238,31 @@ sessionInfo()
     ##  [37] emmeans_1.7.1-1      distributional_0.2.2 pkgbuild_1.2.0      
     ##  [40] rstan_2.21.3         abind_1.4-5          scales_1.1.1        
     ##  [43] mvtnorm_1.1-2        DBI_1.1.1            miniUI_0.1.1.1      
-    ##  [46] xtable_1.8-4         stats4_4.1.2         StanHeaders_2.21.0-7
-    ##  [49] DT_0.19              htmlwidgets_1.5.3    httr_1.4.2          
-    ##  [52] threejs_0.3.3        arrayhelpers_1.1-0   posterior_1.1.0.9000
-    ##  [55] ellipsis_0.3.2       tidybayes_3.0.2      pkgconfig_2.0.3     
-    ##  [58] loo_2.4.1            farver_2.1.0         dbplyr_2.1.1        
-    ##  [61] utf8_1.2.2           tidyselect_1.1.1     labeling_0.4.2      
-    ##  [64] rlang_1.0.1          reshape2_1.4.4       later_1.3.0         
-    ##  [67] munsell_0.5.0        cellranger_1.1.0     tools_4.1.2         
-    ##  [70] cli_3.1.1            generics_0.1.2       broom_0.7.10        
-    ##  [73] ggridges_0.5.3       evaluate_0.14        fastmap_1.1.0       
-    ##  [76] yaml_2.2.1           processx_3.5.2       knitr_1.33          
-    ##  [79] fs_1.5.0             nlme_3.1-153         mime_0.11           
-    ##  [82] projpred_2.0.2       xml2_1.3.2           compiler_4.1.2      
-    ##  [85] bayesplot_1.8.1      shinythemes_1.2.0    rstudioapi_0.13     
-    ##  [88] gamm4_0.2-6          reprex_2.0.1         stringi_1.7.4       
-    ##  [91] highr_0.9            ps_1.6.0             Brobdingnag_1.2-6   
-    ##  [94] lattice_0.20-45      Matrix_1.3-4         nloptr_1.2.2.2      
-    ##  [97] markdown_1.1         shinyjs_2.0.0        tensorA_0.36.2      
-    ## [100] vctrs_0.3.8          pillar_1.7.0         lifecycle_1.0.1     
-    ## [103] bridgesampling_1.1-2 estimability_1.3     httpuv_1.6.2        
-    ## [106] R6_2.5.1             promises_1.2.0.1     gridExtra_2.3       
-    ## [109] codetools_0.2-18     boot_1.3-28          colourpicker_1.1.0  
-    ## [112] MASS_7.3-54          gtools_3.9.2         assertthat_0.2.1    
-    ## [115] withr_2.4.3          shinystan_2.5.0      multcomp_1.4-17     
-    ## [118] mgcv_1.8-38          parallel_4.1.2       hms_1.1.0           
-    ## [121] grid_4.1.2           coda_0.19-4          minqa_1.2.4         
-    ## [124] rmarkdown_2.10       shiny_1.6.0          lubridate_1.7.10    
-    ## [127] base64enc_0.1-3      dygraphs_1.1.1.6
+    ##  [46] xtable_1.8-4         diffobj_0.3.4        stats4_4.1.2        
+    ##  [49] StanHeaders_2.21.0-7 DT_0.19              htmlwidgets_1.5.3   
+    ##  [52] httr_1.4.2           threejs_0.3.3        arrayhelpers_1.1-0  
+    ##  [55] posterior_1.1.0.9000 ellipsis_0.3.2       tidybayes_3.0.2     
+    ##  [58] pkgconfig_2.0.3      loo_2.4.1            farver_2.1.0        
+    ##  [61] dbplyr_2.1.1         utf8_1.2.2           tidyselect_1.1.1    
+    ##  [64] labeling_0.4.2       rlang_1.0.1          reshape2_1.4.4      
+    ##  [67] later_1.3.0          munsell_0.5.0        cellranger_1.1.0    
+    ##  [70] tools_4.1.2          cli_3.1.1            generics_0.1.2      
+    ##  [73] broom_0.7.10         ggridges_0.5.3       evaluate_0.14       
+    ##  [76] fastmap_1.1.0        yaml_2.2.1           processx_3.5.2      
+    ##  [79] knitr_1.33           fs_1.5.0             nlme_3.1-153        
+    ##  [82] mime_0.11            projpred_2.0.2       xml2_1.3.2          
+    ##  [85] compiler_4.1.2       bayesplot_1.8.1      shinythemes_1.2.0   
+    ##  [88] rstudioapi_0.13      gamm4_0.2-6          reprex_2.0.1        
+    ##  [91] stringi_1.7.4        highr_0.9            ps_1.6.0            
+    ##  [94] Brobdingnag_1.2-6    lattice_0.20-45      Matrix_1.3-4        
+    ##  [97] nloptr_1.2.2.2       markdown_1.1         shinyjs_2.0.0       
+    ## [100] tensorA_0.36.2       vctrs_0.3.8          pillar_1.7.0        
+    ## [103] lifecycle_1.0.1      bridgesampling_1.1-2 estimability_1.3    
+    ## [106] httpuv_1.6.2         R6_2.5.1             promises_1.2.0.1    
+    ## [109] gridExtra_2.3        codetools_0.2-18     boot_1.3-28         
+    ## [112] colourpicker_1.1.0   MASS_7.3-54          gtools_3.9.2        
+    ## [115] assertthat_0.2.1     withr_2.4.3          shinystan_2.5.0     
+    ## [118] multcomp_1.4-17      mgcv_1.8-38          parallel_4.1.2      
+    ## [121] hms_1.1.0            grid_4.1.2           coda_0.19-4         
+    ## [124] minqa_1.2.4          rmarkdown_2.10       shiny_1.6.0         
+    ## [127] lubridate_1.7.10     base64enc_0.1-3      dygraphs_1.1.1.6

@@ -5,6 +5,10 @@ date: "`r format(Sys.Date())`"
 output: github_document
 ---
 
+```{r, echo = F}
+knitr::opts_chunk$set(fig.retina = 2.5)
+```
+
 Using a post-test only design, Milkman et al (2022) randomly assigned $689{,}693$ Walmart pharmacy patients into one of 23 conditions. Participants in 22 of the conditions received one of the 22 text-message reminders designed to encourage Walmart flu vaccination. Participants in the business-as-usual control condition received no such messages. The primary outcome was the proportion of persons in each condition who received the flu vaccine at Walmart by December 31st, 2020.
 
 Milkman et al (2022) kindly made a subset of their data public on the OSF at https://osf.io/rn8tw/?view_only=546ed2d8473f4978b95948a52712a3c5. The purpose of this file is to show how to analyze their main results, similar to how they were presented in Figure 1 (p. 3).
@@ -69,7 +73,7 @@ fit1 <- brm(
             prior(exponential(1), class = sd)),
   cores = 4,
   seed = 1,
-  file = "fits/fit1.milkman2022.01"
+  file = "fits/fit1.milkman2022"
 )
 ```
 
