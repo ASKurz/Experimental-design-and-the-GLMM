@@ -1,0 +1,472 @@
+---
+title: "Mancuso & Miltenberger (2016)"
+subtitle: "Multiple baseline AB design"
+author: "A Solomon Kurz"
+date: "`r format(Sys.Date())`"
+output: github_document
+---
+
+```{r, echo = F}
+knitr::opts_chunk$set(fig.retina = 2.5)
+options(width = 110)
+```
+
+Load our primary packages.
+
+```{r, message = F, warning = F}
+library(tidyverse)
+library(brms)
+library(tidybayes)
+```
+
+## Bad habbits!
+
+Mancuso & Miltenberger (2015; https://doi.org/10.1002/jaba.267) used a nice multiple baseline AB design to evaluate habit reversal for helping 6 college students use fewer filled pauses when they speak in public.
+
+```{r}
+# load the data
+load(file = "/Users/solomonkurz/Dropbox/Experimental-design-and-the-GLMM/sketches/data/mancuso2016.rda")
+
+mancuso2016 <- mancuso2016
+
+# what is this?
+glimpse(mancuso2016)
+```
+
+The participant pseudonyms are listed in the `id` column. The session number is coded $1, \dots, N$ in the `session` column and coded the same minus $1$ in the `session01` column. The two phases `baseline` and `postintervention` are saved as characters in the `condition` column. The same information is coded in a dummy format in the `post` column.
+
+After a short baseline-assessment period (A), each student met for individual habit-reversal and competing-response training. Then each student met for multiple post-intervention assessment periods (B) where they gave new speeches. All speeches were a minimum of 3 minutes long and a maximum of 5 minutes long.
+
+The duration of the speeches is in the `minutes` column. The number of filled pauses is in the `count` column and the number of counts per minute is in the `rate` column. 
+
+### EDA.
+
+Here are the number of baseline and post-intervention sessions, by student.
+
+```{r}
+mancuso2016 %>% 
+  drop_na(count) %>% 
+  count(id, condition) %>% 
+  pivot_wider(names_from = condition, values_from = n)
+```
+
+A complexity of the multiple-baseline design is each student has a different number of measurement occasions and those occasions were collected over different combinations of the experimental `condition`.
+
+We can get a sense of that data structure with a quick missing data analysis plot.
+
+```{r, fig.width = 5, fig.height = 2.5}
+mancuso2016 %>% 
+  mutate(r = ifelse(is.na(count), "missing", "observed")) %>% 
+  mutate(r = factor(r, levels = c("observed", "missing"))) %>% 
+  
+  ggplot(aes(x = session, y = id)) +
+  geom_tile(aes(fill = r),
+            color = "white") +
+  scale_fill_viridis_d("data", option = "D", direction = -1, end = .8) +
+  scale_x_continuous(expand = c(0, 0), limits = c(0.5, 20.5)) +
+  scale_y_discrete(NULL, expand = c(0, 0)) +
+  ggtitle("Missing data analysis")
+```
+
+This kind of unevenness in the data over time would be a disaster with classical statistical procedures such as an analysis of variance (ANOVA). As we'll see, it's no problem at all for a GLMM. In some of our previous analyses, we handled missing data with multiple imputation. When we have longitudinal data of this kind, it's often easier to handle the missing data with full-information maximum likelihood.
+
+Anyway, here's a quick descriptive plot of the data.
+
+```{r, fig.width = 6, fig.height = 3.5}
+mancuso2016 %>% 
+  drop_na(count) %>% 
+  
+  ggplot(aes(x = session, y = count / minutes, color = condition)) +
+  geom_point() +
+  geom_line() +
+  scale_color_manual(NULL, values = c("red3", "blue3")) +
+  scale_y_continuous("rate", limits = c(0, NA)) +
+  facet_wrap(~ id, scales = "free_y")
+```
+
+We could also use the `geom_smooth()` method to get a sense of the treands across students and conditions.
+
+```{r, fig.width = 6, fig.height = 3.5}
+mancuso2016 %>% 
+  drop_na(count) %>% 
+  
+  ggplot(aes(x = session, y = count / minutes , color = condition)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, formula = y ~ x, size = 1/2) +
+  scale_color_manual(NULL, values = c("red3", "blue3")) +
+  scale_y_continuous("rate", limits = c(0, NA)) +
+  facet_wrap(~ id, scales = "free_y")
+```
+
+We explicitly removed the standard error ribbons from the plot with `se = FALSE` because, IMO, they would be invalid. They're based on OLS estimation, which isn't particularly appropriate for that of this kind. However, the lines are okay for quick-and-dirty exploratory plots.
+
+## Models
+
+There are a handful of different ways to analyze these data. We'll consider three.
+
+### Option 1. The naïve Gaussian approach.
+
+If you didn't have a good foundation if the GLMM, I suspect your initial impulse would be to model the habit rates (i.e., the counts divided by the minutes) with the normal distribution. The rates are continuous, after all. The model would be something like
+
+$$
+\begin{align*}
+\text{rate}_{ij} & \sim \operatorname{Normal}(\mu_{ij}, \sigma_\epsilon) \\
+\mu_{ij} & = \text{< some parameters >}.
+\end{align*}
+$$
+
+I'm purposefully leaving the details of the model blank because, IMO, this is not a good idea. This approach ignores that the actual dependent variables are the number of target behaviors in a given session. We know that variables like that are counts, which are non-negative integers. So, let's instead entertain models that actually acknowledge that.
+
+### Option 2. The multilevel Poisson with random effects for the experimental condition.
+
+Probably the model that will best answer the experimental question is a conditional Poisson model
+
+$$
+\begin{align*}
+\text{count}_{ij} & \sim \operatorname{Poisson}(\lambda_{ij}) \\
+\log(\lambda_{ij}) & = \log(\text{minutes}_{ij}) + a_i + b_i \text{post}_{ij} \\
+a_i & = \alpha + u_i \\
+b_i & = \beta + v_i \\
+\begin{bmatrix} u_i \\ v_i \end{bmatrix} & \sim
+  \operatorname{Normal} \left ( 
+    \begin{bmatrix} 0 \\ 0 \end{bmatrix}, \mathbf \Sigma 
+    \right) \\
+\mathbf \Sigma & = \mathbf{SRS} \\
+\mathbf S & =  \begin{bmatrix} \sigma_u & 0 \\ 0 & \sigma_v \end{bmatrix} \\
+\mathbf R & =  \begin{bmatrix} 1 & \rho \\ \rho & 1 \end{bmatrix} \\
+\alpha & \sim \operatorname{Normal}(2.3, 0.5) \\
+\beta  & \sim \operatorname{Normal}(0, 1) \\
+\sigma_u & \sim \operatorname{Exponential}(1) \\
+\sigma_v & \sim \operatorname{Exponential}(1) \\
+\rho    & \sim \operatorname{LKJ}(2),
+\end{align*}
+$$
+
+where $a_i$ is the average rate at baseline and $b_i$ is average change in the rate during the post-intervention period. Since these are within-person data, both coefficients can vary across participants, as indicated by their $i$ subscripts. Also notice we have an offset: $\log(\text{minutes}_{ij})$. Our offset accounts for the differences in speech lengths and will express the model in terms of counts per minute.
+
+Before we jump into the theoretical model, let's warm up with a simpler intercept-s and offset-only model
+
+$$
+\begin{align*}
+\text{count}_{ij} & \sim \operatorname{Poisson}(\lambda_{ij}) \\
+\log(\lambda_{ij}) & = \log(\text{minutes}_{ij}) + a_i \\
+a_i & = \alpha + u_i \\
+u_i & \sim \operatorname{Normal}(0, \sigma_u) \\
+\alpha & \sim \operatorname{Normal}(2.3, 0.5) \\
+\sigma_u & \sim \operatorname{Exponential}(1).
+\end{align*}
+$$
+
+```{r}
+log(10)
+
+exp(2.302585 + c(-2, 0, 2))
+```
+
+Here's how fit that model with `brm()`.
+
+```{r}
+# unconditional means model
+fit1 <- brm(
+  data = mancuso2016,
+  family = poisson,
+  count ~ 1 + offset(log(minutes)) + (1 | id),
+  prior = c(prior(normal(log(10), 1), class = Intercept),
+            prior(exponential(1), class = sd)),
+  cores = 4,
+  seed = 1,
+  file = "fits/fit1.mancuso2016"
+)
+
+# summarize
+summary(fit1)
+```
+
+Since we used `log.minutes` as the offset variable, that makes the intercept $\alpha_0$ the log of the population mean, per minute. Here's what that is after exponentiating.
+
+```{r}
+fixef(fit1)[, -2] %>% exp()
+```
+
+Let's see how that matches up with the sample statistics.
+
+```{r}
+mancuso2016 %>% 
+  summarise(mean = mean(count / minutes, na.rm = TRUE))
+```
+
+Now let's fit the theory-based model that differentiates between the A and B conditions. 
+
+```{r}
+# theory-based model
+fit2 <- brm(
+  data = mancuso2016,
+  family = poisson,
+  count ~ 0 + Intercept + offset(log(minutes)) + post + (1 + post | id),
+  prior = c(prior(normal(log(10), 1), class = b, coef = Intercept),
+            prior(normal(0, 1), class = b, coef = post),
+            prior(exponential(1), class = sd),
+            prior(lkj(2), class = cor)),
+  cores = 4,
+  seed = 1,
+  file = "fits/fit2.mancuso2016"
+)
+
+# summarize
+summary(fit2)
+```
+
+We might want to practice working with the fixed effects.
+
+```{r}
+# population average baseline (per minute)
+alpha <- fixef(fit2)[1, 1]
+alpha
+
+# population average change for post-intervention (per minute)
+beta <- fixef(fit2)[2, 1]
+beta
+
+# population average post-intervention (per minute)
+alpha + beta
+
+# in the lambda metric (after exponentiating)
+alpha %>% exp()
+
+exp(alpha + beta)
+
+# the difference in the lambda metric
+exp(alpha) - exp(alpha + beta)
+```
+
+The problem with this approach is you cannot get 95% CIs when you combine parameters this way. If you want to get 95% CIs for combinations of the fixed effects, you need to work directly with the posterior draws.
+
+```{r, warning = F}
+# save the posterior draws
+post <- as_draws_df(fit2)
+
+# the two means in the log metric
+post %>% 
+  transmute(`mu[baseline]` = b_Intercept,
+            `mu[postintervention]` = b_Intercept + b_post) %>% 
+  pivot_longer(everything()) %>% 
+  group_by(name) %>% 
+  mean_qi(value)
+
+# the two means in the count metric
+post %>% 
+  transmute(`mu[baseline]` = exp(b_Intercept),
+            `mu[postintervention]` = exp(b_Intercept + b_post)) %>% 
+  pivot_longer(everything()) %>% 
+  group_by(name) %>% 
+  mean_qi(value)
+
+# the difference between the two means in the count metric
+post %>% 
+  mutate(`mu[baseline]` = exp(b_Intercept),
+         `mu[postintervention]` = exp(b_Intercept + b_post)) %>% 
+  mutate(contrast = `mu[postintervention]` - `mu[baseline]`) %>% 
+  mean_qi(contrast)
+```
+
+What this is telling us is the population average effect for the habit-reversal and competing-response training is a reduction in 6.3 counts, per minute, with a 95% credible interval of 3.5 to 10.3 counts.
+
+Compare the results of our multilevel model with the summary of the results in the original paper:
+
+> The results showed that habit reversal greatly reduced filled pauses during public speaking (see Figure 1). In baseline, all six participants exhibited a moderate to high rate of the target behaviors ($M = 7.4$ responses per minute). Immediately after habit reversal training, participants exhibited the target behaviors at a much lower frequency ($M = 1.4$ responses per minute). (p. 190)
+
+The major advantage of our GLMM approach is we were able to accompany both population mean estimates, and their contrast, with 95% credible intervals. Those 95% CIs allow us to explicitly express the certainty (and uncertainty) in our estimates and they are in full compliance with APA recommendations to accompany all effect sizes with 95% CIs.
+
+The behavior analysts in the room will probably want to see the participant-level results displayed with a plot. Here we'll use the `fitted()` method.
+
+```{r}
+f <- fitted(fit2, newdata = mancuso2016) %>% 
+  data.frame() %>% 
+  bind_cols(mancuso2016) %>% 
+  mutate(rate_hat = Estimate / minutes,
+         lwr = Q2.5  / minutes,
+         upr = Q97.5 / minutes)
+
+# what have we done?
+glimpse(f)
+```
+
+Here's a version of Figure 1 in the original paper.
+
+```{r, fig.width = 4.5, fig.height = 5.5}
+# annotation
+baseline <- 
+  mancuso2016 %>% 
+  filter(id == "Amy" & session %in% c(2, 11)) %>% 
+  select(id, session) %>% 
+  mutate(rate  = c(2, 13),
+         label = c("baseline", "postintervention assessment"))
+
+# for the background fill in geom_rect()
+shade <-
+  mancuso2016 %>% 
+  distinct(id) %>% 
+  mutate(xmin = -Inf,
+         xmax = c(3.5, 4.5, 5.5, 5.5, 7.5, 8.5),
+         ymin = -Inf,
+         ymax = Inf)
+
+# wrangle
+f %>% 
+  drop_na(count) %>% 
+
+  # plot!
+  ggplot() +
+  geom_rect(data = shade,
+            aes(xmin = xmin, xmax = xmax,
+                ymin = ymin, ymax = ymax),
+            fill = alpha("grey80", alpha = 1/2)) +
+  geom_ribbon(aes(x = session, ymin = lwr, ymax = upr, group = post),
+              alpha = 1/3) +
+  geom_line(aes(x = session, y = rate_hat, group = post),
+            size = 1/4) +
+  geom_point(aes(x = session, y = count / minutes),
+             size = 2/3) +
+  geom_text(data = baseline,
+            aes(x = session, y = rate, label = label, color = label),
+            size = 2.75) +
+  scale_color_manual(values = c("red3", "blue3"), breaks = NULL) +
+  scale_x_continuous(breaks = 1:20, expand = expansion(mult = 0.02)) +
+  ylab("habit count per minute") +
+  coord_cartesian(xlim = c(1, 20), ylim = c(0, NA)) +
+  theme_linedraw() +
+  theme(panel.grid = element_blank(),
+        strip.background = element_blank(),
+        strip.text = element_text(color = "black", hjust = 1)) +
+  facet_wrap(~ id, ncol = 1, scales = "free_y")
+```
+
+It might not be clear to see, but there's still a potentially important insight missing from this model.
+
+### Option 3. The Poisson conditional multilevel growth model.
+
+That last model did not entertain the possibility there were changes over time in the target-behavior rates, within each experimental condition. To do that, we need a full conditional growth model of the form
+
+$$
+\begin{align*}
+\text{count}_{ij} & \sim \operatorname{Poisson}(\lambda_{ij}) \\
+\log(\lambda_{ij}) & = \log(\text{minutes}_{ij}) + a_i + b_i \text{post}_{ij} + c_i \text{time01}_{ij} + d_i \text{post}_{ij} \times \text{time01}_{ij} \\
+a_i & = \alpha + u_i \\
+b_i & = \beta + v_i \\
+c_i & = \gamma + w_i \\
+d_i & = \delta + x_i \\
+\begin{bmatrix} u_i \\ v_i \\ w_i \\ x_i \end{bmatrix} & \sim
+  \operatorname{Normal}(\mathbf 0, \mathbf \Sigma) \\
+\mathbf \Sigma & = \mathbf{SRS} \\
+\mathbf S & =  
+  \begin{bmatrix} 
+    \sigma_u & 0 & 0 & 0 \\ 
+    0 & \sigma_v & 0 & 0 \\ 
+    0 & 0 & \sigma_w & 0 \\ 
+    0 & 0 & 0 & \sigma_x 
+  \end{bmatrix} \\
+\mathbf R & = 
+  \begin{bmatrix} 
+    1 & \rho_{uv} & \rho_{uw} & \rho_{ux} \\ 
+    \rho_{vu} & 1 & \rho_{vw} & \rho_{vx} \\ 
+    \rho_{wu} & \rho_{wv} & 1 & \rho_{wx} \\ 
+    \rho_{xu} & \rho_{xv} & \rho_{xw} & 1
+  \end{bmatrix} \\
+\alpha & \sim \operatorname{Normal}(2.3, 0.5) \\
+\beta, \dots, \delta & \sim \operatorname{Normal}(0, 1) \\
+\sigma_u, \dots, \sigma_x & \sim \operatorname{Exponential}(1) \\
+\rho    & \sim \operatorname{LKJ}(1) \\
+\end{align*}
+$$
+
+where now
+
+* $a_i$ are the intercepts at the beginning of the baseline period,
+* $b_i$ are the changes in intercepts for the beginning of the post-intervention period,
+* $c_i$ are the time-slopes for the baseline period, and
+* $d_i$ are the changes in time-slopes for the post-intervention  period.
+
+As indicated by their $i$ subscripts, all these are allowed to vary across students, which is the major advantage of a within-person design. Here's how to fit the model with `brm()`.
+
+```{r}
+# fit
+fit3 <- brm(
+  data = mancuso2016,
+  family = poisson,
+  count ~ 0 + Intercept + offset(log(minutes)) + post + session01 + post:session01 + 
+    (1 + post + session01 + post:session01 | id),
+  prior = c(prior(normal(log(10), 1), class = b, coef = Intercept),
+            prior(normal(0, 1), class = b, coef = post),
+            prior(exponential(1), class = sd),
+            prior(lkj(1), class = cor)),
+  cores = 4,
+  seed = 1,
+  control = list(adapt_delta = .95),
+  file = "fits/fit3.mancuso2016"
+)
+
+# summarize
+summary(fit3)
+```
+
+Focusing just on the `Population-Level Effects` section, our estimate for $\gamma$ is small and primarily positive, suggesting there is a modest increase over time in the baseline condition, on average. The estimate for $\delta$ is a little smaller and mostly negative, suggesting that the changes over time in the post-intervention period will be similar to or perhaps somewhat smaller than those during the baseline period.
+
+As far as the variance parameters listed in the `Group-Level Effects` section, those for $\sigma_w$ and $\sigma_x$ (i.e., the rows for `sd(session01)` and `sd(post:session01)`) are pretty small. On the whole, this tells us our six students differed more in their intercepts than in their slopes.
+
+This is all very abstract. Let's flesh this out with another version of Figure 1. Again, we'll use the `fitted()` method to display the student-level trajectories.
+
+```{r, fig.width = 5.5, fig.height = 5.5}
+# compute
+f <- fitted(fit3, newdata = mancuso2016) %>% 
+  data.frame() %>% 
+  bind_cols(mancuso2016) %>% 
+  mutate(rate_hat = Estimate / minutes,
+         lwr = Q2.5  / minutes,
+         upr = Q97.5 / minutes)
+
+# wrangle
+f %>% 
+  drop_na(count) %>% 
+
+  # plot!
+  ggplot() +
+  geom_rect(data = shade,
+            aes(xmin = xmin, xmax = xmax,
+                ymin = ymin, ymax = ymax),
+            fill = alpha("grey80", alpha = 1/2)) +
+  geom_ribbon(aes(x = session, ymin = lwr, ymax = upr, group = post),
+              alpha = 1/3) +
+  geom_line(aes(x = session, y = rate_hat, group = post),
+            size = 1/4) +
+  # this is new
+  geom_point(aes(x = session, y = count / minutes, size = minutes)) +
+  geom_text(data = baseline,
+            aes(x = session, y = rate, label = label, color = label),
+            size = 2.75) +
+  # this is new
+  scale_size_continuous("speech length\n(minutes)", range = c(1/2, 2), 
+                        breaks = c(3, 5), limits = c(3, 5)) +
+  scale_color_manual(values = c("red3", "blue3"), breaks = NULL) +
+  scale_x_continuous(breaks = 1:20, expand = expansion(mult = 0.02)) +
+  ylab("habit count per minute") +
+  coord_cartesian(xlim = c(1, 20), ylim = c(0, NA)) +
+  theme_linedraw() +
+  theme(panel.grid = element_blank(),
+        strip.background = element_blank(),
+        strip.text = element_text(color = "black", hjust = 1)) +
+  facet_wrap(~ id, ncol = 1, scales = "free_y")
+```
+
+The major insight from the full model `fit3` is that, in all cases, it appears our students showed increases in their target-behaviors during the baseline period. I'm not sure how to interpret that, but it might well be of interest and I'm glad we have statistical frameworks that can formally sniff this out.
+
+This version of the model also explicitly shows the students' performances during the post-intervention period were remarkably stable. This is generally a very good thing. It suggests that the treatment had lasting effects on their behavior, which we'd hope it would.
+
+Also, notice how in this version of the figure, we allowed the size of the data point dots to vary by their `minutes` values. Since each student's speech was somewhere between 3 and 5 minutes long, why not try to find a way to explicitly show that? Recall that since these are not the real data from the study, you can't trust any apparent patterns in the duration of these speeches. But if we had access to the real data, interesting insights might pop out. The main point is that you should always be on the lookout to find ways to squeeze more information out of your data.
+
+## Session information
+
+```{r}
+sessionInfo()
+```
+
+
