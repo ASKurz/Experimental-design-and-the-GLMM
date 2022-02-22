@@ -1,0 +1,137 @@
+---
+title: "mancuso2016"
+author: "A Solomon Kurz"
+date: "`r format(Sys.Date())`"
+output: github_document
+---
+
+The purpose of this file is to simulate the data from Mancuso & Miltenberger (2016; https://doi.org/10.1002/jaba.267). We don't have their actual data file, they displayed their data in Figure 1 (p. 191). Here we'll work through that figure to make a data file that approximates their original data.
+
+Load the **tidyverse**.
+
+```{r, warning = F, message = F}
+library(tidyverse)
+```
+
+First make the person-specific data frames.
+
+```{r}
+# Amy
+amy <- tibble(
+  id      = "Amy",
+  session = 1:20,
+  post    = rep(0:1, times = c(3, 17))) %>% 
+  mutate(condition = ifelse(post == 0, "baseline", "postintervention"),
+         rate      = c(13, 12, 15, 2, 3, 3, 3.5, 2.5, NA, 2.5, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA))
+
+# Sam
+sam <- tibble(
+  id      = "Sam",
+  session = 1:20,
+  post    = rep(0:1, times = c(4, 16))) %>% 
+  mutate(condition = ifelse(post == 0, "baseline", "postintervention"),
+         rate      = c(6, 7.5, 6, 7.9, 1.2, 1.5, 0.75, 2.5, 1.33, 2, 0.9, NA, 1.8, NA, NA, NA, NA, NA, NA, NA))
+
+# Laura
+laura <- tibble(
+  id      = "Laura",
+  session = 1:20,
+  post    = rep(0:1, times = c(5, 15))) %>% 
+  mutate(condition = ifelse(post == 0, "baseline", "postintervention"),
+         rate      = c(9.2, 14.5, 12, 13, 13.9, 2, 1.5, 2.8, 2.7, 2.3, NA, 3.75, NA, NA, NA, NA, NA, NA, NA, NA))
+
+# Kate
+kate <- tibble(
+  id      = "Kate",
+  session = 1:20,
+  post    = rep(0:1, times = c(5, 15))) %>% 
+  mutate(condition = ifelse(post == 0, "baseline", "postintervention"),
+         rate      = c(8.8, 8.2, 7.3, 8.6, 8.2, 0.8, 1, 0.85, 0.88, 1.1, 
+                    0.9, NA, 0.75, NA, NA, NA, NA, NA, NA, NA))
+
+# Anne
+anne <- tibble(
+  id      = "Anne",
+  session = 1:20,
+  post    = rep(0:1, times = c(7, 13))) %>% 
+  mutate(condition = ifelse(post == 0, "baseline", "postintervention"),
+         rate      = c(2.9, 3.5, 3.65, 1.4, 4.8, 3.8, 3.9, 
+                    1, 0.5, 0.6, 1.9, 0.2, 1.2, 1.7, 0.15, 1.1, 1.25, 1, NA, 0.2))
+
+# Jen
+jen <- tibble(
+  id      = "Jen",
+  session = 1:20,
+  post    = rep(0:1, times = c(8, 12))) %>% 
+  mutate(condition = ifelse(post == 0, "baseline", "postintervention"),
+         rate      = c(4.3, 6, 4.25, 4.4, 5.2, 4.8, 7.3, 5.8, 0.7, 0.8, 
+                    0.6, 1, 0.9, NA, 1, NA, NA, NA, NA, NA))
+```
+
+Now combine them, wrangle, and save the new data frame as `mancuso2016`.
+
+```{r}
+names <- c("Amy", "Sam", "Laura", "Kate", "Anne", "Jen")
+
+mancuso2016 <-
+  bind_rows(amy, sam, laura, kate, anne, jen) %>% 
+  mutate(id = factor(id, levels = names))  %>% 
+  mutate(session01 = session - 1) %>% 
+  select(id, session, session01, condition, post, rate) %>% 
+  # add the minutes variable
+  mutate(minutes = ifelse(post == 0, 
+                          rbeta(n = n(), shape1 = 0.5, shape2 = 0.7),
+                          rbeta(n = n(), shape1 = 0.7, shape2 = 0.5))) %>% 
+  mutate(minutes = minutes * 2 + 3) %>% 
+  mutate(minutes = ifelse(is.na(rate), NA, minutes)) %>% 
+  # compute the counts
+  mutate(count = round(rate * minutes, digits = 0))
+```
+
+Take a look at the data.
+
+```{r}
+glimpse(mancuso2016)
+```
+
+Here's a version of Figure 1.
+
+```{r}
+mancuso2016 %>% 
+  drop_na(count) %>% 
+  
+  ggplot(aes(x = session, y = count / minutes, color = condition)) +
+  geom_point() +
+  geom_line() +
+  scale_color_manual(NULL, values = c("red3", "blue3")) +
+  scale_y_continuous("rate", limits = c(0, NA)) +
+  facet_wrap(~ id, scales = "free_y")
+```
+
+We could also use the `geom_smooth()` method to get a sense of the treands across students and conditions.
+
+```{r}
+mancuso2016 %>% 
+  drop_na(count) %>% 
+  
+  ggplot(aes(x = session, y = count / minutes , color = condition)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, formula = y ~ x, size = 1/2) +
+  scale_color_manual(NULL, values = c("red3", "blue3")) +
+  scale_y_continuous("rate", limits = c(0, NA)) +
+  facet_wrap(~ id, scales = "free_y")
+```
+
+Now save the results in an external file.
+
+```{r}
+save(mancuso2016, file = "/Users/solomonkurz/Dropbox/Experimental-design-and-the-GLMM/sketches/data/mancuso2016.rda")
+```
+
+## Session information
+
+```{r}
+sessionInfo()
+```
+
+
