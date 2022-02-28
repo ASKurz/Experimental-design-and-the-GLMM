@@ -1,0 +1,319 @@
+---
+title: "Coker et al (2009)"
+subtitle: "Multivariate single-case ABAB design"
+author: "A Solomon Kurz"
+date: "`r format(Sys.Date())`"
+output: github_document
+---
+
+```{r, echo = F}
+knitr::opts_chunk$set(fig.retina = 2.5)
+options(width = 110)
+```
+
+Load our primary packages.
+
+```{r, message = F, warning = F}
+library(tidyverse)
+library(brms)
+library(tidybayes)
+```
+
+## Bad habbits!
+
+Coker et al (2009; https://doi.org/10.3233/NRE-2009-0469) used a multivariate single-case ABAB design to evaluate a modified constraint-induced movement therapy on baby diagnosed with hemiplegic cerebral palsy.
+
+
+```{r}
+# load the data
+load(file = "/Users/solomonkurz/Dropbox/Experimental-design-and-the-GLMM/sketches/data/coker2009.rda")
+
+# what is this?
+glimpse(coker2009)
+```
+
+The data are in the long format with respect to the three behavior types listed in the `behavior` column. Each was measured across 19 successive trials, which are listed in the `trial` column. The `trial0` column is `trial - `, to help the intercept in regression models. Each of the behaviors were assessed within four experimental phases (i.e., A1, B1, A2, B2), which are recorded in the `phase` column. The `ptrial` and `ptrial0` columns list the trials within each of the four phases, restarting the sequence at the beginning of each `phase`. The `total` column is the number of observed behaviors within a given `trial`. 
+
+### EDA.
+
+Here are the number of trials within each experimental phase.
+
+```{r}
+coker2009 %>%
+  filter(behavior == "reach") %>% 
+  count(phase)
+```
+
+Here's a version of Figure 2 in the original paper. 
+
+```{r, fig.width = 4.5, fig.height = 4}
+coker2009 %>% 
+  mutate(Phase = ifelse(str_detect(phase, "A"), "A", "B")) %>% 
+  
+  ggplot(aes(x = trial, y = total, group = phase, color = Phase)) +
+  geom_vline(xintercept = c(2.5, 10.5, 13.5), color = "white") +
+  geom_point() +
+  geom_line() +
+  scale_x_continuous(breaks = seq(from = 1, to = 19, by = 2)) +
+  scale_color_viridis_d(option = "A", end = .6) +
+  ylab("# motor behaviors observed") +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~ behavior, ncol = 1)
+```
+
+We could also use the `geom_smooth()` method to get a sense of the linear treands across behaviors and phases.
+
+```{r, fig.width = 4.5, fig.height = 4}
+coker2009 %>% 
+  mutate(Phase = ifelse(str_detect(phase, "A"), "A", "B")) %>% 
+  
+  ggplot(aes(x = trial, y = total, group = phase, color = Phase)) +
+  geom_vline(xintercept = c(2.5, 10.5, 13.5), color = "white") +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, formula = y ~ x, size = 1/2) +
+  scale_x_continuous(breaks = seq(from = 1, to = 19, by = 2)) +
+  scale_color_viridis_d(option = "A", end = .6) +
+  ylab("# motor behaviors observed") +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~ behavior, ncol = 1)
+```
+
+We explicitly removed the standard error ribbons from the plot with `se = FALSE` because, IMO, they would be invalid. They're based on OLS estimation, which isn't particularly appropriate for that of this kind. However, the lines are okay for quick-and-dirty exploratory plots.
+
+## Models
+
+There are a handful of different models we might use to analyze these data. We'll consider three. In all cases, we'll model the behavioral counts with the Poisson likelihood. As the data are in the long format with respect to the behavior types, the model will be multilevel in that behavioral counts will be nested within the three levels of `behavior`.
+
+The first model will be the unconditional growth model
+
+$$
+\begin{align*}
+\text{total}_{ij} & \sim \operatorname{Poisson}(\lambda_{ij}) \\
+\log(\lambda_{ij}) & = a_i + b_i \text{trial0}_{ij} \\
+a_i & = \alpha + u_i \\
+b_i & = \beta + v_i \\
+\begin{bmatrix} u_i \\ v_i \end{bmatrix} & \sim
+  \operatorname{Normal} \left ( 
+    \begin{bmatrix} 0 \\ 0 \end{bmatrix}, \mathbf \Sigma 
+    \right) \\
+\mathbf \Sigma & = \mathbf{SRS} \\
+\mathbf S & =  \begin{bmatrix} \sigma_u & \\ 0 & \sigma_v \end{bmatrix} \\
+\mathbf R & =  \begin{bmatrix} 1 & \\ \rho & 1 \end{bmatrix} \\
+\alpha & \sim \operatorname{Normal}(\log(5), 0.5) \\
+\beta  & \sim \operatorname{Normal}(0, 0.5) \\
+\sigma_u & \sim \operatorname{Exponential}(2) \\
+\sigma_v & \sim \operatorname{Exponential}(2) \\
+\rho    & \sim \operatorname{LKJ}(2),
+\end{align*}
+$$
+
+where the behavioral count variable `total` varies across $i$ behaviors and $j$ trials. There is an overall intercept $\alpha$ and `behavior`-specific deviations $(u_i)$ around that overall intercept. There is an overall slope across `trial0` $\beta$, which has `behavior`-specific deviations $(v_i)$ around that overall parameter. Per by convention, those two deviation parameters are modeled as multivariate normal with the variance/covariance $\mathbf \Sigma$ decomposed into a standard deviation matrix $\mathbf S$ and correlation matrix $\mathbf R$. 
+
+The second model allows for `phase`-specific means:
+
+$$
+\begin{align*}
+\text{total}_{ij} & \sim \operatorname{Poisson}(\lambda_{ij}) \\
+\log(\lambda_{ij}) & = a_{[\text{phase}]i} \\
+a_{[\text{phase}]i} & = \alpha_{[\text{phase}]} + u_{[\text{phase}]i} \\
+\begin{bmatrix} u_{[1]i} \\ u_{[2]i} \\ u_{[3]i} \\ u_{[4]i} \end{bmatrix} & \sim
+  \operatorname{Normal} \left ( 
+    \begin{bmatrix} 0 \\ 0 \\ 0 \\ 0 \end{bmatrix}, \mathbf{SRS} 
+    \right) \\
+
+\mathbf S & = \begin{bmatrix} 
+  \sigma_1 & & & \\ 
+  0 & \sigma_2 & & \\ 
+  0 & 0 & \sigma_3 & \\ 
+  0 & 0 & 0 & \sigma_4 \end{bmatrix} \\
+
+\mathbf R & = \begin{bmatrix} 
+  1 & & & \\ 
+  \rho_{21} & 1 \\ 
+  \rho_{31} & \rho_{32} & 1 \\ 
+  \rho_{41} & \rho_{42} & \rho_{43} & 1 \end{bmatrix} \\
+
+\alpha_{[\text{phase}]} & \sim \operatorname{Normal}(\log(5), 1) \\
+\sigma_1, \dots, \sigma_4 & \sim \operatorname{Exponential}(2) \\
+\mathbf R & \sim \operatorname{LKJ}(1).
+\end{align*}
+$$
+
+Here the ${[\text{phase}]}$ subscript indicates the $\alpha$ parameter is indexed by the four levels of `phase`, which all also vary across the three levels of `behavior` as indicated by the `behavior`-specific deviations around those four grand means $u_{[\text{phase}]i}$. Those four deviation parameters are modeled as multivariate normal in the typical way, with the $\mathbf S$ and $\mathbf R$ matrices now following a $4 \times 4$ structure. 
+
+The final model is what you might call the full or theory based model:
+
+$$
+\begin{align*}
+\text{total}_{ij} & \sim \operatorname{Poisson}(\lambda_{ij}) \\
+
+\log(\lambda_{ij}) & = b_{0i} + b_1 \text{B1}_{ij} + b_{2i} \text{A2}_{ij} + b_{3i} \text{B2}_{ij} + b_{4i} \text{trial0}_{ij} + b_{5i} (\text{B1} \cdot \text{trial0})_{ij}+ b_{6i} (\text{A2} \cdot \text{trial0})_{ij} + b_{7i} (\text{B2} \cdot \text{trial0})_{ij} \\
+
+b_{0i} & = \beta_0 + u_{0i}  \\
+b_{1i} & = \beta_1 + u_{1i}  \\
+b_{2i} & = \beta_2 + u_{2i}  \\
+b_{3i} & = \beta_3 + u_{3i}  \\
+b_{4i} & = \beta_4 + u_{4i}  \\
+b_{5i} & = \beta_5 + u_{5i}  \\
+b_{6i} & = \beta_6 + u_{6i}  \\
+b_{7i} & = \beta_7 + u_{7i}  \\
+
+\begin{bmatrix} u_{0i} \\ \vdots \\ u_{7i} \end{bmatrix} & \sim
+  \operatorname{Normal}(\mathbf 0, \mathbf{SRS}) \\
+\beta_0 & \sim \operatorname{Normal}(\log(5), 0.5) \\
+\beta_1, \dots, \beta_7  & \sim \operatorname{Normal}(0, 0.5) \\
+\sigma_1, \dots, \sigma_8 & \sim \operatorname{Exponential}(2) \\
+\mathbf R & \sim \operatorname{LKJ}(1),
+\end{align*}
+$$
+
+where now the intercepts and `ptrial0` slopes vary across the four levels of `phase`. Given that all these also vary across the three levels of `behavior`, this results in an $8 \times 8$ structure for the $\mathbf S$ and $\mathbf R$ matrices.
+
+Here's how to fit the models with **brms**.
+
+```{r}
+fit1 <- brm(
+  data = coker2009,
+  family = poisson,
+  total ~ 0 + Intercept + trial0 + (1 + trial0 | behavior),
+  prior = c(prior(normal(log(5), 0.5), class = b, coef = Intercept),
+            prior(normal(0, 0.5), class = b),
+            prior(exponential(2), class = sd),
+            prior(lkj(2), class = cor)),
+  cores = 4, seed = 1,
+  control = list(adapt_delta = .9995,
+                 max_treedepth = 12),
+  file = "fits/fit1.coker2009"
+)
+
+fit2 <- brm(
+  data = coker2009,
+  family = poisson,
+  total ~ 0 + phase + (0 + phase | behavior),
+  prior = c(prior(normal(log(5), 1), class = b),
+            prior(exponential(2), class = sd),
+            prior(lkj(1), class = cor)),
+  cores = 4, seed = 1,
+  control = list(adapt_delta = .999,
+                 max_treedepth = 12),
+  file = "fits/fit2.coker2009"
+)
+
+fit3 <- brm(
+  data = coker2009,
+  family = poisson,
+  total ~ 0 + Intercept + phase + ptrial0 + phase:ptrial0 + (1 + phase + ptrial0 + phase:ptrial0 | behavior),
+  prior = c(prior(normal(log(5), 0.5), class = b, coef = Intercept),
+            prior(normal(0, 0.5), class = b),
+            prior(exponential(2), class = sd),
+            prior(lkj(1), class = cor)),
+  cores = 4, seed = 1,
+  control = list(adapt_delta = .9999,
+                 max_treedepth = 12),
+  file = "fits/fit3.coker2009"
+)
+```
+
+As is often the case in when you have few levels for the multilevel grouping term (i.e., the levels of `behavior`), all three models required adjustments to the parameters within the `control` settings to keep the MCMC chains healthy.
+
+Rather than looking at the model summaries with `print()`, we just plot.
+
+```{r, fig.width = 8, fig.height = 5.5}
+model <- c("Unconditional growth", "Means by phase", "Within-phase growth")
+
+rbind(
+  fitted(fit1),
+  fitted(fit2),
+  fitted(fit3)
+) %>% 
+  data.frame() %>% 
+  bind_cols(
+    bind_rows(coker2009, coker2009, coker2009)
+  ) %>% 
+  mutate(Phase = ifelse(str_detect(phase, "A"), "A", "B"),
+         model = rep(model, each = n() / 3) %>% factor(., levels = model))  %>% 
+  
+  ggplot(aes(x = trial, group = phase)) +
+  geom_vline(xintercept = c(2.5, 10.5, 13.5), color = "grey50", linetype = 2, size = 1/4) +
+  geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5, fill = Phase),
+              alpha = 1/3) +
+  geom_line(aes(y = Estimate, color = Phase)) +
+  geom_point(aes(y = total),
+             size = 2/3) +
+  scale_fill_viridis_d(option = "A", begin = .2, end = .6) +
+  scale_color_viridis_d(option = "A", begin = .2, end = .6) +
+  scale_x_continuous(breaks = seq(from = 1, to = 19, by = 2)) +
+  labs(title = "Constraint-induced movement therapy on a baby diagnosed with hemiplegic cerebral palsy",
+       "behavor count",
+       subtitle = "The three behavior types are separated by the facet columns. The three competing models are depicted by\nthe faceted columns, starting with the simplest (unconditinoal growth) at the top and ending with the full\ntheoretically-justified conditional growth model on the bottom.",
+       x = "Trial",
+       y = "Count") +
+  facet_grid(model ~ behavior) +
+  theme_linedraw() +
+  theme(panel.grid = element_blank(),
+        plot.title.position = "plot",
+        strip.background = element_blank(),
+        strip.text = element_text(color = "black"))
+```
+
+IMO, you're best off using `fit2`, the full theoretically-justified conditional growth model. However, you could compare the models by their out-of-sample performance with their LOO-CV estimates and contrasts.
+
+```{r}
+fit1 <- add_criterion(fit1, criterion = "loo")
+fit2 <- add_criterion(fit2, criterion = "loo")
+fit3 <- add_criterion(fit3, criterion = "loo")
+
+loo_compare(fit1, fit2, fit3) %>% 
+  print(simplify = F)
+```
+
+Numerically, the full model `fit3` made the best sense of the data from a cross-validation perspective. Note, however, how large the standard errors are relative to the differences, particularly for `fit3` relative to `fit1`. What does this mean? If you study the top and bottom columns of the facet plot, above, you'll see that the results from the experiment are somewhat ambiguous. The unconditional growth model, alone, made pretty good sense of the data. Why might that be? We're measuring behaviors in a baby and what do babies do if not develop? I suspect Corker and colleagues would have provided a more convincing demonstration of their intervention had they collected data on more trials, particularly during the A phases. Yes, there's enough information in the data to suggest the intervention was probably helpful. But the evidence is weak and no-one should be breaking open the Champagne.
+
+Here's how you might compute effect sizes (unstandardized mean differences) with the full model `fit3`.
+
+```{r, fig.width = 7.5, fig.height = 4, message = F}
+nd <- coker2009 %>% 
+  group_by(behavior, phase) %>% 
+  summarise(ptrial0 = mean(ptrial0)) %>% 
+  ungroup() %>% 
+  mutate(row = 1:n())
+
+fitted(fit3,
+       newdata = nd,
+       summary = F) %>% 
+  data.frame() %>% 
+  set_names(1:12) %>% 
+  mutate(draw = 1:n()) %>% 
+  pivot_longer(-draw, 
+               names_to = "row",
+               names_transform = list(row = as.integer)) %>% 
+  left_join(nd, by = "row") %>% 
+  select(-row, -ptrial0) %>% 
+  pivot_wider(names_from = phase, values_from = value) %>% 
+  mutate(`B1 - A1` = B1 - A1,
+         `B2 - A2` = B2 - A2) %>% 
+  mutate(`B - A` = (`B1 - A1` + `B2 - A2`) / 2) %>% 
+  pivot_longer(contains("-"), names_to = "contrast") %>% 
+  mutate(contrast = factor(contrast, levels = c("B1 - A1", "B2 - A2", "B - A"))) %>% 
+  
+  ggplot(aes(x = value, y = 0)) +
+  geom_vline(xintercept = 0, size = 1/4, linetype = 2, color = "grey25") +
+  tidybayes::stat_halfeye(.width = .95, size = 1) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  labs(title = "Effect sizes from the single-case multilevel Poisson conditional growth model",
+       subtitle = "The gray shapes are the posterior distributions for the effect sizes.\nThe dots and horizontal lines at their bases are the posterior means and 95% credible intervals.",
+       x = "unstandardized mean differences in behavioral counts") +
+  facet_grid(contrast ~ behavior) +
+  theme_linedraw() +
+  theme(panel.grid = element_blank(),
+        strip.background = element_blank(),
+        strip.text.y = element_text(angle = 0),
+        strip.text = element_text(color = "black"))
+```
+
+## Session information
+
+```{r}
+sessionInfo()
+```
+
