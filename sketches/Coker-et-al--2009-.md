@@ -1,7 +1,7 @@
 Coker et al (2009)
 ================
 A Solomon Kurz
-2022-02-27
+2022-02-28
 
 Load our primary packages.
 
@@ -11,7 +11,7 @@ library(brms)
 library(tidybayes)
 ```
 
-## Bad habbits!
+## Constraint-induced movement therapy on baby diagnosed with hemiplegic cerebral palsy
 
 Coker et al (2009; <https://doi.org/10.3233/NRE-2009-0469>) used a
 multivariate single-case ABAB design to evaluate a modified
@@ -37,18 +37,25 @@ glimpse(coker2009)
     ## $ total    <dbl> 0, 11, 8, 4, 12, 23, 15, 11, 29, 50, 42, 1, 13, 3, 35, 20, 46, 10, 18, 6, 22, 9, 9, 11, 21,…
 
 The data are in the long format with respect to the three behavior types
-listed in the `behavior` column. Each was measured across 19 successive
-trials, which are listed in the `trial` column. The `trial0` column is
-`trial -`, to help the intercept in regression models. Each of the
-behaviors were assessed within four experimental phases (i.e., A1, B1,
-A2, B2), which are recorded in the `phase` column. The `ptrial` and
-`ptrial0` columns list the trials within each of the four phases,
-restarting the sequence at the beginning of each `phase`. The `total`
-column is the number of observed behaviors within a given `trial`.
+listed in the `behavior` column. Throughout the intervention, the baby
+was videotaped during 10 minutes of unstructured play. A blinded
+examiner coded how many times the baby used his affected right arm and
+hand during developmentally appropriate tasks such as (a) reaching for
+an object, (b) weightbearing (stabalizing himself) , and (c) approaching
+midline during each 10-minutes play session. These were measured across
+19 successive trials, which are listed in the `trial` column. The
+`trial0` column is `trial -`, to help the intercept in regression
+models. Each of the behaviors were assessed within four experimental
+phases (i.e., A1, B1, A2, B2), which are recorded in the `phase` column.
+The `ptrial` and `ptrial0` columns list the trials within each of the
+four phases, restarting the sequence at the beginning of each `phase`.
+The `total` column is the number of observed behaviors within a given
+`trial`.
 
 ### EDA.
 
-Here are the number of trials within each experimental phase.
+Here are the number of trials within each experimental phase. They are
+the same for each `behavior`.
 
 ``` r
 coker2009 %>%
@@ -112,9 +119,10 @@ However, the lines are okay for quick-and-dirty exploratory plots.
 
 There are a handful of different models we might use to analyze these
 data. We’ll consider three. In all cases, we’ll model the behavioral
-counts with the Poisson likelihood. As the data are in the long format
-with respect to the behavior types, the model will be multilevel in that
-behavioral counts will be nested within the three levels of `behavior`.
+counts with the Poisson likelihood, which is canonical for unbounded
+counts. As the data are in the long format with respect to the
+`behavior` types, the model will be multilevel in that behavioral counts
+will be nested within the three levels of `behavior`.
 
 The first model will be the unconditional growth model
 
@@ -159,7 +167,8 @@ those four grand means *u*<sub>\[phase\]*i*</sub>. Those four deviation
 parameters are modeled as multivariate normal in the typical way, with
 the **S** and **R** matrices now following a 4 × 4 structure.
 
-The final model is what you might call the full or theory based model:
+The final model is what you might call the full or theory-based model.
+It’s a conditional growth model of the form
 
 $$ $$
 
@@ -171,6 +180,7 @@ and **R** matrices.
 Here’s how to fit the models with **brms**.
 
 ``` r
+# unconditional growth
 fit1 <- brm(
   data = coker2009,
   family = poisson,
@@ -185,6 +195,7 @@ fit1 <- brm(
   file = "fits/fit1.coker2009"
 )
 
+# means by phase
 fit2 <- brm(
   data = coker2009,
   family = poisson,
@@ -198,6 +209,7 @@ fit2 <- brm(
   file = "fits/fit2.coker2009"
 )
 
+# conditional growth model (within-phase growth)
 fit3 <- brm(
   data = coker2009,
   family = poisson,
@@ -260,7 +272,7 @@ rbind(
 
 <img src="Coker-et-al--2009-_files/figure-gfm/unnamed-chunk-8-1.png" width="768" />
 
-IMO, you’re best off using `fit2`, the full theoretically-justified
+IMO, you’re best off using `fit3`, the full theoretically-justified
 conditional growth model. However, you could compare the models by their
 out-of-sample performance with their LOO-CV estimates and contrasts.
 
