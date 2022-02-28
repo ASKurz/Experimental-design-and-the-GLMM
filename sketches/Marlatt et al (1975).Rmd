@@ -1,0 +1,467 @@
+---
+title: "Marlatt et al (1975)"
+subtitle: "Quasi-experimental 2 X 3 factorial design"
+author: "A Solomon Kurz"
+date: "`r format(Sys.Date())`"
+output: github_document
+---
+
+```{r, echo = F}
+knitr::opts_chunk$set(fig.retina = 2.5)
+options(width = 110)
+```
+
+Load our primary packages.
+
+```{r, message = F, warning = F}
+library(tidyverse)
+library(brms)
+library(tidybayes)
+```
+
+## An example from the drinking literature
+
+Marlatt, Kosturn, and Lang (1975; https://doi.org/10.1037/0021-843X.84.6.652) reported the results of a bar-lab type study on elicited anger and the opportunity for retaliation on the consumption of alcohol in male and female social drinkers. I have simulated data that resemble those from Marlatt et al and saved them in a file called `marlatt1975.rda`. Here we load the `marlatt1975` data.
+
+```{r}
+# load the data
+load(file = "/Users/solomonkurz/Dropbox/Experimental-design-and-the-GLMM/sketches/data/marlatt1975.rda")
+
+# what is this?
+glimpse(marlatt1975)
+```
+
+After screening the drinking habits of 1,300 undergraduate students, Marlatt and colleagues recruited 30 men and 30 women from a subset of 358 who were identified as heavy social drinkers. The participants were then randomized into one of three levels of the experimental `condition`, by `sex`. After the several-stage experimental procedure, the amount of wine each student drank was recorded in `ounces`.
+
+## EDA
+
+### Sample statistics.
+
+Here are the sample statistics.
+
+```{r, warning = F, message = F}
+marlatt1975 %>% 
+  group_by(sex, condition) %>% 
+  summarise(m = mean(ounces) %>% round(digits = 2),
+            s = sd(ounces) %>% round(digits = 2),
+            n = n())
+```
+
+If you compare these values with those presented in Table 1 of the original article (p. 656), you'll see they're pretty similar.
+
+### Look at the data.
+
+Here's a quick plot of the `marlatt1975` data.
+
+```{r, fig.width = 5, fig.height = 3.5}
+# adjust the global plot settings
+theme_set(
+  theme_gray() +
+    theme(panel.grid = element_blank(),
+          plot.title.position = "plot",
+          strip.background = element_blank(),
+          strip.text = element_text(color = "black"))
+  
+)
+
+# plot
+marlatt1975 %>% 
+  ggplot(aes(x = ounces, fill = sex)) +
+  geom_histogram(binwidth = 1) +
+  geom_rug(aes(color = sex),
+           size = 1/4) +
+  scale_fill_manual(values = c("blue3", "red3"), breaks = NULL) +
+  scale_color_manual(values = c("blue3", "red3"), breaks = NULL) +
+  coord_cartesian(xlim = c(0, 20)) +
+  facet_grid(sex ~ condition)
+```
+
+## How to model non-negative continuous data
+
+Conventional regression with the Gaussian likelihood isn't great for modeling non-negative continuous data because there's nothing to keep the algorithm from predicting negative values. There are a many different likelihoods we could use to model data of this kind, such as the:
+
+* gamma,
+* exponential,
+* inverse-Gaussian,
+* log-normal, and
+* Weibull.
+
+A reasonable place to start is with *gamma regression*.
+
+## Gamma regression
+
+To get a sense of the gamma distribution, here are what three gamma densities look like, with different parameter settings.
+
+```{r, echo = F, eval = F}
+gamma_s_and_r_from_mean_sd <- function(mean, sd) {
+  if (mean <= 0) stop("mean must be > 0")
+  if (sd   <= 0) stop("sd must be > 0")
+  shape <- mean^2 / sd^2
+  rate  <- mean   / sd^2
+  return(list(shape = shape, rate = rate))
+}
+
+
+
+
+gamma_s_and_r_from_mean_sd(mean = 2, sd = 2)
+gamma_s_and_r_from_mean_sd(mean = 6, sd = 2)
+gamma_s_and_r_from_mean_sd(mean = 12, sd = 2)
+```
+
+```{r, fig.width = 5, fig.height = 4.5}
+tibble(shape = c(1, 9, 36),
+       rate = c(0.5, 1.5, 3)) %>% 
+  expand(x = seq(from = 0, to = 20, by = 0.05),
+         nesting(shape, rate)) %>% 
+  mutate(label = str_c("shape = ", shape, ", rate = ", rate),
+         density = dgamma(x = x, shape = shape, rate = rate)) %>% 
+  ggplot(aes(x = x, y = density)) +
+  geom_area() +
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  facet_wrap(~ reorder(label, shape), ncol = 1, scales = "free_y") +
+  ggtitle("I am a gamma.",
+          subtitle = expression("I range from 0 to "*infinity*" and, as you will soon see, I am weird.")) +
+  theme(strip.text = element_text(hjust = 1))
+```
+
+The gamma distribution takes on continuous values ranging from zero to positive infinity. Holding the standard deviation constant, the gamma distribution becomes increasingly symmetric and Gaussian looking as the mean increases. As the mean goes to zero, the gamma distribution becomes increasingly skewed and, as in the top row of the plot, it eventually bunches up at the zero boundary like a wedge.
+
+It turns out there are a lot of ways to define the gamma distribution. Two of these ways are canonical.
+
+### The two canonical ways to define the gamma distribution.
+
+If we have some variable $y$, we can describe it as gamma-distributed with a *shape* parameter $\alpha$ and a *rate* parameter $\beta$ using the formula
+
+$$
+f(y; \alpha, \beta) = \frac{y^{\alpha - 1} \exp(-\beta y) \beta^\alpha}{\Gamma(\alpha)},
+$$
+
+where $\Gamma(\cdot)$ is the gamma function. The second canonical way to define the gamma function is with a *shape* parameter $k$ and *scale* parameter $\theta$:
+
+$$
+f(y; k, \theta) = \frac{y^{k - 1} \exp \left (-\frac{y}{\theta} \right )}{\theta^k \Gamma(k)}.
+$$
+
+Both canonical formulas for the gamma distribution used a *shape* parameter. Even though shape was either called $\alpha$ in the first instance or $k$ in the second instance, these were both the same thing. $\alpha$ and $k$ are both the shape.
+
+The $\beta$ rate parameter in the first formula is the reciprocal of the $\theta$ scale parameter in the second formula. That is,
+
+$$
+\begin{align*}
+\beta & = \frac{1}{\theta}, \text{ and thus} \\
+\theta & = \frac{1}{\beta}.
+\end{align*}
+$$
+
+It's important to become somewhat fluent with the shape, rate, and/or scale parameters because these are the inputs in the typical **R** functions like `dgamma()` and `rgamma()`. If we want to simulate gamma-distributed data with the `rgamma()` function, for example, we can define the gamma distribution with either
+
+* the `shape` and `rate` arguments, or
+* the `shape` and `scale` arguments.
+
+```{r}
+?rgamma
+```
+
+No matter what, you always need to have the `shape` argument. Once you have that, you can use either the `rate` or the `scale`. Both are fine.
+
+### Mean and standard deviation.
+
+You can define the *mean* of the gamma distribution as
+
+$$
+\begin{align*}
+\mu & = \frac{\alpha}{\beta}, \text{or} \\
+    & = k\theta.
+\end{align*}
+$$
+
+If you would like the *standard deviation* of the gamma distribution, you can define it with the shape and rate as
+
+$$
+\begin{align*}
+\sigma & = \sqrt{\frac{\alpha}{\beta^2}}, \text{or} \\
+       & = \sqrt{k\theta^2}.
+\end{align*}
+$$
+
+What's important to notice is whether your using the first or second canonical forms of the gamma, the mean and standard deviation are functions of both of the gamma parameters. As a consequence, the mean and standard deviation for a gamma distribution are correlated.
+
+### The two canonical formulas won't work.
+
+One of the reason's I'm torturing you with all this is that neither of the two canonical formulas for the gamma distribution work well with regression models. However, there is a third way to define gamma, which uses the *mean* $\mu$ and the *shape* $\alpha$. When you parameterize gamma in terms of the mean and dispersion, it follows the formula
+
+$$
+f(y; \mu, \alpha) = \frac{ \left (\frac{\alpha}{\mu} \right)^\alpha y^{\alpha - 1} \exp(-\frac{\alpha y}{\mu})}{\Gamma(\alpha)},
+$$
+
+which is admittedly awful. However, you will never have to work with that formula directly. It will be there working hard for you in the background.
+
+## Conditional means model
+
+The basic statistical model for our $2 \times 3$ factorial data is
+
+$$
+\begin{align*}
+\text{ounces}_i & \sim \operatorname{Gamma}(\mu_i, \alpha) \\
+\log(\mu_i) & = \beta_0 + \beta_1 \text{condition}_i + \beta_2 \text{sex}_i + \beta_3 \text{condition}_i \times \text{sex}_i,
+\end{align*}
+$$
+
+where we're using the log link to constrain the model for $\mu_i$ to the non-negative space. You should know that `brms::brm()`, as other functions in **R**, uses the inverse link for gamma regression as a default. However, it's generally a better idea to use the log link.
+
+As to priors, we'll first want to think about our intercept $\beta_0$. The way the `sex` and `condition` variables are coded, this will be the mean for men in the `insulted only` condition. Recall these are undergraduates who drink heavily on occasion, but who are being monitored in a psychology experiment. How many ounces of wine will they drink? Also keep in mind that 5 ounces is the typical size for a single glass of wine. Further recall that $\beta_0$ will be on the log scale. A reasonable place to start might be 5 ounces (i.e., one glass of wine). If we were to set a normal prior with a mean of $\log(5)$ and a standard deviation of $0.4581$, that would put about 95% of the prior mass between 2 and 12.5 ounces, with the center of the mass around 5 ounces.
+
+```{r}
+exp(log(5) + 0.468 * c(-1.96, 0, 1.96)) 
+```
+
+The remaining $\beta$ coefficients are all deviations around this reference group. Assigning a simple $\operatorname{Normal}(0, 0.5)$ prior to each would allow for modest group differences, but rule out dramatic ones. Our final prior to contend with is for the shape parameter, $\alpha$. The current **brms** default prior for that $\alpha$ parameter is $\operatorname{Gamma}(0.01, 0.01)$. To get a sense of that that might be, let's plot.
+
+```{r, fig.width = 3.5, fig.height = 3}
+tibble(x = seq(from = 0, to = 10, by = 0.01)) %>% 
+  mutate(density = dgamma(x, shape = 0.01, rate = 0.01)) %>% 
+  
+  ggplot(aes(x = x, y = density)) +
+  geom_area() +
+  scale_x_continuous(expression(alpha~prior), breaks = 0:3 * 3, expand = c(0, 0)) +
+  scale_y_continuous(NULL, breaks = NULL, expand = c(0, 0)) +
+  ggtitle("Gamma(0.01, 0.01)")
+```
+
+The default $\operatorname{Gamma}(0.01, 0.01)$ places the prior probability across a wide range of values. As this is our first gamma regression model, it might make sense to go with the default. Thus, we can write our full statistical model as
+
+$$
+\begin{align*}
+\text{ounces}_i & \sim \operatorname{Gamma}(\mu_i, \alpha) \\
+\log(\mu_i) & = \beta_0 + \beta_1 \text{condition}_i + \beta_2 \text{sex}_i + \beta_3 \text{condition}_i \times \text{sex}_i \\
+\beta_0 & \sim \operatorname{Normal}(\log 5, 0.468) \\
+\beta_1, \dots, \beta_3 & \sim \operatorname{Normal}(0, 0.5) \\
+\alpha & \sim \operatorname{Gamma}(0.01, 0.01).
+\end{align*}
+$$
+
+Here's how to fit the model with `brm()`.
+
+```{r}
+fit1 <- brm(
+  data = marlatt1975,
+  family = Gamma(link = "log"),
+  ounces ~ 0 + Intercept + sex + condition + condition:sex,
+  prior = c(prior(normal(log(5), 0.468), class = b, coef = Intercept),
+            prior(normal(0, 0.5), class = b),
+            # this is the default
+            prior(gamma(0.01, 0.01), class = shape)),
+  cores = 4,
+  seed = 1,
+  file = "fits/fit1.marlatt1975"
+)
+```
+
+Check the summary.
+
+```{r}
+summary(fit1)
+```
+
+The results for the $\beta$ parameters are all on the log metric. Rather than going through the summary output, we might just plot. Here we'll use the `fitted()` function to pull the marginal means for the six groups.
+
+```{r}
+nd <- marlatt1975 %>% 
+  distinct(sex, condition) %>% 
+  mutate(code = str_c(sex, ".", as.integer(condition)),
+         row = 1:6)
+
+f <- fitted(fit1, newdata = nd) %>% 
+  data.frame() %>% 
+  bind_cols(nd)
+
+# what is this?
+print(f)
+```
+
+Here's one way to plot the results.
+
+```{r, fig.width = 5.5, fig.height = 3.5}
+f %>% 
+  ggplot(aes(x = sex, y = Estimate, ymin = Q2.5, ymax = Q97.5,
+             group = condition, color = condition)) +
+  geom_pointrange(position = position_dodge(width = 0.1)) +
+  geom_line(position = position_dodge(width = 0.1)) +
+  scale_color_viridis_d(option = "F", end = .7) +
+  scale_x_discrete(NULL, labels = c("men", "women")) +
+  scale_y_continuous("average ounces of wine consumed", limits = c(0, 10))
+```
+
+If it's difficult to interpret the effects in terms of ounces, recall that a typical glass of wine is about 5 ounces. Here's a different version of the same plot that uses that simple algebraic transformation.
+
+```{r, fig.width = 5.5, fig.height = 3.5}
+f %>% 
+  ggplot(aes(x = sex, y = Estimate, ymin = Q2.5, ymax = Q97.5,
+             group = condition, color = condition)) +
+  geom_pointrange(position = position_dodge(width = 0.1)) +
+  geom_line(position = position_dodge(width = 0.1)) +
+  scale_color_viridis_d(option = "F", end = .7) +
+  scale_x_discrete(NULL, labels = c("men", "women")) +
+  # this is the new part
+  scale_y_continuous("average glasses of wine consumed",
+                     breaks = c(0, 2.5, 5, 7.5, 10),
+                     # here's the algebraic transformation,
+                     # yep, you can just change the labels!
+                     labels = c(0, 2.5, 5, 7.5, 10) / 5,
+                     limits = c(0, 10))
+```
+
+For data of this kind, you could use the differences in ounces or in glasses wine as the effect size. A difference in ounces might be easy for alcohol researchers to understand. A differences in glasses of wine would be easy for most adults to understand.
+
+## Full distributional model
+
+Since the gamma distribution also has a $\alpha$ parameter, we could fit a distributional model by assigning a linear model to that, too. Be default, **brms** will model $\alpha$ with the log link to insure positive values. Ignoring priors for a moment, we might express the full distributional model as
+
+$$
+\begin{align*}
+\text{ounces}_i & \sim \operatorname{Gamma}(\mu_i, \alpha_i) \\
+\log(\mu_i) & = \beta_0 + \beta_1 \text{condition}_i + \beta_2 \text{sex}_i + \beta_3 \text{condition}_i \times \text{sex}_i\\
+\log(\alpha_i) & = \eta_0 + \eta_1 \text{condition}_i + \eta_2 \text{sex}_i + \eta_3 \text{condition}_i \times \text{sex}_i,
+\end{align*}
+$$
+
+where the four $\beta$ parameters define the linear model for $\log(\mu_i)$, and the four $\eta$ parameters define the new linear model for $\log(\alpha_i)$. You don't have to call those new parameters by $\eta$, but doing so might help differentiate them from the $\beta$ parameters. 
+
+```{r, echo = F, eval = F}
+get_prior(data = marlatt1975,
+          family = Gamma(link = "log"),
+          bf(ounces ~ 0 + Intercept + sex + condition + condition:sex,
+             shape  ~ 1 + sex + condition + condition:sex))
+```
+
+Anyway, the **brms** default for our new intercept $\eta_1$ is $\operatorname{Student-t}(3, 0, 2.5)$, which will allow for a wide range of posterior values on the log scale. Given this is our first distributional gamma model, we might just stick with that. However, since we might expect the six conditions will not have radically different shape values, we might assign weakly-regularizing $\operatorname{Normal}(0, 0.5)$ priors to the remaining $\eta$ parameters. Thus, we can write the full model as
+
+$$
+\begin{align*}
+\text{ounces}_i & \sim \operatorname{Gamma}(\mu_i, \alpha_i) \\
+\log(\mu_i) & = \beta_0 + \beta_1 \text{condition}_i + \beta_2 \text{sex}_i + \beta_3 \text{condition}_i \times \text{sex}_i\\
+\log(\alpha_i) & = \eta_0 + \eta_1 \text{condition}_i + \eta_2 \text{sex}_i + \eta_3 \text{condition}_i \times \text{sex}_i \\
+\beta_0 & \sim \operatorname{Normal}(\log 5, 0.468) \\
+\beta_1, \dots, \beta_3 & \sim \operatorname{Normal}(0, 0.5) \\
+\eta_0 & \sim \operatorname{Student-t}(3, 0, 2.5) \\
+\eta_1, \dots, \eta_3 & \sim \operatorname{Normal}(0, 0.5).
+\end{align*}
+$$
+
+As with other distributional models, we fit this in **brms** with help from the `bf()` function.
+
+```{r}
+fit2 <- brm(
+  data = marlatt1975,
+  family = Gamma(link = "log"),
+  bf(ounces ~ 0 + Intercept + sex + condition + condition:sex,
+     # this is new
+     shape  ~ 0 + Intercept + sex + condition + condition:sex),
+  prior = c(prior(normal(log(5), 0.468), class = b, coef = Intercept),
+            prior(normal(0, 0.5), class = b),
+            # this is new
+            prior(student_t(3, 0, 2.5), class = b, coef = Intercept, dpar = shape),
+            prior(normal(0, 0.5), class = b, dpar = shape)),
+  cores = 4,
+  seed = 1,
+  file = "fits/fit2.marlatt1975"
+)
+```
+
+Check the results.
+
+```{r}
+print(fit2)
+```
+
+Here's a version of our earlier plots, updated to showcase both distributional parameters.
+
+```{r, fig.width = 8, fig.height = 3.5}
+rbind(fitted(fit2, newdata = nd),
+      fitted(fit2, newdata = nd, dpar = "shape")) %>% 
+  data.frame() %>% 
+  bind_cols(bind_rows(nd, nd)) %>% 
+  mutate(parameter = rep(c("mu[italic(i)]", "alpha[italic(i)]"), each = n() / 2)) %>% 
+  
+  ggplot(aes(x = sex, y = Estimate, ymin = Q2.5, ymax = Q97.5,
+             group = condition, color = condition)) +
+  geom_pointrange(position = position_dodge(width = 0.1)) +
+  geom_line(position = position_dodge(width = 0.1)) +
+  scale_color_viridis_d(option = "F", end = .7) +
+  scale_x_discrete(NULL, labels = c("men", "women")) +
+  ylab("ounces") +
+  facet_wrap(~ parameter, labeller = label_parsed) 
+```
+
+In this case, our conditions differed more markedly in the means than their shapes. So it goes...
+
+Since we have full posteriors for both $\mu_i$ and $\alpha_i$, this might be a good opportunity to practice depicting the posterior predictive distributions for our `ounces` data. First, we redo the `fitted()` code and wrangle.
+
+```{r}
+# we don't need all 4,000 posterior draws
+n_draws <- 1000
+
+set.seed(1)
+
+f <- rbind(
+  fitted(fit2, newdata = nd, summary = F, ndraws = n_draws),
+  fitted(fit2, newdata = nd, summary = F, ndraws = n_draws, dpar = "shape")
+) %>% 
+  data.frame() %>% 
+  set_names(nd %>% pull(code)) %>% 
+  mutate(draw = rep(1:n_draws, times = 2),
+         dpar = rep(c("mu", "alpha"), each = n_draws)) %>% 
+  pivot_longer(m.1:w.3, names_to = "code") %>% 
+  pivot_wider(values_from = value, names_from = dpar) %>% 
+  mutate(beta = alpha / mu)
+```
+
+Plot our posterior predictive distributions along with the data.
+
+```{r, fig.width = 5, fig.height = 3.5}
+set.seed(1)
+
+f %>% 
+  # take a ransom sample of 100 from the 1000 draws
+  filter(draw %in% sample(1:n_draws, size = 100)) %>% 
+  expand(ounces = seq(from = 0, to = 22, length.out = 100),
+         nesting(draw, code, alpha, beta)) %>% 
+  mutate(density = dgamma(x = ounces, shape = alpha, rate = beta)) %>% 
+  left_join(nd, by = "code") %>% 
+  
+  ggplot(aes(x = ounces)) +
+  geom_histogram(data = marlatt1975,
+                 aes(y = ..density.., fill = sex),
+                 binwidth = 1, size = 0) +
+  geom_line(aes(y = density, group = draw), 
+            size = 1/4, alpha = 1/3) +
+  scale_fill_manual(values = c("blue3", "red3"), breaks = NULL) +
+  scale_color_manual(values = c("blue3", "red3"), breaks = NULL) +
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  ggtitle("100 draws of the posterior predictive distribution, by group") +
+  coord_cartesian(xlim = c(0, 22)) +
+  facet_grid(sex ~ condition)
+```
+
+Each of the black lines depicts a credible estimate of the posterior predictive distribution for each group. The differences among the lines express the uncertainty in the posterior. There were only 60 cases in the data, after all.
+
+As we discussed earlier, $\mu$ and $\sigma$ are correlated for the gamma distribution. We can demonstrate that with our posterior draws from `fit2`.
+
+```{r}
+f %>% 
+  mutate(sigma = sqrt(alpha / beta^2)) %>% 
+  group_by(code) %>% 
+  summarise(correlation = cor(mu, sigma) %>% round(digits = 2))
+```
+
+Within each of the six groups, $\mu$ and $\sigma$ were always correlated above .5.
+
+## Session information
+
+```{r}
+sessionInfo()
+```
+
