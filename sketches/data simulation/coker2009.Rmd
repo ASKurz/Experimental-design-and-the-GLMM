@@ -1,0 +1,88 @@
+---
+title: "coker2009"
+author: "A Solomon Kurz"
+date: "`r format(Sys.Date())`"
+output: github_document
+---
+
+The purpose of this file is to simulate the data from Coker et al (2009; https://doi.org/10.3233/NRE-2009-0469). We don't have their actual data file, they displayed their data in Figure 2 (pp. 204--205). Here we'll work through that figure to make a data file that approximates their original data.
+
+Load the **tidyverse**.
+
+```{r, warning = F, message = F}
+library(tidyverse)
+```
+
+First make the behavior-specific data frames.
+
+```{r}
+# reached for an object with affected limb
+reach <-
+  tibble(trial = 1:19,
+         phase = rep(c("A1", "B1", "A2", "B2"), times = c(2, 8, 3, 6)),
+         total = c(0, 11, 8, 4, 12, 23, 15, 11, 29, 50, 42, 1, 13, 3, 35, 20, 46, 10, 18),
+         behavior = "reach") 
+
+# stabilized weight with affected limb
+stabilize <-
+  tibble(trial = 1:19,
+         phase = rep(c("A1", "B1", "A2", "B2"), times = c(2, 8, 3, 6)),
+         total = c(6, 22, 9, 9, 11, 21, 37, 22, 13, 11, 14, 19, 28, 17, 31, 31, 24, 40, 15),
+         behavior = "stabilize") 
+
+# approached mid-line with affected limb
+approach <-
+  tibble(trial = 1:19,
+         phase = rep(c("A1", "B1", "A2", "B2"), times = c(2, 8, 3, 6)),
+         total = c(6, 14, 3, 3, 33, 4, 5, 12, 14, 17, 8, 3, 9, 7, 14, 13, 33, 10, 20),
+         behavior = "approach") 
+```
+
+Now combine them, wrangle, and save the new data frame as `coker2009`.
+
+```{r}
+coker2009 <- bind_rows(
+  reach, stabilize, approach
+) %>% 
+  mutate(phase = factor(phase, levels = c("A1", "B1", "A2", "B2")),
+         trial0 = trial - 1) %>% 
+  group_by(phase, behavior) %>% 
+  mutate(ptrial = 1:n()) %>% 
+  ungroup() %>% 
+  mutate(ptrial0 = ptrial - 1) %>% 
+  select(behavior, trial, trial0, ptrial, ptrial0, phase, total)
+```
+
+Take a look at the data.
+
+```{r}
+glimpse(coker2009)
+```
+
+```{r}
+coker2009 %>% 
+  mutate(Phase = ifelse(str_detect(phase, "A"), "A", "B")) %>% 
+  
+  ggplot(aes(x = trial, y = total, group = phase, color = Phase)) +
+  geom_vline(xintercept = c(2.5, 10.5, 13.5), color = "white") +
+  geom_point() +
+  geom_line() +
+  scale_x_continuous(breaks = seq(from = 1, to = 19, by = 2)) +
+  scale_color_viridis_d(option = "A", end = .6) +
+  ylab("# motor behaviors observed") +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~ behavior, ncol = 1)
+```
+
+Now save the results in an external file.
+
+```{r}
+save(coker2009, file = "/Users/solomonkurz/Dropbox/Experimental-design-and-the-GLMM/sketches/data/coker2009.rda")
+```
+
+## Session information
+
+```{r}
+sessionInfo()
+```
+
