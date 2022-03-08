@@ -51,7 +51,9 @@ mason2014 <- bind_rows(
   sam, ed, brian
 ) %>% 
   mutate(id = fct_rev(id),
-         phase = factor(phase))
+         phase = factor(phase),
+         session0 = session - 1) %>% 
+  select(id, session, session0, phase, count)
 
 # what have we done?
 glimpse(mason2014)
@@ -88,11 +90,4 @@ save(mason2014, file = "/Users/solomonkurz/Dropbox/Experimental-design-and-the-G
 ```{r}
 sessionInfo()
 ```
-
-
-
-
-
-
-
 
