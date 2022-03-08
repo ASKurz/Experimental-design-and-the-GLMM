@@ -1,0 +1,98 @@
+---
+title: "mason2014"
+author: "A Solomon Kurz"
+date: "`r format(Sys.Date())`"
+output: github_document
+---
+
+The purpose of this file is to simulate the data from Mason et al (2014; https://doi.org/10.1016/j.rasd.2013.12.014). We don't have their actual data file, they displayed their data in Figure 2 (p. 340). Here we'll work through that figure to make a data file that approximates their original data.
+
+Load the **tidyverse**.
+
+```{r, warning = F, message = F}
+library(tidyverse)
+```
+
+First make the person-specific data frames.
+
+```{r}
+# Sam
+sam <- tibble(
+  id      = "Sam",
+  session = c(3, 4, 5, 6, 7, 8,
+              9, 10, 11, 12, 15, 16, 19, 21, 22, 25, 32, 36, 42),
+  count   = c(4, 13, 4, 6, 6, 6,
+              38, 20, 34, 41, 17, 16, 38, 21, 28, 35, 56, 21, 40),
+  phase   = rep(LETTERS[1:2], times = c(6, 13)))
+
+# Ed
+ed <- tibble(
+  id      = "Ed",
+  session = c(1, 2, 3, 4, 5, 6, 7, 9, 11,
+              15, 16, 19, 22, 24, 25, 29, 30, 32, 34, 36, 37, 39, 42, 45),
+  count   = c(5, 8, 2, 5, 1, 4, 11, 5, 2,
+              27, 33, 29, 30, 33, 24, 24, 25, 30, 41, 38, 24, 21, 39, 27),
+  phase   = rep(LETTERS[1:2], times = c(9, 15)))
+
+# Brian
+brian <- tibble(
+  id      = "Brian",
+  session = c(2:7, 16, 19, 22,
+              25, 27, 29, 30:32, 33, 34, 42, 46, 47),
+  count   = c(8, 1, 2, 6, 5, 1, 1, 3, 3,
+              22, 27, 22, 15, 24, 11, 51, 6, 29, 20, 33),
+  phase   = rep(LETTERS[1:2], times = c(9, 11)))
+```
+
+Now combine them and wrangle a little to make the `mason2014` data frame.
+
+```{r}
+mason2014 <- bind_rows(
+  sam, ed, brian
+) %>% 
+  mutate(id = fct_rev(id),
+         phase = factor(phase))
+
+# what have we done?
+glimpse(mason2014)
+head(mason2014)
+```
+
+We can look at the data with a version of Figure 2 from the original article.
+
+```{r}
+lines <- mason2014 %>% 
+  distinct(id) %>% 
+  mutate(xintercept = c(8.5, 13, 23.5))
+
+mason2014 %>% 
+  ggplot(aes(x = session, y = count, color = phase)) +
+  geom_vline(data = lines,
+             aes(xintercept = xintercept),
+             color = "white") +
+  geom_point(size = 2) +
+  geom_line() +
+  ylim(0, 60) +
+  facet_wrap(~ id, ncol = 1) +
+  theme(panel.grid = element_blank())
+```
+
+Now save the results in an external file.
+
+```{r}
+save(mason2014, file = "/Users/solomonkurz/Dropbox/Experimental-design-and-the-GLMM/sketches/data/mason2014.rda")
+```
+
+## Session information
+
+```{r}
+sessionInfo()
+```
+
+
+
+
+
+
+
+
