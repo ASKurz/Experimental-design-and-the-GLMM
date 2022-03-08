@@ -9,4 +9,5 @@ These files contain content sketches. They aren’t necessarily full chapters or
 | Coker et al (2009) | Multivariate single-case ABAB design | 
 | Mancuso & Miltenberger (2016) | Multiple baseline AB design |
 | Marlatt et al (1975) | Quasi-experimental 2 X 3 factorial design |
+| Mason et al (2014) | Multiple baseline AB design | 
 | Milkman et al (2022) | Post-test only designs with a large number of conditions| 
