@@ -1,0 +1,763 @@
+---
+title: "Kessler et al (2022)"
+subtitle: "Within-person $2 \times 2 \times 2$ factorial design"
+author: "A Solomon Kurz"
+date: "`r format(Sys.Date())`"
+output: github_document
+---
+
+```{r, echo = F}
+knitr::opts_chunk$set(fig.retina = 2.5)
+options(width = 110)
+```
+
+Load our primary packages.
+
+```{r, message = F, warning = F}
+library(tidyverse)
+library(brms)
+library(tidybayes)
+library(patchwork)
+
+# expand <- tidyr::expand
+```
+
+Kessler et al (2022) included the results from several studies. The authors shared their data files and **R** code on the OSF at https://osf.io/vt9xk/. Here we upload the file for the first experiment.
+
+```{r, message = F, warning = F}
+# load the data
+kessler2022 <- read_csv("/Users/solomonkurz/Dropbox/Experimental-design-and-the-GLMM/sketches/data/Exp1.csv") %>% 
+  # remove the one occasion for which RT == 0
+  filter(RT != 0) %>% 
+  # make a single categorical variable for all combinations of the three IVs (SetSize, Updating, and UpdateSwitch)
+  mutate(condition = case_when(
+    SetSize == 1 & Updating == "no_update" & UpdateSwitch == "repeat" ~ "a",
+    SetSize == 1 & Updating == "no_update" & UpdateSwitch == "switch" ~ "b",
+    SetSize == 1 & Updating == "update"    & UpdateSwitch == "repeat" ~ "c",
+    SetSize == 1 & Updating == "update"    & UpdateSwitch == "switch" ~ "d",
+    SetSize == 2 & Updating == "no_update" & UpdateSwitch == "repeat" ~ "e",
+    SetSize == 2 & Updating == "no_update" & UpdateSwitch == "switch" ~ "f",
+    SetSize == 2 & Updating == "update"    & UpdateSwitch == "repeat" ~ "g",
+    SetSize == 2 & Updating == "update"    & UpdateSwitch == "switch" ~ "h"
+  ))
+
+# what is this?
+glimpse(kessler2022)
+```
+
+The participant numbers are listed in the `Subject` column. The focal variable is `RT`, the reaction time in milliseconds. The three focal independent variables are `SetSize`, `Updating`, and `UpdateSwitch`. As each is binary and all participants experienced all possible levels multiple times, this they make this a within-person $2 \times 2 \times 2$ factorial design. In our `case_when()` code, above, we used those 8 levels to make `condition` variable.
+
+### EDA.
+
+The participants differed by their total number of trials.
+
+```{r, fig.width = 3, fig.height = 2.5}
+kessler2022 %>% 
+  count(Subject) %>% 
+  ggplot(aes(x = n)) +
+  geom_histogram(binwidth = 10) +
+  xlab(expression(italic(n)~trials))
+```
+
+They also differ by their trial numbers, by `condition`.
+
+```{r, fig.width = 5, fig.height = 2.25}
+kessler2022 %>% 
+  count(Subject, condition) %>% 
+  ggplot(aes(x = n)) +
+  geom_histogram(binwidth = 5) +
+  scale_y_continuous(breaks = 0:4 * 2) +
+  xlab(expression(italic(n)~trials)) +
+  facet_wrap(~ condition, nrow = 2, labeller = label_both)
+```
+
+The reaction-time distributions also vary by trial type.
+
+
+```{r, fig.width = 5, fig.height = 2.25}
+
+kessler2022 %>% 
+  ggplot(aes(x = RT)) +
+  geom_density(size = 0, fill = "black") +
+  scale_x_continuous(breaks = 0:2 * 5000, labels = c(0, "5K", "10K")) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  coord_cartesian(xlim = c(0, 10000)) +
+  facet_wrap(~ condition, nrow = 2, labeller = label_both)
+```
+
+As is often the case, the reaction times (`RT`) have a long right tail, the tips of which we excluded from the plot. This distribution will heavily inform out choice of likelihood. Also notice that in every case, the lower-end of the `RT` distribution nearly touches the lower-limit zero. In fact, here are the minimum observed `RT` values, by `condition`.
+
+```{r}
+kessler2022 %>% 
+  group_by(condition) %>% 
+  summarise(min = min(RT))
+```
+
+It's also the case these distributions differ across participants. To get a sense, here are the median and interquartile ranges for the `RT` distributions, by `condition` and a random subset of 5 of the participants.
+
+```{r, fig.width = 6, fig.height = 2.5}
+# define the random subset
+set.seed(1)
+
+random_subset <- kessler2022 %>% 
+  distinct(Subject) %>% 
+  slice_sample(n = 5) %>% 
+  pull()
+
+# subset the data
+kessler2022 %>% 
+  filter(Subject %in% random_subset) %>% 
+  # summarise and wrangle
+  group_by(Subject, condition) %>% 
+  median_qi(RT, .width = .5) %>% 
+  mutate(Subject = factor(Subject)) %>% 
+  
+  # plot
+  ggplot(aes(x = RT, xmin = .lower, xmax = .upper, y = Subject)) +
+  geom_pointrange(fatten = 1.5) +
+  coord_cartesian(xlim = c(0, NA)) +
+  ggtitle("Median and interquartile range, by Subject and condition") +
+  facet_wrap(~ condition, nrow = 2, labeller = label_both) +
+  theme(panel.grid = element_blank())
+```
+
+We see systemic difference in both central tendency (median) and spread (interquartile range). To respect these individual difference, we need a multilevel distributional model.
+
+## Log-normal
+
+Reaction-time data are positive, continuous, and typically have long right tails. A variety of likelihoods can accommodate data with these characteristics, such as the
+
+* exponential,
+* exponentially modified Gaussian,
+* gamma,
+* inverse-Gaussian,
+* log-normal (a.k.a. lognormal),
+* shifted lognormal, and
+* Weibull.
+
+For these data, I'd like to practice using the log-normal. We can describe the positive continuous variable $y$ as log-normal with the equation
+
+$$
+f(y) = \frac{\exp \left( -\frac{1}{2} \left [\frac{\log(y) - \mu}{\sigma} \right]^2 \right)}{\sigma y \sqrt{2 \pi}},
+$$
+
+where $\mu$ and $\sigma$ are the mean and standard deviation of the natural logarithm of $y$, not $y$ itself. Thus for the log-normal, you might opt to call $\mu$ and $\sigma$ the *location* and *scale* to help make that distinction. For the log-normal, the mean and standard deviation of $y$ follow the equations
+
+$$
+\begin{align*}
+\mu_y & = \exp \left (\mu + \frac{\sigma^2}{2} \right), \text{and} \\
+\sigma_y & = \sqrt{[\exp(\sigma^2) + 1] \exp(2\mu + \sigma^2)}.
+\end{align*}
+$$
+
+Notice how both $\mu$ and $\sigma$ parameters define both $\mu_y$ and $\sigma_y$ for the log-normal. In other words, the mean and standard deviation are distinguishable, but correlated with this distribution. As the mean increases, the spread around the mean tends to increase, too.
+
+In the previous section, we mentioned the shifted log-normal distribution another option for reaction-time data. The shifted log-normal can be great when the bulk of your reaction-times and their minimum values are a good distance from zero. Since the data from this experiment are somewhat close to the zero-boundary, I'm not going to practice with the shifted log-normal, here. But it's not a bad option and a critically-minded researcher could still try it out, if desired.
+
+### Shopping models.
+
+Given the log-normal likelihood, a pretty conventional way to model these data would follow the equation
+
+$$
+\begin{align*}
+\text{RT}_{ij} & \sim \operatorname{Log-Normal}(\mu_{ij}, \sigma) \\
+\mu_{ij} & = b_{0i} + b_{1i} \text{SetSize}_{ij} + b_{2i} \text{Updating}_{ij} + b_{3i} \text{UpdateSwitch}_{ij} \\
+& \;\;\; + b_{4i} \text{SetSize}_{ij}\text{Updating}_{ij} + b_{5i} \text{SetSize}_{ij}\text{UpdateSwitch}_{ij} + b_{6i} \text{Updating}_{ij}\text{UpdateSwitch}_{ij} \\
+& \;\;\; + b_{7i} \text{SetSize}_{ij}\text{Updating}_{ij}\text{UpdateSwitch}_{ij} \\
+b_{0i} & = \beta_0 + u_{0i} \\
+b_{1i} & = \beta_1 + u_{1i} \\
+b_{2i} & = \beta_2 + u_{2i} \\
+b_{3i} & = \beta_3 + u_{3i} \\
+b_{4i} & = \beta_4 + u_{4i} \\
+b_{5i} & = \beta_5 + u_{5i} \\
+b_{6i} & = \beta_6 + u_{6i} \\
+b_{7i} & = \beta_7 + u_{7i} \\
+\begin{bmatrix} u_{0i} \\ \vdots \\ u_{7i} \end{bmatrix} & \sim \operatorname{Normal}(\mathbf 0, \mathbf \Sigma)
+\end{align*}
+$$
+
+where reaction-times vary across $i$ persons and $j$ measurement occasions. The $\mu_{ij}$ model is defined by three levels of $b$ coefficients. At the first level, we have the intercept $b_{0i}$ and the lower-level coefficients for the three independent variables, $b_{1i}$ through $b_{3i}$. At the next level, $b_{4i}$ through $b_{6i}$ are the three two-way interaction terms for the independent variables. At the third level, you have the three-way interaction term $b_{7i}$. As indicated by their $i$ subscripts, each $b$ parameter may be decomposed to a grand mean $\beta$ and person-level deviation term $u$. Further, the eight $u$ deviation terms are modeled as multivariate normal with a mean vector of zeros and an $8 \times 8$ variance/covariance matrix $\mathbf \Sigma$.
+
+With that big $8 \times 8$ variance/covariance matrix, this is an expensive model to fit and I'm going to suggest we consider a different kind of model. Using the `condition` variable in place of our three focal independent variables, we can fit the model
+
+$$
+\begin{align*}
+\text{RT}_{ijk} & \sim \operatorname{Log-Normal}(\mu_{ijk}, \sigma) \\
+\mu_{ijk}           & = \beta_0 + u_{1i} + u_{2j} + u_{3ij} \\
+u_{1i}  & \sim \operatorname{Normal}(0, \sigma_{u_1}) \\
+u_{2j}  & \sim \operatorname{Normal}(0, \sigma_{u_2}) \\
+u_{3ij} & \sim \operatorname{Normal}(0, \sigma_{u_3})
+\end{align*}
+$$
+
+where now reaction times vary across $i$ persons, $j$ conditions, and $k$ trials. Here $\beta_0$ is the grand mean and we have three deviation terms: $u_{1i}$ captures the overall person-level deviations, $u_{2i}$ captures the overall condition-level deviations, and $u_{3i}$ captures the interaction between the person- and condition-level deviations. Each of these deviations is modeled as normally distributed with a mean at zero (they are deviations, after all) and standard-deviation parameter $ \sigma_{u_x}$.
+
+An insight still missing from this model is that will not allow us to detect differences in $\sigma$ the data might contain among persons and conditions. Thus we can extend the multilevel log-normal model to a fully distributional model with
+
+$$
+\begin{align*}
+\text{RT}_{ijk} & \sim \operatorname{Log-Normal}(\mu_{ijk}, \sigma_{ijk}) \\
+\mu_{ijk}           & = \beta_0 + u_{1i} + u_{2j} + u_{3ij} \\
+\log (\sigma_{ijk}) & = \eta_0 + v_{1i} + v_{2j} + v_{3ij} \\
+u_{1i}  & \sim \operatorname{Normal}(0, \sigma_{u_1}) \\
+u_{2j}  & \sim \operatorname{Normal}(0, \sigma_{u_2}) \\
+u_{3ij} & \sim \operatorname{Normal}(0, \sigma_{u_3}) \\
+v_{1i}  & \sim \operatorname{Normal}(0, \sigma_{v_1}) \\
+v_{2j}  & \sim \operatorname{Normal}(0, \sigma_{v_2}) \\
+v_{3ij} & \sim \operatorname{Normal}(0, \sigma_{v_3}),
+\end{align*}
+$$
+
+where $\log (\sigma_{ijk})$ has its own linear model, characterized by a grand mean $\eta_0$ and three deviation terms, $v_{1i}$ through $v_{3i}$. As in other contexts, we model $\log (\sigma_{ijk})$ instead of $\sigma_{ijk}$ to ensure positive values.
+
+### Pulling priors.
+
+Now we have the basic model in mind, we need to select our priors. As the multilevel distributional log-normal approach is not commonly used by reaction-time researchers, we won't be able to pull our priors from previous models in the literature. We can, however, get a sense of typical reaction-time distributions from previous literature. In our case, we'll restrict our literature search to the articles Kessler et al (2022) highlighted in the tail end of their introduction section. Unfortunately, some of the articles they cited (e.g., Kessler & Oberauer, 2014, 2015) did not report the sample statistics for the reaction times. Happily, Oberauer (2002) did report means and standard deviations for reaction-times in a variety of switch/non-switch conditions in Table 1 (p. 418). The means range between $1{,}200$ and $2{,}600$ and the standard deviations range between $200$ and $900$. A difficulty with these sample statistics is they are based on trimmed samples where low and high values have been omitted (see pp. 414, 417). As in the paper, a common practice is to trim large reaction-time values which are some number of standard deviations greater than the mean. However, with our use of log-normal likelihood, we don't need to omit large reaction-time values. The model expects a small number of very large values. So if we are to use Oberauer's sample statistics to inform out priors, we might expect our means and standard deviations will be on the higher end.
+
+As a place to start, I'd like my priors to describe a population mean at $2{,}000$ milliseconds and a liberal standard deviation of $900$. Here we'll save those values as `m` and `s` for further use.
+
+```{r}
+m <- 2000  # expected mean based on prior literature
+s <- 900   # expected standard deviation based on prior literature
+```
+
+Our next challenge is to find a way to express these mean and standard deviation values in terms of the log-normal location $\mu$ and scale $\sigma$ parameters. Using the [method of moments](https://www.real-statistics.com/distribution-fitting/method-of-moments/method-of-moments-lognormal-distribution/), we can define the best-fitting log-normal $\mu$ and $\sigma$ parameters for our mean and standard deviation with the equations
+
+$$
+\begin{align*}
+\mu & = \log\left ( \bar y \Bigg / \sqrt{\frac{s^2}{\bar y^2} + 1} \right), \text{and} \\
+\sigma & = \sqrt{\log \left(\frac{s^2}{\bar y^2} + 1 \right)}.
+\end{align*}
+$$
+
+Here's what that looks like in code.
+
+```{r}
+mu    <- log(m / sqrt(s^2 / m^2 + 1))
+sigma <- sqrt(log(s^2 / m^2 + 1))
+
+mu 
+sigma
+```
+
+Next we need to consider how certain or uncertain our priors should be around these values. This can be very abstract, at first, and I find simulating from potential priors can help. For $\mu$, I propose a normal prior centered on $7.5$, but with a standard deviation of $0.6$. Before we set the prior for $\sigma$, recall that the **brms** default will be to model $\log(\sigma)$ to ensure the results are always positive. Thus, I propose a normal prior for $\log(\sigma)$ with a mean of $\log(0.4)$ and a standard deviation of $0.2$. Now draw $10{,}000$ values from the priors and save the results in a data set called `priors`.
+
+```{r}
+set.seed(1)
+
+priors <- tibble(
+  mu    = rnorm(n = 10000, mean = mu, sd = 0.6),
+  sigma = rnorm(n = 10000, mean = log(sigma), sd = 0.2) %>% exp())
+```
+
+To convert out priors out of the log-normal location and scale prarmeters and back into the more-familiar mean and standard deviation metrics, we'll make a couple of funcitons based on the equations, above.
+
+```{r}
+ln_mean <- function(mu, sigma) {
+  exp(mu + (0.5 * sigma^2))
+}
+
+ln_sd <- function(mu, sigma) {
+  v <- (exp(sigma^2) - 1) * exp(2 * mu + sigma^2)
+  return(sqrt(v))
+}
+```
+
+Now we can use our custom `ln_mean()` and `ln_sd()` functions to plot the prior predictive distributions for our sample statistics. 
+
+```{r, fig.width = 7, fig.height = 2.75}
+priors %>% 
+  # compute the sample statistics
+  mutate(mean = ln_mean(mu, sigma),
+         sd = ln_sd(mu, sigma)) %>% 
+  # wrangle
+  pivot_longer(mean:sd) %>% 
+
+  # plot
+  ggplot(aes(x = value, y = 0)) +
+  stat_halfeye(.width = c(.5, .90)) +
+  scale_x_continuous("reaction time (milliseconds)", breaks = 0:10 * 2000) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  ggtitle("Prior predictive distributions for the sample statistics",
+          subtitle = "The dots are the medians and the horizontal lines are the percentile-based 50% and 90% intervals.") +
+  coord_cartesian(xlim = c(0, 10000)) +
+  facet_wrap(~ name)
+```
+
+What may have initially seed like narrow priors ended up pretty generous on the milliseconds scale. If desired, you can use the handy `median_qi()` function to compute the precise values for the prior predictive medians, 50% and 90% ranges.
+
+```{r}
+priors %>% 
+  mutate(mean = ln_mean(mu, sigma),
+         sd = ln_sd(mu, sigma)) %>% 
+  pivot_longer(mean:sd, names_to = "statistic") %>% 
+  group_by(statistic) %>% 
+  median_qi(value, .width = c(.5, .9)) %>% 
+  mutate_at(.vars = vars(value:.upper), round, digits = 0)
+```
+
+In addition to focusing on the sample-statistics implications of our prior predictive distribution, we might also plot several credible reaction-time distributions implied by our priors. In this case, we'll plot 100.
+
+```{r, fig.width = 5, fig.height = 2.75}
+set.seed(1)
+
+priors %>% 
+  mutate(draw = 1:n()) %>% 
+  slice_sample(n = 100) %>% 
+  expand(nesting(draw, mu, sigma),
+         rt = seq(from = 1, to = 11000, by = 10)) %>% 
+  mutate(d = dlnorm(rt, mu, sigma)) %>% 
+  
+  ggplot(aes(x = rt, y = d, group = draw)) +
+  geom_line(alpha = 1/2, size = 1/4) +
+  scale_x_continuous("reaction time (milliseconds)", breaks = 0:10 * 2000) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  ggtitle("Prior predictive distributions for reation times (100 draws)") +
+  coord_cartesian(xlim = c(0, 10000))
+```
+
+So far, it looks like our priors allow for a variety of response-time distributions within a credible range. If anything, our priors might be overly permissive. Feel free to experiment on your own by altering the code, above.
+
+Now we have our population priors nailed down, the next choice is the priors for our $6$ upper-level $\sigma_u$ and $\sigma_v$ parameters. Here I'm going to recommend we use the exponential prior with a rate (i.e., inverse mean) of 1. In my experience, these priors are good defaults when you're working with a new model and/or data type. They put a lot of prior mass between $0$ and $1$, which is regularizing, but their gently right-sloping tails esily allow for larger values, if needed. 
+
+Thus, we can express the full model as
+
+$$
+\begin{align*}
+\text{RT}_{ijk} & \sim \operatorname{Log-Normal}(\mu_{ijk}, \sigma_{ijk}) \\
+\mu_{ijk}           & = \beta_0 + u_{1i} + u_{2j} + u_{3ij} \\
+\log (\sigma_{ijk}) & = \eta_0 + v_{1i} + v_{2j} + v_{3ij} \\
+u_{1i}  & \sim \operatorname{Normal}(0, \sigma_{u_1}) \\
+u_{2j}  & \sim \operatorname{Normal}(0, \sigma_{u_2}) \\
+u_{3ij} & \sim \operatorname{Normal}(0, \sigma_{u_3}) \\
+v_{1i}  & \sim \operatorname{Normal}(0, \sigma_{v_1}) \\
+v_{2j}  & \sim \operatorname{Normal}(0, \sigma_{v_2}) \\
+v_{3ij} & \sim \operatorname{Normal}(0, \sigma_{v_3}) \\
+\beta_0 & \sim \operatorname{Normal}(7.508701, 0.6)  \\
+\eta_0  & \sim \operatorname{Normal}(\log(0.4294214), 0.2) \\
+\sigma_{u_1}, \dots, \sigma_{v_3} & \sim \operatorname{Exponential}(1)
+\end{align*}
+$$
+
+## Fit the log-normal distributional model with **brms**
+
+Here's how we might use `brms::brm()` to fit our model. Notice how the submodels for $\mu_{ijk}$ and $\log (\sigma_{ijk})$ are both wrapped in the `bf()` function. To stave off a few divergent transitions, we had to adjust the default `adapt_delta` settings.
+
+```{r, fit1}
+# 1.085278 hours
+fit1 <- brm(
+  data = kessler2022,
+  family = lognormal,
+  bf(RT    ~ 1 + (1 | Subject) + (1 | condition) + (1 | Subject:condition),
+     sigma ~ 1 + (1 | Subject) + (1 | condition) + (1 | Subject:condition)),
+  prior = c(prior(normal(7.508701, 0.6), class = Intercept),
+            prior(normal(log(0.4294214), 0.2), class = Intercept, dpar = sigma),
+            prior(exponential(1), class = sd)),
+  cores = 4, seed = 1,
+  control = list(adapt_delta = .9),
+  file = "fits/fit1.kessler2022"
+)
+```
+
+Review the parameter summary.
+
+```{r}
+print(fit1)
+```
+
+Clearly, this model summary is dominated by the level-2 $\sigma_u$ and $\sigma_v$ parameters. To get a sense, we'll plot the population level $\mu_\text{condition}$ and $\sigma_\text{condition}$ summaries, the variation in which are what the $\sigma_{u_2}$ and $\sigma_{v_2}$ parameters are summarizing.
+
+```{r, fig.width = 5, fig.height = 2}
+rbind(
+  coef(fit1)$condition[, -2, "Intercept"],
+  coef(fit1)$condition[, -2, "sigma_Intercept"] %>% exp()
+) %>% 
+  data.frame() %>%
+  mutate(condition = rep(letters[1:8], times = 2),
+         parameter = rep(c("mu[italic(j)]", "sigma[italic(j)]"), each = 8)) %>% 
+  
+  ggplot(aes(x = Estimate, xmin = Q2.5, xmax = Q97.5, y = condition)) +
+  geom_pointrange(fatten = 2) +
+  labs(title = expression("Log-normal population parameters, by condition "(italic(j))),
+       x = "marginal posterior") +
+  facet_wrap(~ parameter, scales = "free_x", labeller = label_parsed) +
+  theme(panel.grid = element_blank())
+```
+
+See all the spread in both parameter types? That's why we have those level-2 standard-deviation parameters. Though we aren't showing them, look back at the `print()` summary above to see that the model expects even more variation among the participants than the conditions. This is why we fit multilevel models--to respect the variation.
+
+### Population-level IV contrasts.
+
+Even though it might not be obvious by the parameter summaries in the `print()` output, our `fit1` model will allow us to compare the various experimental conditions in any number of ways. Probably the easiest approach will be with the `fitted()` function. To use `fitte()`, we'll want to make a data set with the desired levels of `condition` and/or `Subject`. If the goal is to compare the different levels of `condition` at the population level, we'll first save those levels and their `SetSize`, `Updating` and `UpdateSwitch` counterparts in a data frame called `nd_pop`, which stands for the population-level new data.
+
+```{r}
+nd_pop <- kessler2022 %>% 
+  distinct(condition, SetSize, Updating, UpdateSwitch) %>% 
+  select(condition, SetSize, Updating, UpdateSwitch) %>% 
+  arrange(condition)
+
+# what is this?
+nd_pop
+```
+
+To make `nd_pop`, we actually only needed the `condition` column. The reason we included `SetSize` through `UpdateSwitch` was to make it easier during some of the data-wrangling phases, to come. If you're following along with code on your own, you'll thank me later.
+
+Next we extract the full posterior distributions of the model-based mean response-time values for each level of `condition` and format the results.
+
+```{r}
+f_pop <- fitted(
+  fit1,
+  newdata = nd_pop,
+  re_formula = ~ (1 | condition),
+  summary = F) %>% 
+  data.frame() %>% 
+  set_names(letters[1:8]) 
+
+# what is this?
+glimpse(f_pop)
+```
+
+Here's how we would work with `f_pop` to make the simple contrasts of the two levels of `SetSize`, the two levels of `Updating`, and the two levels of `UpdateSwitch`.
+
+```{r}
+f_pop %>% 
+  transmute(`SetSize[2] - SetSize[1]` = (e + f + g + h) / 4 - (a + b + c + d) / 4,
+            `update - no update`      = (c + d + g + h) / 4 - (a + b + e + f) / 4,
+            `switch - repeat`         = (b + d + f + h) / 4 - (a + c + e + g) / 4) %>% 
+  pivot_longer(everything()) %>% 
+  group_by(name) %>% 
+  mean_qi(value) %>% 
+  select(name:.upper) %>% 
+  mutate_if(is.double, round, digits = 0)
+```
+
+The results are population-level mean differences in milliseconds, summarized by their posterior means and 95% intervals.
+
+The focal variables in Kessler et al (2022) were `SetSize` and `Updating`. Here we'll use `f_pop` to compute the contrasts for `SetSize`, based on the two levels of `Updating`. Then we'll compute the difference in differences. Finally, we'll plot the results with `stat_halfeye()`.
+
+```{r, fig.width = 7, fig.height = 2.25}
+levels <- c("difference[update] - difference[no~update]", "difference[no~update]", "difference[update]")
+
+f_pop %>% 
+  transmute(`difference[update]`    = (g + h) / 2 - (c + d) / 2,
+            `difference[no~update]` = (e + f) / 2 - (a + b) / 2) %>% 
+  mutate(`difference[update] - difference[no~update]` = `difference[update]` - `difference[no~update]`) %>% 
+  pivot_longer(everything()) %>% 
+  mutate(name = factor(name, levels = levels)) %>% 
+  
+  ggplot(aes(x = value, y = name)) +
+  geom_vline(xintercept = 0, color = "white") +
+  stat_halfeye(.width = .95) +
+  scale_y_discrete(NULL, labels = ggplot2:::parse_safe) +
+  labs(title = "SetSize contrasts, given update or no update",
+       subtitle = expression("The two simple contrasts are based on "*SetSize[2]-SetSize[1]*". The final is a difference in differences."),
+       x = "difference (milliseconds)") +
+  coord_cartesian(xlim = c(-100, 450),
+                  ylim = c(1.4, 3.3)) +
+  theme(axis.text.y = element_text(hjust = 0),
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank(),
+        plot.title.position = "plot")
+```
+
+
+Here are the corresponding contrasts, but this based on `SetSize` and `UpdateSwitch`.
+
+```{r, fig.width = 7, fig.height = 2.25}
+# note, you have to put repeat within quotes to render properly with plotmath
+levels <- c("difference[switch] - difference['repeat']", "difference['repeat']", "difference[switch]")
+
+f_pop %>% 
+  transmute(`difference[switch]`   = (f + h) / 2 - (b + d) / 2,
+            `difference['repeat']` = (e + g) / 2 - (a + c) / 2) %>% 
+  mutate(`difference[switch] - difference['repeat']` = `difference[switch]` - `difference['repeat']`) %>% 
+  pivot_longer(everything()) %>% 
+  mutate(name = factor(name, levels = levels)) %>% 
+  
+  ggplot(aes(x = value, y = name)) +
+  geom_vline(xintercept = 0, color = "white") +
+  stat_halfeye(.width = .95) +
+  scale_y_discrete(NULL, labels = ggplot2:::parse_safe) +
+  labs(title = "SetSize contrasts, given switch or repeat",
+       subtitle = expression("The two simple contrasts are based on "*SetSize[2]-SetSize[1]*". The final is a difference in differences."),
+       x = "difference (milliseconds)") +
+  coord_cartesian(xlim = c(-100, 450),
+                  ylim = c(1.4, 3.3)) +
+  theme(axis.text.y = element_text(hjust = 0),
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank(),
+        plot.title.position = "plot")
+```
+
+### Participant-level IV contrasts.
+
+An advantage of our multilevel model approach is we can go beyond simple population contrasts to see how the results hold up within each of our participants. First, we'll make a new data object that defines the $8$ levels of `condition` for each of the participants.
+
+```{r}
+nd_sub <- kessler2022 %>% 
+  # you only need Subject and condition, but SetSize:UpdateSwitch can help the intermediary data wrangling
+  distinct(Subject, condition, SetSize, Updating, UpdateSwitch) %>% 
+  select(Subject, condition, SetSize, Updating, UpdateSwitch) %>% 
+  arrange(Subject, condition) %>% 
+  mutate(row = 1:n())
+
+# what is this?
+glimpse(nd_sub)
+```
+
+Next we extract the full posterior distributions of the model-based mean response-time values for each level of `condition` and format the results.
+
+```{r}
+# use fitted()
+f_sub <- fitted(
+  fit1,
+  newdata = nd_sub,
+  summary = F) %>% 
+  data.frame() %>% 
+  set_names(1:nrow(nd_sub)) 
+
+# wrangle
+f_sub <- f_sub %>% 
+  mutate(draw = 1:n()) %>% 
+  pivot_longer(-draw, names_to = "row") %>% 
+  mutate(row = as.double(row)) %>% 
+  left_join(nd_sub %>% select(Subject, condition, row), by = "row") %>% 
+  select(-row) %>% 
+  pivot_wider(names_from = condition, values_from = value)
+
+# what is this?
+glimpse(f_sub)
+```
+
+Now we'll compute and plot the `SetSize`- and `Updating`-based contrasts for $34$ participants.
+
+```{r, fig.width = 7, fig.height = 4}
+# define the factor levels
+levels <- c("difference[update] - difference[no~update]", "difference[no~update]", "difference[update]")
+
+# compute the differences by Subject and summarize
+f_update <- f_sub %>% 
+  mutate(`difference[update]`    = (g + h) / 2 - (c + d) / 2,
+         `difference[no~update]` = (e + f) / 2 - (a + b) / 2) %>% 
+  mutate(`difference[update] - difference[no~update]` = `difference[update]` - `difference[no~update]`) %>% 
+  pivot_longer(contains("difference")) %>% 
+  mutate(name = factor(name, levels = levels)) %>% 
+  group_by(Subject, name) %>% 
+  mean_qi(value)
+
+# compute a rank ordering by difference[update]
+f_update_ranks <- f_update %>% 
+  filter(name == "difference[update]") %>% 
+  arrange(value) %>% 
+  mutate(rank = 1:n()) %>% 
+  select(Subject, rank)
+
+# add the rank to the differences
+f_update %>% 
+  left_join(f_update_ranks, by = "Subject") %>% 
+  mutate(name = fct_rev(name)) %>% 
+  
+  # plot!
+  ggplot(aes(x = value, xmin = .lower, xmax = .upper, y = rank)) +
+  geom_vline(xintercept = 0, color = "white") +
+  geom_pointrange(fatten = 1) +
+  scale_y_continuous(expression(rank~by~difference[update]), breaks = NULL) +
+  labs(title = "Participant-level SetSize contrasts, given the update or no update condition",
+       subtitle = expression("The two simple contrasts are based on "*SetSize[2]-SetSize[1]*". The final is a difference in differences."),
+       x = "difference (milliseconds)") +
+  coord_cartesian(xlim = c(-950, 1200)) +
+  facet_wrap(~ name, labeller = label_parsed) +
+  theme(axis.text.y = element_text(hjust = 0),
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank(),
+        plot.title.position = "plot")
+```
+
+Look at all that heterogeneity!
+
+Here's the same analysis, but for the `SetSize`- and `UpdateSwitch`-based contrasts for each participant.
+
+```{r, fig.width = 7, fig.height = 4}
+# define the factor levels
+levels <- c("difference[switch] - difference['repeat']", "difference['repeat']", "difference[switch]")
+
+# compute the differences by Subject and summarize
+f_update <- f_sub %>% 
+  mutate(`difference[switch]`   = (f + h) / 2 - (b + d) / 2,
+         `difference['repeat']` = (e + g) / 2 - (a + c) / 2) %>% 
+  mutate(`difference[switch] - difference['repeat']` = `difference[switch]` - `difference['repeat']`) %>% 
+  pivot_longer(contains("difference")) %>% 
+  mutate(name = factor(name, levels = levels)) %>% 
+  group_by(Subject, name) %>% 
+  mean_qi(value)
+
+# compute a rank ordering by difference[switch]
+f_update_ranks <- f_update %>% 
+  filter(name == "difference[switch]") %>% 
+  arrange(value) %>% 
+  mutate(rank = 1:n()) %>% 
+  select(Subject, rank)
+
+# add the rank to the differences
+f_update %>% 
+  left_join(f_update_ranks, by = "Subject") %>% 
+  mutate(name = fct_rev(name)) %>% 
+  
+  # plot!
+  ggplot(aes(x = value, xmin = .lower, xmax = .upper, y = rank)) +
+  geom_vline(xintercept = 0, color = "white") +
+  geom_pointrange(fatten = 1) +
+  scale_y_continuous(expression(rank~by~difference[switch]), breaks = NULL) +
+  labs(title = "Participant-level SetSize contrasts, given the switch or repeat condition",
+       subtitle = expression("The two simple contrasts are based on "*SetSize[2]-SetSize[1]*". The final is a difference in differences."),
+       x = "difference (milliseconds)") +
+  coord_cartesian(xlim = c(-950, 1200)) +
+  facet_wrap(~ name, labeller = label_parsed) +
+  theme(axis.text.y = element_text(hjust = 0),
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank(),
+        plot.title.position = "plot")
+```
+
+```{r, eval = F, echo = F}
+# I love this, but it clutters up the flow
+
+# If we wanted to make all possible contrasts by `condition`, we could employ the `tidybayes::compare_levels()` function. Here we'll display the results with a plot.
+
+f %>% 
+  mutate(draw = 1:n()) %>% 
+  pivot_longer(-draw) %>% 
+  compare_levels(value, by = name, draw_indices = "draw") %>%
+  ungroup() %>% 
+  mutate(contrast = fct_reorder(name, value)) %>%
+  
+  ggplot(aes(y = contrast, x = value)) +
+  geom_vline(xintercept = 0, color = "white") +
+  stat_halfeye(.width = .95, size = 1) +
+  xlab("population mean difference, by condition (milliseconds)") +
+  theme(axis.text.y = element_text(hjust = 0),
+        panel.grid = element_blank())
+```
+
+### Line lots.
+
+Another way to examine the output is to plot the results for the experimental conditions at the population and participant levels. In addition to the population-means, it might also be interesting to use `brms::predict()` to show the posterior-predictive distribution.
+
+```{r}
+set.seed(1)
+
+p_pop <- predict(
+  fit1,
+  newdata = nd_pop,
+  re_formula = ~ (1 | condition),
+  summary = F) %>% 
+  data.frame() %>% 
+  set_names(letters[1:8])
+
+# what is this?
+glimpse(p_pop)
+```
+
+The output is very much like `f_pop`, but as these are for the conditional distributions, their widths will be much wider.
+
+Before we plot, we'll want to redefine our factor `levels` for the conditions and save a mini `text` data frame which will help annotate one of the plots.
+
+```{r}
+levels <- c("SetSize 1\nupdate", "SetSize 2\nupdate", "SetSize 1\nno update", "SetSize 2\nno update")
+
+text <- p_pop %>% 
+  transmute(`SetSize 2\nno update` = (e + f) / 2) %>% 
+  pivot_longer(everything()) %>% 
+  group_by(name) %>% 
+  mean_qi(.width = c(.5, .80, .95)) %>% 
+  mutate(name = factor(name, levels = levels),
+         level = str_c(.width * 100, "%")) 
+```
+
+Now we're ready to use `p_pop` and `text` to plot the population distribution for the `SetSize` and `Updating` conditions, averaging over `UpdateSwitch`, which we'll save as `p1`. Then we'll use `f_pop` to make the corresponding plot for the population means, saving the results as `p2`. Finally, we'll use `f_sub` to make the participant-level plot of the same, saving the results as `p3`.
+
+```{r}
+# Population distribution
+p1 <- p_pop %>% 
+  transmute(`SetSize 2\nupdate` = (g + h) / 2,
+            `SetSize 1\nupdate` = (c + d) / 2,
+            `SetSize 2\nno update` = (e + f) / 2,
+            `SetSize 1\nno update` = (a + b) / 2) %>% 
+  pivot_longer(everything()) %>% 
+  group_by(name) %>% 
+  mean_qi(.width = c(.5, .80, .95)) %>% 
+  mutate(name = factor(name, levels = levels)) %>% 
+  
+  ggplot(aes(x = name, ymin = .lower, ymax = .upper, group = .width)) +
+  geom_ribbon(alpha = 1/4) +
+  geom_line(aes(y = value)) +
+  geom_text(data = text,
+            aes(y = .upper, label = level),
+            nudge_x = 0.175, vjust = 1,
+            color = "grey33", size = 2.5) +
+  scale_x_discrete(expand = c(0.09, 0.09)) +
+  labs(title = "Population distribution",
+       x = NULL,
+       y = "reaction time (milliseconds)") +
+  coord_cartesian(ylim = c(500, 2500)) +
+  theme(panel.grid = element_blank())
+
+# Population mean
+p2 <- f_pop %>% 
+  transmute(`SetSize 2\nupdate` = (g + h) / 2,
+            `SetSize 1\nupdate` = (c + d) / 2,
+            `SetSize 2\nno update` = (e + f) / 2,
+            `SetSize 1\nno update` = (a + b) / 2) %>% 
+  pivot_longer(everything()) %>% 
+  group_by(name) %>% 
+  mean_qi(.width = c(.5, .80, .95)) %>% 
+  mutate(name = factor(name, levels = levels)) %>% 
+  
+  ggplot(aes(x = name, ymin = .lower, ymax = .upper, group = .width)) +
+  geom_ribbon(alpha = 1/4) +
+  geom_line(aes(y = value)) +
+  scale_x_discrete(expand = c(0.09, 0.09)) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  labs(title = "Population mean",
+       x = NULL) +
+  coord_cartesian(ylim = c(500, 2500)) +
+  theme(panel.grid = element_blank())
+
+# Participant means
+p3 <- f_sub %>% 
+  mutate(`SetSize 2\nupdate` = (g + h) / 2,
+         `SetSize 1\nupdate` = (c + d) / 2,
+         `SetSize 2\nno update` = (e + f) / 2,
+         `SetSize 1\nno update` = (a + b) / 2) %>% 
+  pivot_longer(contains("\n")) %>% 
+  group_by(Subject, name) %>% 
+  mean_qi(value) %>% 
+  mutate(name = factor(name, levels = levels)) %>% 
+  
+  ggplot(aes(x = name, y = value, group = Subject)) +
+  geom_line(size = 1/4, alpha = 1/2) +
+  scale_x_discrete(expand = c(0.09, 0.09)) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  labs(title = "Participant means",
+       x = NULL) +
+  coord_cartesian(ylim = c(500, 2500)) +
+  theme(panel.grid = element_blank())
+```
+
+Now combine the separate plots and entitle.
+
+```{r, fig.width = 9, fig.height = 4.5, warning = F}
+(p1 + p2 + p3) & 
+  theme(axis.text.x = element_text(size = 8)) &
+  plot_annotation(title = "Bayesian log-normal distributional multilevel model",
+                                 subtitle = "Both population-level panels show the posterior mean, along with the 50%, 80%, and 95% intervals. To reduce visual complexity,\nthe participant-level panel only shows the participant means by their posterior means.")
+```
+
+These plots are all focusing in reaction times for `SetSize`, `Updating`, and their interaction. But these results are averaged over the two levels of `UpdateSwitch`. If desired, one could make the analogous set of plots for `SetSize`, `UpdateSwitch` and their interaction, which I'll leave as an exercise for the interested reader.
+
+## Session information
+
+```{r}
+sessionInfo()
+```
+
