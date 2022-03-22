@@ -1,6 +1,6 @@
 # Data
 
-Most of the data files in his folder have been simulated, as documented in the [data simulation](https://github.com/ASKurz/Experimental-design-and-the-GLMM/tree/main/sketches/data%20simulation) folder. Some of the data files, however, were openly shared by the authors. Here are the names an origins.
+Most of the data files in his folder have been simulated, as documented in the [data simulation](https://github.com/ASKurz/Experimental-design-and-the-GLMM/tree/main/sketches/data%20simulation) folder. Some of the data files, however, were openly shared by the authors. Here are the names and origins.
 
 | File | Study | Source | 
 | - | - | - |
