@@ -6,6 +6,7 @@ These files contain content sketches. They aren’t necessarily full chapters or
 
 | Study | Design | 
 | - | - | 
+| Allen & Evans (2001) | Single-case changing criterion design |
 | Coker et al (2009) | Multivariate single-case ABAB design | 
 | Kessler et al (2022) | Within-person 2 X 2 X 2 factorial design |
 | Mancuso & Miltenberger (2016) | Multiple baseline AB design |
