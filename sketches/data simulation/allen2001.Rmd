@@ -1,0 +1,90 @@
+---
+title: "allen2001"
+author: "A Solomon Kurz"
+date: "`r format(Sys.Date())`"
+output: github_document
+---
+
+```{r, echo = F}
+knitr::opts_chunk$set(fig.retina = 2.5)
+```
+
+The purpose of this file is to simulate the data from Allen & Evans (2001; https://doi.org/10.1901/jaba.2001.34-497). We don't have their actual data file, they displayed their data in Figure 1 (p. 499). Here we'll work through that figure to make a data file that approximates their original data.
+
+Load the **tidyverse**.
+
+```{r, warning = F, message = F}
+library(tidyverse)
+```
+
+Compute the individual values from Figure 1 and wrangle.
+
+```{r}
+allen2001 <- tibble(
+ checks = c(93, 80, 90, 95, 90,
+            65, 53, 65, 60, 42, 60, 60, 61, 58, 56, 59,
+            45, 45, 37, 45, 42, 37, 41, 31, 24, 32, 
+            25, 25, 25, 25, 19, 18, 22, 18, 18, 18,
+            18, 17, 19, 17, 18, 17, 18, 17, 16, 17,
+            16, 16, 15, 17, 16, 15, 17, 14, 15, 15,
+            13, 13, 14, 15, 11, 14, 14, 12, 11, 12,
+            11, 12, 11, 10, 11, 11, 10, 11, 10, 11),
+ phase = rep(c("A", "B1", "B2", "B3", "B4", "B5", "B6", "B7"), times = c(5, 11, 10, 10, 10, 10, 10, 10)),
+ criterion = rep(c(NA, 60, 40, 20, 18, 16, 14, 12), times = c(5, 11, 10, 10, 10, 10, 10, 10))
+) %>% 
+  mutate(day          = 1:n(),
+         baseline     = ifelse(phase == "A", 1, 0),
+         intervention = ifelse(phase == "A", 0, 1)) %>% 
+  mutate(lcriterion = ifelse(is.na(criterion), 0, log(criterion))) %>% 
+  select(day, phase, criterion, baseline, intervention, lcriterion, checks)
+```
+
+Take a look at the data.
+
+```{r}
+glimpse(allen2001)
+```
+
+If you look closely at the x-axis in Figure 1, you'll see the data are not evenly spaced over time and the way the authors have annotated the figure makes it very difficulty to fully recapture the original spacing. Thus, our synthetic `allen2001` take a simplified approach where the time variable `day` starts at `1` and increases sequentially until the final value `76`. If you look very carefully at the y-axis of Figure 1 and compare the values at the horizontal dashed lines marking off the criterion levels, it appears as if some of those values are off, which makes it difficult to determine what the exact counts are. We will have to settle for approximate values.
+
+Anyway, the `phase` value marks off the different periods in the experiment where `A` is the baseline period, `B1` is the period for the first criterion level, `B2` is the period for the second criterion level, and so on through `B7`. The criterion levels during the B phases are listed in the `criterion` column, which has `NA` values during the baseline period. The `baseline` column is a dummy indicator which is `1` during baseline and `0` otherwise. In a similar way, the `intervention` column is a dummy indicator which is `0` during baseline and `1` otherwise. To help with modeling, we the `lcriterion` column is the log of the `criterion` values where, to anticipate down-the-road technical difficulties, we have `0` values where the corresponding `criterion` values were `NA`. Finally, the `checks` column has the behavioral counts for the checking behavior.
+
+Here we visualize the `allen2001` data in a similar way to Figure 1.
+
+```{r, warning = F}
+# for the annotation
+label <- allen2001 %>% 
+  group_by(phase) %>% 
+  arrange(desc(day)) %>% 
+  slice(1) %>% 
+  mutate(label  = ifelse(phase == "A", "Baseline", as.character(criterion)),
+         checks = ifelse(is.na(criterion), checks, criterion))
+
+# plot
+allen2001 %>% 
+  ggplot(aes(x = day, y = checks, group = criterion, color = factor(criterion))) +
+  geom_vline(xintercept = 5.5, color = "white") +
+  geom_line(aes(y = criterion),
+            color = "grey50") +
+  geom_point() +
+  geom_line() +
+  geom_text(data = label,
+            aes(y = checks, label = label),
+            hjust = 0, nudge_x = 0.4, nudge_y = 2, color = "grey30") +
+  scale_color_viridis_d(option = "F", end = .7, na.value = "grey50", breaks = NULL) +
+  ylim(0, 100) +
+  theme(panel.grid = element_blank())
+```
+
+Now save the results in an external file.
+
+```{r}
+save(allen2001, file = "/Users/solomonkurz/Dropbox/Experimental-design-and-the-GLMM/sketches/data/allen2001.rda")
+```
+
+## Session information
+
+```{r}
+sessionInfo()
+```
+
