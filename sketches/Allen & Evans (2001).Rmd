@@ -1,0 +1,659 @@
+---
+title: "Allen & Evans (2001)"
+subtitle: "Single-case changing criterion design"
+author: "A Solomon Kurz"
+date: "`r format(Sys.Date())`"
+output: github_document
+---
+
+```{r, echo = F}
+knitr::opts_chunk$set(fig.retina = 2.5)
+options(width = 110)
+```
+
+Load our primary packages.
+
+```{r, message = F, warning = F}
+library(tidyverse)
+library(brms)
+library(tidybayes)
+library(bayesplot)
+library(patchwork)
+library(flextable)
+```
+
+## Excessive checking
+
+Sometimes young people with diabetes excessively check their blood glucose levels. Allen & Evans (2001; https://doi.org/10.1901/jaba.2001.34-497) used a changing criterion design to evaluate an exposure-based intervention to help a 15-year-old, Amy, reduce her checks to the frequency recommended by her endocrinologist, which was 6 to 12 times a day.
+
+```{r}
+# load the data
+load(file = "/Users/solomonkurz/Dropbox/Experimental-design-and-the-GLMM/sketches/data/allen2001.rda")
+
+# what is this?
+glimpse(allen2001)
+```
+
+### EDA.
+
+The data are divided into $8$ phases where the baseline is `A` and the remining phases during the intervention are `B1` through `B7`.
+
+```{r}
+allen2001 %>% 
+  count(phase)
+```
+
+The `B1` phases all have associated `criterion` levels. 
+
+```{r}
+allen2001 %>% 
+  distinct(phase, criterion)
+```
+
+As there is no formal criterion level for the baseline period, that value is missing in the `criterion` column.
+
+The outcome variable `checks` is an umbounded count, which we might summarize by its mean and variance, by `phase`.
+
+```{r, message = F}
+allen2001 %>% 
+  group_by(phase, criterion) %>% 
+  summarise(m = mean(checks),
+            v = var(checks)) %>% 
+  mutate_if(is.double, round, digits = 1)
+```
+
+Here we visualize the `allen2001` data in a similar way to the original Figure 1 in Allen & Evans (p. 499).
+
+```{r, warning = F}
+# adjust the global theme
+theme_set(
+  theme_gray() + 
+    theme(panel.grid = element_blank())
+  )
+
+# for the text/numeral annotation
+label <- allen2001 %>% 
+  group_by(phase) %>% 
+  arrange(desc(day)) %>% 
+  slice(1) %>% 
+  mutate(label  = ifelse(phase == "A", "Baseline", as.character(criterion)),
+         checks = ifelse(is.na(criterion), checks, criterion))
+
+# plot
+allen2001 %>% 
+  ggplot(aes(x = day, y = checks, group = criterion, color = factor(criterion))) +
+  geom_vline(xintercept = 5.5, color = "white") +
+  # for the gray criterion-level lines
+  geom_line(aes(y = criterion),
+            color = "grey50") +
+  geom_point() +
+  geom_line() +
+  # for the text/numeral annotation
+  geom_text(data = label,
+            aes(y = checks, label = label),
+            hjust = 0, nudge_x = 0.4, nudge_y = 2, color = "grey30") +
+  scale_color_viridis_d(option = "F", end = .7, na.value = "grey50", breaks = NULL) +
+  ylim(0, 100)
+```
+
+### Dummies.
+
+To aid with our models to come, we'll want to make a series of dummy variables for the $8$ experimental phases.
+
+```{r}
+allen2001 <- allen2001 %>% 
+  mutate(a  = ifelse(phase == "A", 1, 0),
+         b1 = ifelse(phase == "B1", 1, 0),
+         b2 = ifelse(phase == "B2", 1, 0),
+         b3 = ifelse(phase == "B3", 1, 0),
+         b4 = ifelse(phase == "B4", 1, 0),
+         b5 = ifelse(phase == "B5", 1, 0),
+         b6 = ifelse(phase == "B6", 1, 0),
+         b7 = ifelse(phase == "B7", 1, 0)) 
+
+# what have we done?
+allen2001 %>% 
+  distinct(phase, a, b1, b2, b3, b4, b5, b6, b7)
+```
+
+You don't strictly need to do this because the `phase` variable will actually get the job done. But the dummies can be instructive and we may as well show the way with both.
+
+## Models
+
+In this file, we'll model the data with three model types. 
+
+1. The dummy model
+2. The one-hot model
+3. The theory-based model
+
+### The dummy model.
+
+The simplest and possibly most natural way to analyze the data is with what we're calling the simple dummy model. If we describe the outcome variable `checks` as varying across $i$ measurement occasions, the simple dummy model follows the equation
+
+$$
+\begin{align*}
+\text{checks}_i & \sim \operatorname{Poisson}(\lambda_i) \\
+\log (\lambda_i) & = \beta_0 + \beta_1 \text{B1}_i + \beta_2 \text{B2}_i + \beta_3 \text{B3}_i + \beta_4 \text{B4}_i + \beta_5 \text{B5}_i + \beta_6 \text{B6}_i + \beta_7 \text{B7}_i,
+\end{align*}
+$$
+
+where we use the Poisson likelihood and its conventional log link. The $\beta_0$ parameter is the mean value for the baseline period. Each of the remaining $\beta$ coefficients is multiplies by one of the dummy variables `b1` through `b7`, and these coefficients express the difference between those associated `B` phases and baseline.
+
+Next we consider our priors.
+
+#### Simple priors.
+
+We begin setting our priors with the $\beta_0$ parameter, the expected value during the baseline period. We know that Amy's endocrinologist recommended she check her blood glucose levels $6$ to $12$ times a day, and since her parents initiated a professional intervention, we know her baseline values are likely well beyond that range. But how how much higher should we consider?
+
+One approach is to consider increases in orders of magnitude. If she was checking $10$ times more than the upper limit of her endocrinologist's recommended range, that would mean $12 \times 10 = 120$ checks per day. A two-order-of-magnitude increase would mean $1{,}200$ checks. Given an $8$-hours night sleep, if Amy checked her glucose at a rate of once a minute all day long, that would give her $60 \times 16 = 960$ checks a day, which is approaching that two-order-of-magnitude increase. So we might want a prior that puts most of the prior mass above 12 and less than the $960-1{,}200$ range. 
+
+Although we don't have to, it's typical to use a Gaussian prior for $\beta$ parameters, so we'll do so here, too. As we're using the conventional log link for the Poisson likelihood, that means the Gaussian prior on the model space will have exponentiated Gaussian implications on the count space. To get a sense, here are the means and $95$ percentile ranges on the count metric for $\mathcal N(\log (12 \times 10), 1)$.
+
+```{r}
+sigma <- 1
+
+exp(log(12 * 10) + c(-1.96 * sigma, 0, 1.96 * sigma))
+```
+
+I find it helps when I plot.
+
+```{r, fig.width = 4, fig.height = 2.75}
+set.seed(1)
+
+tibble(prior = rnorm(n = 1e5, mean = log(12 * 10), sd = 1)) %>% 
+  mutate(count = exp(prior)) %>% 
+  
+  ggplot(aes(x = count)) +
+  geom_histogram(binwidth = 5, fill = "grey60") +
+  stat_halfeye(aes(y = 0), .width = c(.5, .95)) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  ggtitle("Prior predictive distribution for N(log(120), 1)") +
+  coord_cartesian(xlim = c(0, 1000))
+```
+
+The dots and two levels of horizontal lines mark off the median, interquartile range, and $95$-percentile range for the prior predictive distribution. The $\mathcal N(\log (12 \times 10), 1)$ prior is broad across the ranges we have considered so far and I'm comfortable sticking with it, going forward. But you should feel free to experiment with different distributions.
+
+Next we consider the priors for $\beta_1$ through $\beta_7$, our deviation parameters. As we're working on the log scale, the $\mathcal N(0, 1)$ is often good places to start. It allows for small, moderate and even large deviations from the reference category, but rule out very large deviations. In this case, however, keep in mind that if our posterior for $\beta_0$ ends up rather high, the posteriors for our upper-end $\beta$ parameters will need to be large and negative to compensate. For example, let's say the average baseline rate is near $250$. Since we expect the mean for the `B7` phase to be about $12$, that would produce a $\beta_7$ parameter of around $-3$.
+
+```{r}
+log(250) - log(12)
+```
+
+Thus, it might make sense to use a larger prior like $\mathcal N(0, 2)$ or greater. In this case, I'm comfortable using $\mathcal N(0, 2)$. Thus, we might express our model with our priors as
+
+$$
+\begin{align*}
+\text{checks}_i & \sim \operatorname{Poisson}(\lambda_i) \\
+\log (\lambda_i) & = \beta_0 + \beta_1 \text{B1}_i + \beta_2 \text{B2}_i + \beta_3 \text{B3}_i + \beta_4 \text{B4}_i + \beta_5 \text{B5}_i + \beta_6 \text{B6}_i + \beta_7 \text{B7}_i \\
+\beta_0 & \sim \operatorname{Normal}(\log(120), 1) \\
+\beta_1, \dots, \beta_7 & \sim \operatorname{Normal}(0, 2).
+\end{align*}
+$$
+
+#### Fit.
+
+We can fit the model with `brm()` using either the dummy variables `b1` through `b7` or with just the `phase` variable. For simplicity, I'm just using the `phase` approach with `fit1`. But if you're interested, you can find the alternate version of the model `formula` which explicitly uses the dummies in the commented-out lines.
+
+```{r fit1}
+fit1 <- brm(
+  data = allen2001,
+  family = poisson,
+  checks ~ 0 + Intercept + phase,
+  # this is the explicitly dummy-variable alternative:
+  # checks ~ 0 + Intercept + b1 + b2 + b3 + b4 + b5 + b6 + b7,
+  prior = c(prior(normal(log(12 * 10), 1), class = b, coef = Intercept),
+            prior(normal(0, 2), class = b)),
+  cores = 4,
+  seed = 1,
+  file = "fits/fit1.allen2001"
+)
+```
+
+Check the parameter summary.
+
+```{r}
+print(fit1)
+```
+
+Based on the $\widehat R$ and ESS columns, the chains appear to be in good health. We can confirm that with a quick look at the trace plots, too.
+
+```{r, fig.width = 6, fig.height = 5, message = F}
+as_draws_df(fit1) %>% 
+  rename(chain     = .chain,
+         `beta[0]` = b_Intercept,
+         `beta[1]` = b_phaseB1,
+         `beta[2]` = b_phaseB2,
+         `beta[3]` = b_phaseB3,
+         `beta[4]` = b_phaseB4,
+         `beta[5]` = b_phaseB5,
+         `beta[6]` = b_phaseB6,
+         `beta[7]` = b_phaseB7) %>% 
+  mcmc_trace(pars = vars(contains("beta")),
+             facet_args = list(ncol = 2, 
+                               labeller = label_parsed, 
+                               strip.position = "right"), 
+             size = .15) +
+  scale_x_continuous(NULL, breaks = NULL) +
+  theme(legend.position = "none",
+        strip.text.y = element_text(angle = 0))
+```
+
+The chains look great.
+
+Here's how we might express the model with a line plot.
+
+```{r}
+fitted(fit1) %>% 
+  data.frame() %>% 
+  bind_cols(allen2001) %>% 
+
+  ggplot(aes(x = day, group = criterion)) +
+  geom_vline(xintercept = 5.5, color = "white") +
+  geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5, fill = factor(criterion)),
+              alpha = 1/3) +
+  geom_line(aes(y = Estimate, color = factor(criterion))) +
+  geom_point(aes(y = checks),
+             size = 1/2) +
+  scale_fill_viridis_d(option = "F", begin = .2, end = .8, na.value = "grey50", breaks = NULL) +
+  scale_color_viridis_d(option = "F", begin = .2, end = .8, na.value = "grey50", breaks = NULL) +
+  scale_y_continuous("checks", limits = c(0, 100)) +
+  labs(title = "The dummy-code model with weak priors.")
+```
+
+Look at those sweet steps!
+
+### The one-hot model.
+
+Next we consider a closely-related version fo the model inspired by our friends in the machine-learning community, which follows the basic form
+
+$$
+\begin{align*}
+\text{checks}_i & \sim \operatorname{Poisson}(\lambda_i) \\
+\log (\lambda_i) & = \beta_0 \text{A}_i + \beta_1 \text{B1}_i + \beta_2 \text{B2}_i + \beta_3 \text{B3}_i + \beta_4 \text{B4}_i + \beta_5 \text{B5}_i + \beta_6 \text{B6}_i + \beta_7 \text{B7}_i, \\
+\end{align*}
+$$
+
+where $\beta_0$ is still the mean during the baseline period, but now we explicitly include the `a` dummy variable in the equation, while we continue to retain all the other $7$ dummies for the B phases. Whereas man social scientists tend to leave out the dummy variable which encodes the reference category--the way we omitted the `a` dummy in `fit1`--, the one-hot encoding method includes ALL dummy variables. As a consequence, we no longer have a reference category. Rather, the coefficient for each dummy $\beta_0, \dots, \beta7$ is directly parameterized as the mean of its own phase, without reference to any other phase.
+
+The one-hot parameterization is attractive because it offers a more natural way for setting our priors. Consider, again, the distinct levels of `phase` and their associated `criterion` values.
+
+```{r}
+allen2001 %>% 
+  distinct(phase, criterion) %>% 
+  flextable()
+```
+
+We still don't have a great expected value for the baseline A period, so we'll retina the $\mathcal N(\log (120), 1)$ prior from before. But now we have very specific expectations for the average number of checks within the B phases which are defined by the values in the `criterion` column. So for the priors for $\beta_1, \dots, \beta7$, I propose we use a Gaussian prior centered on the log of each `criterion` value. 
+
+The next issue is how tot set the $\sigma$ hyperparameters, which will express how certain our priors are for $\beta_1, \dots, \beta7$. As is turns out, 
+
+* $\sigma = 0.3536465$ puts 95% of the prior mass between half of the expected value and twice the expected value,
+* $\sigma = 0.20687$ puts 95% of the prior mass between two-thirds of the expected value and $150\%$ of the expected value,
+* $\sigma = 0.1467766$ puts 95% of the prior mass between three-quarters of the expected value and four-thirds of the expected value.
+
+Execute the code, below, to see four yourself.
+
+```{r, eval = F}
+# sigma <- 0.3536465  # 1/2 on the low end; 2/1 on the high end
+# sigma <- 0.20687    # 2/3 on the low end; 3/2 on the high end
+sigma <- 0.1467766    # 3/4 on the low end; 4/3 on the high end
+
+# B1 criterion 60
+exp(log(60) + c(-1.96 * sigma, 0, 1.96 * sigma))
+
+# B2 criterion 40
+exp(log(40) + c(-1.96 * sigma, 0, 1.96 * sigma))
+
+# B3 criterion 20
+exp(log(20) + c(-1.96 * sigma, 0, 1.96 * sigma))
+
+# B4 criterion 18
+exp(log(18) + c(-1.96 * sigma, 0, 1.96 * sigma))
+
+# B5 criterion 16
+exp(log(16) + c(-1.96 * sigma, 0, 1.96 * sigma))
+
+# B6 criterion 14
+exp(log(14) + c(-1.96 * sigma, 0, 1.96 * sigma))
+
+# B7 criterion 12
+exp(log(12) + c(-1.96 * sigma, 0, 1.96 * sigma))
+```
+
+You, of course, could use any mixture of these or other entirely different values. When I perused the prior literature on changing-criterion designs, I was struck by how orderly the data often hovered around the expected criterion levels (e.g., [Hartmann & Hall, 1976](https://doi.org/10.1901/jaba.1976.9-527); [Morgan & Hiebert, 1982](https://doi.org/10.2466/pr0.1982.50.3c.1287)). So why not stand by your convictions and set a strong prior? Here's the model I propose:
+
+
+$$
+\begin{align*}
+\text{checks}_i & \sim \operatorname{Poisson}(\lambda_i) \\
+\log (\lambda_i) & = \beta_0 \text{A}_i + \beta_1 \text{B1}_i + \beta_2 \text{B2}_i + \beta_3 \text{B3}_i + \beta_4 \text{B4}_i + \beta_5 \text{B5}_i + \beta_6 \text{B6}_i + \beta_7 \text{B7}_i \\
+\beta_0 & \sim \operatorname{Normal}(\log(120), 1) \\
+\beta_1 & \sim \operatorname{Normal}(\log(60), 0.1467766) \\
+\beta_2 & \sim \operatorname{Normal}(\log(40), 0.1467766) \\
+\beta_3 & \sim \operatorname{Normal}(\log(20), 0.1467766) \\
+\beta_4 & \sim \operatorname{Normal}(\log(18), 0.1467766) \\
+\beta_5 & \sim \operatorname{Normal}(\log(16), 0.1467766) \\
+\beta_6 & \sim \operatorname{Normal}(\log(14), 0.1467766) \\
+\beta_7 & \sim \operatorname{Normal}(\log(12), 0.1467766),
+\end{align*}
+$$
+
+where my tight $\sigma$ hyperparameters express my conviction 95% of the prior mass for each of the B periods should rest between three-quarters and four-thirds of the criterion level.
+
+#### Fit.
+
+Similar to before, we can fit the model with `brm()` using either all dummy variables `a` through `b7` or with just the `phase` variable. Note that if you chose to experiment with the explicit method, you'll need to adjust the terms in the `coef` arguments within the `prior()` functions. If this confuses you, spend some time with the `get_prior()` function.
+
+```{r fit2}
+fit2 <- brm(
+  data = allen2001,
+  family = poisson,
+  checks ~ 0 + phase,
+  # this is the explicitly dummy-variable alternative:
+  # checks ~ 0 + a + b1 + b2 + b3 + b4 + b5 + b6 + b7,
+  prior = c(prior(normal(log(12 * 10), 1), class = b, coef = phaseA),
+            prior(normal(log(60), 0.1467766), class = b, coef = phaseB1),
+            prior(normal(log(40), 0.1467766), class = b, coef = phaseB2),
+            prior(normal(log(20), 0.1467766), class = b, coef = phaseB3),
+            prior(normal(log(18), 0.1467766), class = b, coef = phaseB4),
+            prior(normal(log(16), 0.1467766), class = b, coef = phaseB5),
+            prior(normal(log(14), 0.1467766), class = b, coef = phaseB6),
+            prior(normal(log(12), 0.1467766), class = b, coef = phaseB7)),
+  cores = 4,
+  seed = 1,
+  file = "fits/fit2.allen2001"
+)
+```
+
+Check the parameter summary.
+
+```{r}
+print(fit2)
+```
+
+We might check the health of the chains, this time with trank plots.
+
+```{r, fig.width = 6, fig.height = 5}
+as_draws_df(fit2) %>% 
+  mutate(chain     = .chain) %>% 
+  rename(`beta[0]` = b_phaseA,
+         `beta[1]` = b_phaseB1,
+         `beta[2]` = b_phaseB2,
+         `beta[3]` = b_phaseB3,
+         `beta[4]` = b_phaseB4,
+         `beta[5]` = b_phaseB5,
+         `beta[6]` = b_phaseB6,
+         `beta[7]` = b_phaseB7) %>% 
+  mcmc_rank_overlay(pars = vars(contains("beta")),
+             facet_args = list(ncol = 2, 
+                               labeller = label_parsed, 
+                               strip.position = "right")) +
+  scale_x_continuous(NULL, breaks = NULL) +
+  coord_cartesian(ylim = c(30, NA)) +
+  theme(legend.position = "none",
+        strip.text.y = element_text(angle = 0))
+```
+
+The chains appear to be in good health.
+
+Here's how we might express this model with a line plot.
+
+```{r}
+fitted(fit2) %>% 
+  data.frame() %>% 
+  bind_cols(allen2001) %>% 
+
+  ggplot(aes(x = day, group = criterion)) +
+  geom_vline(xintercept = 5.5, color = "white") +
+  geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5, fill = factor(criterion)),
+              alpha = 1/3) +
+  geom_line(aes(y = Estimate, color = factor(criterion))) +
+  geom_point(aes(y = checks),
+             size = 1/2) +
+  scale_fill_viridis_d(option = "F", begin = .2, end = .8, na.value = "grey50", breaks = NULL) +
+  scale_color_viridis_d(option = "F", begin = .2, end = .8, na.value = "grey50", breaks = NULL) +
+  scale_y_continuous("checks", limits = c(0, 100)) +
+  labs(title = "The one-hot model with theory-based priors.")
+```
+
+If you look closely, you'll see the $95\%$ intervals during the intervention phase are a little tighter than the corresponding ones in the plot of the `fit1` model from the last section. That's because we used smarter priors.
+
+### The theory-based model.
+
+Between the dummy and one-hot models, we have a pretty good framework for analyzing a variety of changing-criterion data sets. But if you're willing to get a little weird, with me, I think we can do even better. When we set the priors for out one-hot model, covered how the changing-criterion design makes specific predictions about the conditional means during the intervention period. If our intervention brings the target behavior under experimental control, the average behavior rate should be equal to the criterion level. Why not just build that into the model formula? One way would be the model
+
+$$
+\begin{align*}
+\text{checks}_i & \sim \operatorname{Poisson}(\lambda_i) \\
+\log (\lambda_i) & = \beta_0 \text{baseline}_i + \beta_1 \text{intervention}_i \times \log (\text{criterion}_i),
+\end{align*}
+$$
+
+where `baseline` is a dummy indicating whether we're in the baseline phase or not (yes, this is just an alternative to the `a` dummy) and `intervention` is a dummy indicating whether we're in the intervention phase or not (i.e., `intervention = ifelse(baseline == 1, 0, 1)`). Notice that our `intervention` dummy is always in an interaction with the log of the `criterion` level. During the baseline period, the $\log (\text{criterion}_i)$ term drops out because it gets multiplied by zero. During the intervention period, the expected value at baseline drops out because it gets multiplied by zero. 
+
+The one catch with this parameterization is it requires us to insert a non-`NA` value in the `criterion` column during the baseline occasions. Otherwise, `brm()` will automatically drop those cases. Since the model equation will always cancel those values out by multiplying them by zero, it really doesn't matter what they are, as long as they're not missing. To make this easy, I've included an `lcriterion` variable in the data set.
+
+```{r}
+allen2001 %>% 
+  distinct(phase, criterion, lcriterion) %>% 
+  flextable() %>% 
+  width(width = c(0.75, 0.75, 1.25))
+```
+
+In the data, `lcriterion` is just the log of `criterion` during the intervention periods. But during baseline, `lcriterion` is just zero. If you want, you could replace those zeros with `-999` or any other numeral. As long as the model formula contains the $\beta_1 \text{intervention}_i \times \log (\text{criterion}_i)$ portion, those values will always get zeroed out, but their inclusion will keep `brm()` from dropping the cases that would otherwise read as missing data.
+
+As to priors, we'll continue to keep our diffuse $\mathcal N(\log(120), 1)$ prior on $\beta_0$. If our model holds, we should expect the posterior for $\beta_1$ to be very close to $1$. So why not be bold and express that with a very tight prior like$\mathcal N(1, 0.1)$? If you're game, we can express the full model as
+
+$$
+\begin{align*}
+\text{checks}_i & \sim \operatorname{Poisson}(\lambda_i) \\
+\log (\lambda_i) & = \beta_0 \text{baseline}_i + \beta_1 \text{intervention}_i \times \log (\text{criterion}_i)  \\
+\beta_0 & \sim \operatorname{Normal}(\log(120), 1) \\
+\beta_1 & \sim \operatorname{Normal}(1, 0.1).
+\end{align*}
+$$
+
+Here's how to fit the model with `brm()`.
+
+```{r fit3}
+fit3 <- brm(
+  data = allen2001,
+  family = poisson,
+  checks ~ 0 + baseline + intervention : lcriterion,
+  prior = c(prior(normal(log(12 * 10), 1), class = b, coef = baseline),
+            prior(normal(1, 0.1), class = b, coef = "intervention:lcriterion")),
+  cores = 4, seed = 1,
+  file = "fits/fit3.allen2001"
+)
+```
+
+Here's the parameter summary.
+
+```{r}
+print(fit3)
+```
+
+The chains look great!
+
+```{r, fig.width = 6, fig.height = 1.35, message = F}
+as_draws_df(fit3) %>% 
+  rename(chain     = .chain,
+         `beta[0]` = b_baseline,
+         `beta[1]` = `b_intervention:lcriterion`) %>% 
+  mcmc_trace(pars = vars(contains("beta")),
+             facet_args = list(ncol = 2, 
+                               labeller = label_parsed, 
+                               strip.position = "right"), 
+             size = .15) +
+  scale_x_continuous(NULL, breaks = NULL) +
+  theme(legend.position = "none",
+        strip.text.y = element_text(angle = 0))
+```
+
+Behold the line plot.
+
+```{r}
+fitted(fit3) %>% 
+  data.frame() %>% 
+  bind_cols(allen2001) %>% 
+
+  ggplot(aes(x = day, group = criterion)) +
+  geom_vline(xintercept = 5.5, color = "white") +
+  geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5, fill = factor(criterion)),
+              alpha = 1/3) +
+  geom_line(aes(y = Estimate, color = factor(criterion))) +
+  geom_point(aes(y = checks),
+             size = 1/2) +
+  scale_fill_viridis_d(option = "F", begin = .2, end = .8, na.value = "grey50", breaks = NULL) +
+  scale_color_viridis_d(option = "F", begin = .2, end = .8, na.value = "grey50", breaks = NULL) +
+  scale_y_continuous("checks", limits = c(0, 100)) +
+  labs(title = "It's almost shocking how well the theory-based model describes the data.")
+```
+
+The two-parameter theory-based model returns very tight $95\%$ intervals during the intervention period.
+
+### Model comparison?
+
+One might wonder how the three models compare from a LOO-CV perspective.
+
+```{r}
+fit1 <- add_criterion(fit1, criterion = "loo")
+fit2 <- add_criterion(fit2, criterion = "loo")
+fit3 <- add_criterion(fit3, criterion = "loo")
+
+loo_compare(fit1, fit2, fit3, criterion = "loo") %>% print(simplify = F)
+```
+
+The dummy and one-hot models are very similar, which shouldn't be a big surprise. Look how well our gutsy two-parameter theory-based model is doing, though. This sins it commits with its overconfidence are made up for by its parsimony. This might not hold for all data sets, though. The theory-based model only works if you have strong experimental control over the target behavior.
+
+### How big is it?
+
+Now we've experimented with different ways to model the data, a natural question is how to express the analyses in terms of an effect size. Given the data are counts, I'm not sure a Cohen's $d$ standardized-mean-difference type effect size makes sense, here. To my mind, Cohen's $d$ implies the Gaussian likelihood given how you are standardizing the parameter with some version of $\sigma$. We could, however, compute a simple unstandardized mean difference of the average at baseline minus the average at the final phase `B7`. An alternative would be a ratio where you divide the baseline mean by the final `B7` mean, which would express how many times larger the baseline mean was from the final mean. On the flip side, if we were to divide the final `B7` mean by the baseline mean, that ratio would express the final `B7` mean as a proportion of the baseline. If you subtract that proportion from $1$ and then multiply by $100$, you get a percent decrease from baseline.
+
+Here's how to compute those effect sizes and their $95\%$ intervals with our original model `fit1`.
+
+```{r}
+# define the new data
+nd <- allen2001 %>% 
+  distinct(phase) %>% 
+  slice(c(1, 8))
+
+fitted(fit1,
+       newdata = nd,
+       summary = F) %>% 
+  # wrangle
+  data.frame() %>%
+  set_names(nd %>% pull(phase)) %>% 
+  transmute(`A - B7` = A - B7,
+            `A / B7` = A / B7,
+            `B7 / A` = B7 / A,
+            `(1 - B7 / A) * 100` = (1 - B7 / A) * 100) %>% 
+  pivot_longer(everything(), names_to = "effect") %>% 
+  group_by(effect) %>% 
+  mean_qi(value) %>% 
+  select(effect:.upper) %>% 
+  mutate_if(is.double, round, digits = 2)
+```
+
+Our unstandardized pre/post mean difference is $78.2, 95\% \text{CI}\ [69.5, 87.0]$. The baseline checking rate was $8.3\ [6.7, 10.3]$ times greater than the final rate at the end of the intervention. Put another way, the final checking rate during the 12-check criterion phase of the intervention constituted an $87.8\%\ [85.0\%, 90.2\%]$ reduction in blood glucose checks.
+
+### Phase contrasts.
+
+The line plots for all out models show a clear and dramatic reduction of Amy's checking behavior following the onset of the exposure-based intervention. A strength of the changing criterion design is it allows researchers to make very specific predictions about the rate differences in each phase shift. If all goes well, the difference in the average rate in one phase to the next should be the same as the difference in the criterion level for those two phases. Consider the following table.
+
+```{r}
+# save the expected contrasts
+e_difference <- allen2001 %>% 
+  distinct(phase, criterion) %>% 
+  mutate(contrast = str_c(phase, " - ", lead(phase)),
+         e_difference = criterion - lead(criterion)) %>% 
+  filter(!is.na(contrast))
+
+# display the results in a table
+e_difference %>% 
+  rename(`expected difference` = e_difference) %>% 
+  flextable() %>% 
+  width(width = c(0.5, 1.5, 1.7, 1.7)) %>% 
+  align(j = 3, align = "right", part = "all")
+```
+
+For each phase, the natural contrast is with the rate in the subsequent phase. If we subtract the criterion level of each phase from the preceding phases level, this will provide a list of expected differences. However, since the baseline `A` phase doesn't have an experimental criterion, there is no expected difference for the baseline minus the first experimental phase `B1`. Though none of our models are parameterized in terms of these contrasts, we can compute them from the posterior of each. The easiest way is probably with aid from the `fitted()` function. Here's the workflow with `fit2`.
+
+```{r, warning = F}
+# define the new data
+nd <- allen2001 %>% 
+  distinct(phase)
+
+# compute the fitted values
+fitted(fit2,
+       newdata = nd,
+       summary = F) %>% 
+  # wrangle
+  data.frame() %>%
+  set_names(nd %>% pull(phase)) %>% 
+  transmute(`A - B1`  = A - B1,
+            `B1 - B2` = B1 - B2,
+            `B2 - B3` = B2 - B3,
+            `B3 - B4` = B3 - B4,
+            `B4 - B5` = B4 - B5,
+            `B5 - B6` = B5 - B6,
+            `B6 - B7` = B6 - B7) %>% 
+  pivot_longer(everything(), names_to = "contrast") %>% 
+  
+  # plot
+  ggplot(aes(x = value, y = 0)) +
+  tidybayes::stat_halfeye(.width = .95, normalize = "panels", size = 1.5) +
+  geom_vline(data = e_difference,
+             aes(xintercept = e_difference),
+             linetype = 2, size = 1/3) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  labs(title = "Contrasts for subsequent phases",
+       subtitle = "The dashed lines mark the expected contrast values based on the experimental design.",
+       x = "contrast") +
+  facet_wrap(~ contrast, scales = "free", nrow = 2)
+```
+
+```{r fit3_contrasts, eval = F, echo = F}
+# define the new data
+nd <- allen2001 %>% 
+  distinct(phase, baseline, intervention, lcriterion)
+
+# compute the fitted values
+fitted(fit3,
+       newdata = nd,
+       summary = F) %>% 
+  # wrangle
+  data.frame() %>%
+  set_names(nd %>% pull(phase)) %>% 
+  transmute(`A - B1`  = A - B1,
+            `B1 - B2` = B1 - B2,
+            `B2 - B3` = B2 - B3,
+            `B3 - B4` = B3 - B4,
+            `B4 - B5` = B4 - B5,
+            `B5 - B6` = B5 - B6,
+            `B6 - B7` = B6 - B7) %>% 
+  pivot_longer(everything(), names_to = "contrast") %>% 
+  
+  # plot
+  ggplot(aes(x = value, y = 0)) +
+  tidybayes::stat_halfeye(.width = .95, normalize = "panels", size = 1.5) +
+  geom_vline(data = e_difference,
+             aes(xintercept = e_difference),
+             linetype = 2, size = 1/3) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  labs(title = "Contrasts for subsequent phases",
+       subtitle = "The dashed lines mark the expected contrast values based on the experimental design.",
+       x = "contrast") +
+  facet_wrap(~ contrast, scales = "free", nrow = 2)
+```
+
+In all cases, the expected contrasts between phases were well within the bounds $95\%$ of the posterior, which suggests the serial decreases in the excessive checking behaviors were indeed under experimental control. Amy didn't just gradually reduce her checks over time; she reduced her checks according to the magnitudes intended by the researchers.
+
+If you make the corresponding plot for our theory-based model `fit3`, you'll notice the contrasts are similar, but their posteriors are much more narrow. I'll leave that as an exercise for the interested reader.
+
+## Session information
+
+```{r}
+sessionInfo()
+```
+
