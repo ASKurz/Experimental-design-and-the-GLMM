@@ -254,9 +254,13 @@ fitted(fit1) %>%
   geom_line(aes(y = Estimate, color = factor(criterion))) +
   geom_point(aes(y = checks),
              size = 1/2) +
+  # for the text/numeral annotation
+  geom_text(data = label,
+            aes(y = checks, label = label),
+            hjust = 0, nudge_x = 0.4, nudge_y = 2, color = "grey30") +
   scale_fill_viridis_d(option = "F", begin = .2, end = .8, na.value = "grey50", breaks = NULL) +
   scale_color_viridis_d(option = "F", begin = .2, end = .8, na.value = "grey50", breaks = NULL) +
-  scale_y_continuous("checks", limits = c(0, 100)) +
+  scale_y_continuous("blood glucose checks", limits = c(0, 100)) +
   labs(title = "The dummy-code model with weak priors.")
 ```
 
@@ -410,9 +414,13 @@ fitted(fit2) %>%
   geom_line(aes(y = Estimate, color = factor(criterion))) +
   geom_point(aes(y = checks),
              size = 1/2) +
+  # for the text/numeral annotation
+  geom_text(data = label,
+            aes(y = checks, label = label),
+            hjust = 0, nudge_x = 0.4, nudge_y = 2, color = "grey30") +
   scale_fill_viridis_d(option = "F", begin = .2, end = .8, na.value = "grey50", breaks = NULL) +
   scale_color_viridis_d(option = "F", begin = .2, end = .8, na.value = "grey50", breaks = NULL) +
-  scale_y_continuous("checks", limits = c(0, 100)) +
+  scale_y_continuous("blood glucose checks", limits = c(0, 100)) +
   labs(title = "The one-hot model with theory-based priors.")
 ```
 
@@ -504,9 +512,13 @@ fitted(fit3) %>%
   geom_line(aes(y = Estimate, color = factor(criterion))) +
   geom_point(aes(y = checks),
              size = 1/2) +
+  # for the text/numeral annotation
+  geom_text(data = label,
+            aes(y = checks, label = label),
+            hjust = 0, nudge_x = 0.4, nudge_y = 2, color = "grey30") +
   scale_fill_viridis_d(option = "F", begin = .2, end = .8, na.value = "grey50", breaks = NULL) +
   scale_color_viridis_d(option = "F", begin = .2, end = .8, na.value = "grey50", breaks = NULL) +
-  scale_y_continuous("checks", limits = c(0, 100)) +
+  scale_y_continuous("blood glucose checks", limits = c(0, 100)) +
   labs(title = "It's almost shocking how well the theory-based model describes the data.")
 ```
 
@@ -552,7 +564,12 @@ fitted(fit1,
   group_by(effect) %>% 
   mean_qi(value) %>% 
   select(effect:.upper) %>% 
-  mutate_if(is.double, round, digits = 2)
+  mutate_if(is.double, round, digits = 2) %>% 
+  rename(mean = value,
+         lwr = .lower,
+         upr = .upper) %>% 
+  flextable() %>% 
+  width(width = 1.5)
 ```
 
 Our unstandardized pre/post mean difference is $78.2, 95\% \text{CI}\ [69.5, 87.0]$. The baseline checking rate was $8.3\ [6.7, 10.3]$ times greater than the final rate at the end of the intervention. Put another way, the final checking rate during the 12-check criterion phase of the intervention constituted an $87.8\%\ [85.0\%, 90.2\%]$ reduction in blood glucose checks.
