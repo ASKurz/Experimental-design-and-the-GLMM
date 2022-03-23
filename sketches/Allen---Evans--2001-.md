@@ -63,7 +63,7 @@ allen2001 %>%
     ## 7 B6       10
     ## 8 B7       10
 
-The `B1` phases all have associated `criterion` levels.
+The `B` phases all have associated `criterion` levels.
 
 ``` r
 allen2001 %>% 
@@ -181,7 +181,7 @@ allen2001 %>%
 
 You don’t strictly need to do this because the `phase` variable will
 actually get the job done. But the dummies can be instructive and we may
-as well show the way with both.
+as well show how to fit the model with both strategies.
 
 ## Models
 
@@ -190,6 +190,9 @@ In this file, we’ll model the data with three model types.
 1.  The dummy model
 2.  The one-hot model
 3.  The theory-based model
+
+The first two are pretty conventional. The third model requires we leave
+convention behind.
 
 ### The dummy model.
 
@@ -229,7 +232,7 @@ two-order-of-magnitude increase would mean 1, 200 checks. Given an
 8-hours night sleep, if Amy checked her glucose at a rate of once a
 minute all day long, that would give her 60 × 16 = 960 checks a day,
 which is approaching that two-order-of-magnitude increase. So we might
-want a prior that puts most of the prior mass above 12 and less than the
+want a prior that puts most of the prior mass above 12 and below the
 960 − 1, 200 range.
 
 Although we don’t have to, it’s typical to use a Gaussian prior for *β*
@@ -274,8 +277,8 @@ distributions.
 
 Next we consider the priors for *β*<sub>1</sub> through *β*<sub>7</sub>,
 our deviation parameters. As we’re working on the log scale, the 𝒩(0,1)
-is often good places to start. It allows for small, moderate and even
-large deviations from the reference category, but rule out very large
+is often a good place to start. It allows for small, moderate and even
+large deviations from the reference category, but rules out very large
 deviations. In this case, however, keep in mind that if our posterior
 for *β*<sub>0</sub> ends up rather high, the posteriors for our
 upper-end *β* parameters will need to be large and negative to
@@ -411,8 +414,9 @@ Look at those sweet steps!
 
 ### The one-hot model.
 
-Next we consider a closely-related version fo the model inspired by our
-friends in the machine-learning community, which follows the basic form
+Next we consider a closely-related version of the dummy model, inspired
+by our friends in the machine-learning community, which follows the
+basic form
 
 $$
 \\begin{align\*}
@@ -424,12 +428,13 @@ $$
 where *β*<sub>0</sub> is still the mean during the baseline period, but
 now we explicitly include the `a` dummy variable in the equation, while
 we continue to retain all the other 7 dummies for the B phases. Whereas
-man social scientists tend to leave out the dummy variable which encodes
-the reference category–the way we omitted the `a` dummy in `fit1`–, the
-one-hot encoding method includes ALL dummy variables. As a consequence,
-we no longer have a reference category. Rather, the coefficient for each
-dummy *β*<sub>0</sub>, …, *β*7 is directly parameterized as the mean of
-its own phase, without reference to any other phase.
+many social scientists tend to leave out the dummy variable which
+encodes the reference category–the way we omitted the `a` dummy in
+`fit1`–, the one-hot encoding method includes ALL dummy variables. As a
+consequence, we no longer have a reference category. Rather, the
+coefficient for each dummy *β*<sub>0</sub>, …, *β*7 is directly
+parameterized as the mean of its own phase, without reference to any
+other phase.
 
 The one-hot parameterization is attractive because it offers a more
 natural way for setting our priors. Consider, again, the distinct levels
@@ -448,18 +453,18 @@ phases which are defined by the values in the `criterion` column. So for
 the priors for *β*<sub>1</sub>, …, *β*7, I propose we use a Gaussian
 prior centered on the log of each `criterion` value.
 
-The next issue is how tot set the *σ* hyperparameters, which will
+The next issue is how we might set the *σ* hyperparameters, which will
 express how certain our priors are for *β*<sub>1</sub>, …, *β*7. As is
 turns out,
 
 -   *σ* = 0.3536465 puts 95% of the prior mass between half of the
     expected value and twice the expected value,
 -   *σ* = 0.20687 puts 95% of the prior mass between two-thirds of the
-    expected value and 150% of the expected value,
+    expected value and 150% of the expected value, and
 -   *σ* = 0.1467766 puts 95% of the prior mass between three-quarters of
     the expected value and four-thirds of the expected value.
 
-Execute the code, below, to see four yourself.
+Execute the code, below, to see for yourself.
 
 ``` r
 # sigma <- 0.3536465  # 1/2 on the low end; 2/1 on the high end
@@ -634,8 +639,8 @@ used smarter priors.
 
 Between the dummy and one-hot models, we have a pretty good framework
 for analyzing a variety of changing-criterion data sets. But if you’re
-willing to get a little weird, with me, I think we can do even better.
-When we set the priors for out one-hot model, covered how the
+willing to get a little weird, I think we can do even better. When we
+set the priors for out one-hot model, we covered how the
 changing-criterion design makes specific predictions about the
 conditional means during the intervention period. If our intervention
 brings the target behavior under experimental control, the average
@@ -801,7 +806,7 @@ loo_compare(fit1, fit2, fit3, criterion = "loo") %>% print(simplify = F)
 
 The dummy and one-hot models are very similar, which shouldn’t be a big
 surprise. Look how well our gutsy two-parameter theory-based model is
-doing, though. This sins it commits with its overconfidence are made up
+doing, though. The sins it commits with its overconfidence are made up
 for by its parsimony. This might not hold for all data sets, though. The
 theory-based model only works if you have strong experimental control
 over the target behavior.
@@ -863,7 +868,7 @@ intervention. Put another way, the final checking rate during the
 
 ### Phase contrasts.
 
-The line plots for all out models show a clear and dramatic reduction of
+The line plots for all our models show a clear and dramatic reduction of
 Amy’s checking behavior following the onset of the exposure-based
 intervention. A strength of the changing criterion design is it allows
 researchers to make very specific predictions about the rate differences
