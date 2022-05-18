@@ -1,0 +1,727 @@
+---
+title: "nordhov2010"
+author: "A Solomon Kurz"
+date: "`r format(Sys.Date())`"
+output: github_document
+---
+
+The purpose of this file is to simulate the data from Nordhov et al (2010; https://doi.org/10.1542/peds.2010-0778). We don't have their actual data file, but they displayed information about sample size, mean, and standard deviations for the primary outcomes in Figure 1, Table 2, and Table 3 (pp. e1092--e1093).
+
+Participants were randomized into two groups and data were collected at three time points.
+
+1. At baseline, researchers collected information about the infants' health (e.g., weight) and family background (e.g., years of education for each parent). 
+2. When the children were 3 years of age, the first batch of post-treatment outcome measures collected, which were the Mental Developmental Index (MDI) and Psychomotor Developmental Index (PDI) from the Norwegian version of the Bayley Scales of Infant Development II (BSID-II). 
+3. When the children were 5 years of age, the second and final batch of post-treatment measures were collected, which were the performance IQ (PIQ), verbal IQ (VIQ), and full-scale IQ (FSIQ) from the Norwegian version of the Wechsler Preschool and Primary Scale of Intelligence-Revised (WPPSI-R).
+
+One of the tricky characteristics of this study is that whereas the primary outcomes were collected from the children, some of the children were twins and twins were always randomized into the same condition. So it was actually the families who were the units which were randomized, not the children. Furthermore, the intervention (see p. e1089) was a series of sessions in which the parents attended, communicated with and received instruction from the research staff. The infants attended all sessions following the initial debriefing session, in which parents had the opportunity to discuss their thoughts and feelings around their hospital stay and their preterm infants. Thus, a proper analysis of these data will have to account for randomization at the level of the family and the correlations among the twins.
+
+## Simulate
+
+Load our primary packages, **faux** and the **tidyverse**.
+
+```{r, warning = F, message = F}
+library(tidyverse)
+library(faux)
+library(GGally)
+```
+
+### Sample sizes.
+
+There are a variety of sample size values we'll want to compute for our simulations.
+
+```{r}
+# child-level sample sizes
+n_i <- 72
+n_c <- 74
+
+# number of twins
+n_twin_i <- 16
+n_twin_c <- 14
+
+# number of mothers, based on twin status
+n_nontwin_mom_i <- n_i - n_twin_i
+n_twin_mom_i <- n_twin_i / 2
+
+n_nontwin_mom_c <- n_c - n_twin_c
+n_twin_mom_c <- n_twin_c / 2
+
+# number of mothers, by condition
+n_moms_i <- n_nontwin_mom_i + n_twin_mom_i
+n_moms_c <- n_nontwin_mom_c + n_twin_mom_c
+# n_moms_i + n_moms_c # 131
+
+# total number of mothers and kids
+n_moms <- n_nontwin_mom_i + n_twin_mom_i + n_nontwin_mom_c + n_twin_mom_c
+
+n_kids <- (n_nontwin_mom_i + n_nontwin_mom_c) + (n_twin_mom_i + n_twin_mom_c) * 2
+```
+
+Further, here are some drop-out rates based on Figure 1 (p. e1092).
+
+```{r}
+# 3 years of age
+p_i_3 <- (72 - 67) / 72
+p_c_3 <- (74 - 67) / 74
+
+# 5 years of age
+p_i_5 <- (72 - 66) / 72
+p_c_5 <- (74 - 65) / 74
+```
+
+### Background variables.
+
+For the present study, we will simulate data from two of the background variables collected at baseline. At the family level, we will simulate the mother's years of education. At the child level, we will simulate birth weight in grams.
+
+#### Mother's education.
+
+Nordhov et al listed the years of education for both parents in Table 1 (p. e1092), by condition. Due to the random assignment, we can presume the parents on both groups are from the same population of parents. Thus, we can use the sampe statistics to compute the weighted average and pooled standard deviation for mother's years of education. For some variable $y$ that is measured in $j$ groups with differing sample sizes ($n_j$), we can compute the weighted average with the formula
+
+$$\text{weighted average} = \frac{\sum_j n_j \bar y_j}{\sum_j n_j}.$$
+
+For two groups with different sample sizes, we can compute the pooled standard deviation with the formula
+
+$$s_p = \sqrt{\frac{(n_1 - 1)s_1^2 + (n_2 - 1)s_2^2}{n_1 + n_2 - 2}}.$$
+
+Using those formulas, we now compute the weighted mean and pooled standard deviation for mother's education.
+
+```{r}
+tibble(group = c("intervention", "control"),
+       mean  = c(14.6, 13.5),
+       sd    = c(2.8, 3.2),
+       n     = c(n_i, n_c)) %>% 
+  summarise(weighted_mean = sum(n * mean) / sum(n),
+            pooled_sd = sqrt(sum((n - 1) * sd^2) / (sum(n) - 2)))
+```
+
+We can simulate a distribution that approximates those sample statistics with a truncated Poisson distribution.
+
+```{r}
+# simulate
+set.seed(1)
+
+edu <- tibble(e = rpois(1e5, lambda = 13.4)) %>% 
+  # truncate
+  filter(e > 9) %>% 
+  filter(e < 24)
+
+# plot
+edu %>%
+  mutate(category = case_when(
+    edu < 13 ~ "no college",
+    edu > 12 & edu < 17 ~ "some college",
+    edu > 16 ~ "some grad school"
+  )) %>% 
+  
+  ggplot(aes(x = e, fill = category)) +
+  geom_bar() +
+  scale_fill_viridis_d(option = "D", end = .8) +
+  labs(title = "simulated population",
+       x = "mother's education")
+
+# summarize
+edu %>% 
+  summarise(m = mean(e),
+            s = sd(e))
+```
+
+I don't know whether the years of education among Norwegian looks like this, but it seems plausible that the bulk of the mothers have at least a high-school education or at least some college, and a minority have some graduate school.
+
+Now we sample $n = 131$ from the population.
+
+```{r}
+set.seed(2)
+
+edu <- edu %>% 
+  slice(1:n_moms) %>% 
+  pull()
+
+# what is this?
+str(edu)
+
+# summarize
+mean(edu)
+sd(edu)
+```
+
+#### Birth weight.
+
+Nordhov et al the birth weights in grams in Table 1 (p. e1092), by condition. The children were not truly randomized to condition due to the dependencies caused by the twins. However, the twins were a minority of the children and the families were randomized to condition. Thus, for simplicity sake, we can use the formulas from above to compute the weighted mean and pooled standard deviations for birth weights as follows.
+
+```{r}
+tibble(group = c("intervention", "control"),
+       mean = c(1396, 1381),
+       sd = c(429, 436),
+       n = c(n_moms_i, n_moms_c)) %>% 
+  summarise(weighted_mean = sum(n * mean) / sum(n),
+            pooled_sd = sqrt(sum((n - 1) * sd^2) / (sum(n) - 2)))
+```
+
+Based on Wilcox (2001; https://doi.org/10.193/ije/30.6.1233), the distribution of birth weights is aproximately normal, with a roughly uniform residual distribution ranging between 0 and 2,500 grams on the left tail. He highlighted this with data from 405,676 live and still births from Norway in 1992 through 1998 (see Figure 1, p. 1235). Further, we read: "Babies less than 2500 g include the whole residual distribution plus the lower tail of the predominant distribution" (p. 1235), which is where I determined the residual distribution has an upper limit of 2,500. A littler earlier on the same page, we read: "In a typical population, 2 to 5% of births are in the residual distribution."
+
+If you combine the shape of the distribution in Wilcox's Figure 1 with the constraints of the weighted mean and pooled standard deviations of the birth weights from Nordhov et al, you can approximate the population distribution like so.
+
+```{r}
+# how many draws?
+n <- 1e6
+# what percent in the residual distribution?
+p_r <- 0.02
+
+# simulate
+set.seed(3)
+
+bw <- tibble(bw = c(rnorm(n = n, mean = 3600, sd = 600),
+                    runif(n = n * p_r, min = 0, max = 2500))) 
+
+# plot
+bw %>% 
+  ggplot(aes(x = bw)) +
+  geom_histogram(aes(fill = bw > 2000),
+                 binwidth = 100, boundary = 0) +
+  geom_line(data = tibble(bw = seq(from = 0, to = 6000, length.out = 200)) %>%
+              mutate(d = dnorm(bw, mean = 3600, sd = 600) * 100 * (n)),
+            aes(y = d)) +
+  scale_fill_viridis_d(option = "D", end = .8) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab("birth weight (g)") +
+  coord_cartesian(xlim = c(0, 6000))
+```
+
+When you select the portion of the distribution ranging between 400 and 2,000 grams, that returns the following subpopulation statistics.
+
+```{r}
+bw %>% 
+  filter(bw <= 2000) %>% 
+  filter(bw > 399) %>% 
+  
+  summarise(m = mean(bw),
+            s = sd(bw),
+            `400-1000`  = mean(bw >=  400 & bw <= 1000),
+            `1001-1500` = mean(bw >= 1001 & bw <= 1500),
+            `1501-2000` = mean(bw >= 1501 & bw <= 2000),
+            # mean and standard deviaiton for bw converted to pounds
+            m_lbs = mean(bw / 453.592),
+            s_lbs = sd(bw / 453.592)) %>% 
+  mutate_if(is.double, round, digits = 2)
+```
+
+This is reasonably close to the sampel statistics Nordhov et al reported in their Table 1 (p. e1091).
+
+Here's what a random draw of $N = 146$ of those `bw` values looks like in terms of sample statistics and a histogram.
+
+```{r}
+# subset
+set.seed(4)
+
+bw <- bw %>% 
+  filter(bw <= 2000) %>% 
+  filter(bw > 399) %>% 
+  slice_sample(n = n_i + n_c) %>% 
+  mutate(bw = round(bw))
+
+# summarize
+bw %>% 
+  summarise(m = mean(bw),
+            s = sd(bw),
+            `400-1000`  = mean(bw >=  400 & bw <= 1000),
+            `1001-1500` = mean(bw >= 1001 & bw <= 1500),
+            `1501-2000` = mean(bw >= 1501 & bw <= 2000),
+            # mean and standard deviaiton for bw converted to pounds
+            m_lbs = mean(bw / 453.592),
+            s_lbs = sd(bw / 453.592)) %>% 
+  mutate_if(is.double, round, digits = 2)
+
+# plot
+bw %>% 
+  mutate(category = case_when(
+    bw >=  400 & bw <= 1000 ~ "400-1000",
+    bw >= 1001 & bw <= 1500 ~ "1001-1500",
+    bw >= 1501 & bw <= 2000 ~ "1501-2000"
+  )) %>% 
+  mutate(category = factor(category, levels = c("400-1000", "1001-1500", "1501-2000"))) %>% 
+  ggplot(aes(x = bw, fill = category)) +
+  geom_histogram(binwidth = 100, boundary = 0) +
+  scale_fill_viridis_d(option = "D", end = .8) +
+  coord_cartesian(xlim = c(0, 2000)) +
+  labs(title = expression(italic(n)==146),
+       x = "birth weight (grams)")
+```
+
+Finally, make `bw` a simple numeric vector.
+
+```{r}
+bw <- pull(bw)
+```
+
+### Basic groups.
+
+Here we add a skeleton data set with
+
+* family identification number (`fid`),
+* a dummy variable indicating the twin status for each family (`twin`),
+* the experimental `group` for each family,
+* a dummy variable of the same coded `0` for the control condition and `1` for the treatment condition (`tx`), and
+* the number of children in each family (`n_kid`).
+
+```{r}
+d <- tibble(
+  fid   = 1:n_moms,
+  twin  = rep(c(0:1, 0:1), 
+              times = c(n_nontwin_mom_i, n_twin_mom_i, n_nontwin_mom_c, n_twin_mom_c)),
+  group = rep(c("treatment", "control"), 
+              times = c(n_nontwin_mom_i + n_twin_mom_i, n_nontwin_mom_c + n_twin_mom_c))) %>% 
+  mutate(tx    = ifelse(group == "control", 0, 1),
+         n_kid = twin + 1)
+
+# what is this?
+glimpse(d)
+```
+
+### Missing data.
+
+Based on the information in Figure 1, Table 2, and Table 3 (pp. e1092--e1093), there is a certain amount of missing data at the 3- and 5-year post-treatment time points.
+
+```{r, eval = F, echo = F}
+# drop-out rates (see Figure 1, p. e1092)
+(72 - 67) / 72
+(74 - 67) / 74
+(72 + 74 - 67 - 67) / (72 + 74)
+```
+
+```{r, eval = F, echo = F}
+# drop-out rates (see Figure 1, p. e1092)
+(72 - 66) / 72
+(74 - 65) / 74
+(72 + 74 - 66 - 65) / (72 + 74)
+```
+
+Here we simulate missing data, at the family level. The missing data rates are a nonlinear function of the mean-centered log of mother's education, such that we are more likely to have missing data for children of mothers with less education, particularly for those with no college experience. The overall missing data rates are a little larger than those reported in the text, largely for pedagogical purposes.
+
+After simulating the missing data identifiers (`missing_3` and `missing_5`), we expand the data set to include identification variables (`id`) for the $n = 146$ children. Finally, we add in the child-level birth weights.
+
+```{r}
+set.seed(5)
+
+d <- d %>% 
+  mutate(m_edu = edu) %>% 
+  mutate(lc_m_edu = log(m_edu) - mean(log(m_edu))) %>% 
+  # missing-data rates exagerated a bit
+  mutate(missing_3 = ifelse(group == "treatment", 
+                            rbinom(n = n(), size = 1, prob = plogis(qlogis(p_i_3 * 0.8) + -9 * lc_m_edu)), 
+                            rbinom(n = n(), size = 1, prob = plogis(qlogis(p_c_3 * 0.6) + -9 * lc_m_edu))),
+         missing_5 = ifelse(group == "treatment", 
+                            rbinom(n = n(), size = 1, prob = plogis(qlogis(p_i_5 * 0.7) + -9 * lc_m_edu)), 
+                            rbinom(n = n(), size = 1, prob = plogis(qlogis(p_c_5 * 0.7) + -9 * lc_m_edu)))) %>%
+  uncount(weights = n_kid, .id = "birth_order") %>% 
+  mutate(id = 1:n(),
+         bw = bw) %>% 
+  # make a mean-centered version of bw
+  mutate(c_bw = bw - mean(bw))
+
+# what?
+glimpse(d)
+```
+
+Here are the missing data rates, by condition and time point.
+
+```{r}
+d %>% 
+  group_by(group) %>%
+  summarise(n3      = sum(1 - missing_3),
+            p_miss3 = mean(missing_3),
+            n5      = sum(1 - missing_5),
+            p_miss5 = mean(missing_5)) %>% 
+  mutate_if(is.double, round, digits = 2)
+```
+
+### Primary outcomes.
+
+We will use the `faux::rnorm_multi()` function to help simulate the data for the primary outcome measures. Within each time point, if think of IQ-type scores $y$ as varying across $i$ children, nested within $j$ mothers, and across $k$ scales. With respect to the $k$ scales, this would refer to the MDI and PDI scores BSID-II when the children were 3 years of age. When they were five, this would refer to the PIQ and VIQ from the WPPSI-R. Using this framework, you can define the primary outcomes with the formula
+
+$$
+\begin{align*}
+y_{ijk} & \sim \mathcal N(\mu_{ijk}, \sigma_\epsilon) \\
+\mu_{ijk} & = \beta_{0ij} + \beta_{1j} \text{test}_{ijk} \\
+\beta_{0ij} & = \gamma_{0j} + u_{ij} \\
+\beta_{1j} & = \gamma_{1j}  \\
+\gamma_{0j} & = \delta_{00} + \delta_{01} \text{group}_j + v_{0j} \\
+\gamma_{1j} & = \delta_{10} + \delta_{11} \text{group}_j + v_{1j} \\
+
+u_{ij} & \sim \mathcal N(0, \sigma_u) \\
+\begin{bmatrix} v_{0j} \\ v_{1j} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{SRS}) \\
+
+\mathbf S & = \begin{bmatrix} \sigma_{v_{0}} \\ 1 & \sigma_{v_{1}}\end{bmatrix} \\
+\mathbf R & = \begin{bmatrix} 1 \\ \rho & 1 \end{bmatrix},
+\end{align*}
+$$
+
+where `test` is a generic stand-in for a dummy variable differentiating, say, the MDI from the PDI. This formula uses a 3-level notational style where the $\beta$ coefficients are the at level 1, the $\gamma$ coefficients are at level 2, and the $\delta$ coefficients are at level 3. As there are only two observations within kids, only one of the level-2 $\beta$ coefficients has a deviation parameter. However, since twins in some families allow for as many as 4 measurement occasions, both of the level-3 $\gamma$ coefficients are allowed deviation parameters.
+
+We can also express this equation in a more compact format
+
+$$
+\begin{align*}
+y_{ijk} & \sim \mathcal N(\mu_{ijk}, \sigma_\epsilon) \\
+\mu_{ijk} & = \delta_{00} + \delta_{01} \text{group}_j + \delta_{10}\text{test}_{ijk} + \delta_{11} \text{group}_j \text{test}_{ijk} + [u_{ij} + v_{0j} + v_{1j} \text{test}_{ijk}] \\
+
+u_{ij} & \sim \mathcal N(0, \sigma_u) \\
+\begin{bmatrix} v_{0j} \\ v_{1j} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{SRS}) \\
+
+\mathbf S & = \begin{bmatrix} \sigma_{v_{0}} \\ 1 & \sigma_{v_{1}}\end{bmatrix} \\
+\mathbf R & = \begin{bmatrix} 1 \\ \rho & 1 \end{bmatrix}
+\end{align*}
+$$
+
+<Both these equations need the kid and mother predictor variables>
+
+<It's probably best to just present the formula(s) with the beta-type coefficients>
+
+First, save the parameter values.
+
+```{r}
+# BSID fixed effects
+b00 <- 92.3
+b01 <- 97.9 - 92.3                    # 5.6
+b10 <- 92.8 - 92.3                    # 0.5
+b11 <- (93.7 - 97.9) - (92.8 - 92.3)  # -4.7
+
+# BSID variance components
+sigma_ub <- 10
+sigma_v0b <- 6
+sigma_v1b <- 2
+
+rho <- 0.6
+
+sigma_eb <- 8
+
+# WPSSI fixed effects
+g00 <- 95.3
+g01 <- 101.3 - 95.3                     # 6
+g10 <- 96.3 - 95.3                      # 1
+g11 <- (102.4 - 101.3) - (96.3 - 95.3)  # 0.1
+
+sigma_uw <- 10
+sigma_v0w <- 6
+sigma_v1w <- 2
+
+sigma_ew <- 10
+```
+
+Simulate the level-2 and level-3 variance components with `rnorm_multi()`.
+
+```{r}
+set.seed(6)
+
+SIGMA_v <- rnorm_multi(
+  n = n_moms,
+  mu = c(0, 0, 0, 0),
+  sd = c(sigma_v0b, sigma_v1b, sigma_v0w, sigma_v1w), 
+  r = rho, 
+  varnames = list("sv0b", "sv1b", "sv0w", "sv1w")
+) %>% 
+  mutate(fid = 1:n_moms)
+
+set.seed(7)
+
+SIGMA_u <- rnorm_multi(
+  n = n_kids,
+  mu = c(0, 0),
+  sd = c(sigma_ub, sigma_uw), 
+  r = rho, 
+  varnames = list("sub", "suw")
+) %>% 
+  mutate(id = 1:n_kids)
+
+set.seed(8)
+
+SIGMA_e <- tibble(
+  seb = rnorm(n = n_kids * 2, mean = 0, sd = sigma_eb),
+  sew = rnorm(n = n_kids * 2, mean = 0, sd = sigma_ew)
+)
+```
+
+Next we need to `expand()` the `d` data set to include two measurement occasions for each testing period. These, will be marked by the `pdi` dummy and corresponding `BSID` text variable, as well as the `viq` dummy and the corresponding `WPSSI` text variable.
+
+```{r}
+d <- d %>% 
+  expand(nesting(id, fid, group, tx, m_edu, lc_m_edu, twin, bw, c_bw, missing_3, missing_5),
+         pdi = 0:1) %>% 
+  mutate(BSID = ifelse(pdi == 0, "MDI", "PDI"),
+         viq  = pdi) %>% 
+  mutate(WPSSI = ifelse(viq == 0, "PIQ", "VIQ"))
+
+# what?
+head(d)
+```
+
+Now we use the model equation to compute the outcome variables.
+
+```{r}
+nordov2010 <- 
+  d %>% 
+  mutate(b00 = b00 - 1.0,  # the numbers on the right 
+         b01 = b01 - 1.0,  # correct for sample variation
+         b10 = b10 - 1.8,  # bringing the mean values closer to the paper
+         b11 = b11 + 3.0) %>% 
+  mutate(g00 = g00 - 4.0,
+         g01 = g01 + 1.0,
+         g10 = g10 + 2.0,
+         g11 = g11 - 2.0) %>%
+  left_join(SIGMA_v, by = "fid") %>% 
+  left_join(SIGMA_u, by = "id") %>% 
+  bind_cols(SIGMA_e) %>% 
+  # model equations
+  # the 3/500 coefficient for c_bw brings causes a 3-IQ increase
+  # for each 500 g increase in bw 
+  # based on Table 5 (p. 318) of
+  # https://doi.org/10.1001/archpedi.1994.02170040043007 
+  mutate(bsid  = b00 + b01 * tx + b10 * pdi + b11 * tx * pdi + (sub + sv0b + sv1b * pdi) + seb + 25 * lc_m_edu + 3/500 * c_bw,
+         wpssi = g00 + g01 * tx + g10 * viq + g11 * tx * viq + (suw + sv0w + sv1w * viq) + sew + 25 * lc_m_edu + 3/500 * c_bw) %>% 
+  mutate(bsid  = round(bsid,  digits = 1),
+         wpssi = round(wpssi, digits = 1)) %>% 
+  mutate(bsid  = ifelse(missing_3 == 1, NA, bsid),
+         wpssi = ifelse(missing_5 == 1, NA, wpssi)) %>% 
+  select(id:WPSSI, bsid:wpssi)
+```
+
+Summarize.
+
+```{r}
+nordov2010 %>% 
+  drop_na(bsid) %>% 
+  group_by(group, BSID) %>% 
+  summarise(m = mean(bsid),
+            s = sd(bsid),
+            n = n())
+
+nordov2010 %>% 
+  drop_na(wpssi) %>% 
+  group_by(group, WPSSI) %>% 
+  summarise(m = mean(wpssi),
+            s = sd(wpssi),
+            n = n())
+```
+
+## Wide
+
+Though the data were simulated with a long format, we will be analyzing them in a wider format. Here we make the conversion such that each participant has one row and the each of the BSID-II and WPSSI-R scores has its own column.
+
+```{r}
+nordov2010 <- nordov2010 %>% 
+  select(-pdi, -viq, -WPSSI, -wpssi) %>% 
+  pivot_wider(names_from = BSID, values_from = bsid) %>% 
+  left_join(nordov2010 %>% 
+              select(id, fid, WPSSI, wpssi) %>%  
+              pivot_wider(names_from = WPSSI, values_from = wpssi),
+            by = c("id", "fid")) %>% 
+  # make the FSIQ
+  mutate(FSIQ = (PIQ + VIQ) / 2) %>% 
+  # prune unnecessary columns
+  select(id:m_edu, bw, MDI:FSIQ) %>% 
+  # convert the uppercase names to lowercase
+  rename_at(.vars = vars(MDI:FSIQ), .funs = tolower)
+
+# what is this?
+glimpse(nordov2010)
+```
+
+## EDA
+
+To get a sense of the data, here are the 5 scale scores in histograms faceted by experimental `group` and filled by `m_edu`.
+
+```{r}
+nordov2010 %>% 
+  pivot_longer(mdi:fsiq) %>% 
+  mutate(m_edu = factor(m_edu)) %>% 
+  
+  ggplot(aes(x = value)) +
+  geom_vline(xintercept = 100, color = "white") +
+  geom_histogram(aes(group = m_edu, fill = m_edu),
+                binwidth = 10) +
+  scale_fill_viridis_d("mother's\neducation (y)", option = "A", end = .85) +
+  scale_x_continuous(breaks = c(70, 100, 130)) +
+  facet_grid(group ~ name) +
+  theme(legend.key.height = unit(0.15, 'in'),
+        panel.grid = element_blank())
+```
+
+Here's a dot plot of the same, but filled by `bw`.
+
+```{r}
+nordov2010 %>% 
+  pivot_longer(mdi:fsiq) %>% 
+  mutate(m_edu = factor(m_edu)) %>% 
+  
+  ggplot(aes(x = value)) +
+  geom_vline(xintercept = 100, color = "white") +
+  geom_dotplot(aes(fill = bw, group = bw),
+               binwidth = 7, stroke = 1/10,
+               stackgroups = TRUE, binpositions = "all") +
+  scale_fill_viridis_c("birth weight (g)", option = "A", end = .85, limits = c(400, 2000)) +
+  scale_x_continuous(breaks = c(70, 100, 130)) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  facet_grid(group ~ name) +
+  theme(panel.grid = element_blank())
+```
+
+To get a sense of the correlations among the five outcome variables, we might use a custom `ggpairs()` plot.
+
+```{r}
+my_upper <- function(data, mapping, ...) {
+  
+  # get the x and y data to use the other code
+  x <- eval_data_col(data, mapping$x)
+  y <- eval_data_col(data, mapping$y)
+  
+  # compute the correlations
+  corr <- cor(x, y, method = "p", use = "pairwise")
+  
+  # plot the cor value
+  ggally_text(
+    label = formatC(corr, digits = 2, format = "f") %>% str_replace(., "0\\.", "."),
+    mapping = aes(),
+    color = "grey20",
+    size = 4) +
+    scale_x_continuous(NULL, breaks = NULL) +
+    scale_y_continuous(NULL, breaks = NULL) +
+    cowplot::panel_border(size = 1/2)
+}
+
+my_diag <- function(data, mapping, ...) {
+  ggplot(data = data, mapping = mapping) + 
+    geom_density(size = 0, fill = "grey30") +
+    scale_x_continuous(NULL, breaks = NULL) +
+    scale_y_continuous(NULL, breaks = NULL) +
+    theme(panel.grid = element_blank())
+}
+
+
+my_lower <- function(data, mapping, ...) {
+  ggplot(data = data, mapping = mapping) + 
+    geom_point(size = 1/2, alpha = 1/2) +
+    scale_x_continuous(NULL, breaks = c(70, 100, 130)) +
+    scale_y_continuous(NULL, breaks = c(70, 100, 130)) +
+    theme(panel.grid = element_blank())
+}
+
+nordov2010 %>% 
+  select(mdi:fsiq) %>% 
+  ggpairs(upper = list(continuous = my_upper),
+          diag  = list(continuous = my_diag),
+          lower = list(continuous = my_lower)) +
+  theme(strip.text = element_text(size = 9))
+```
+
+Here's the missing data analysis. In the last three numeric columns, we show the percent of data present at each of the three time points, by experimental `group`.
+
+```{r}
+nordov2010 %>% 
+  group_by(group) %>% 
+  summarise(n = n(),
+            baseline = 100 * mean(!is.na(bw)),
+            `3-year` = 100 * mean(!is.na(mdi)),
+            `5-year` = 100 * mean(!is.na(piq))) %>% 
+  mutate_if(is.double, round, digits = 1)
+```
+
+## Save
+
+Now save the results in an external `.rda` file.
+
+```{r}
+save(nordov2010, file = "/Users/solomonkurz/Dropbox/Experimental-design-and-the-GLMM/sketches/data/nordov2010.rda")
+```
+
+## Session information
+
+```{r}
+sessionInfo()
+```
+
+
+
+
+
+
+If think of IQ-type scores $y$ as varying across $i$ children, nested within $j$ mothers, and across $k$ tests, you can model the data as
+
+
+$$
+\begin{align*}
+y_{ijk} & \sim \mathcal N(\mu_{ijk}, \sigma_{ijk}) \\
+\mu_{ijk} & = \beta_{0ij} + \beta_{1j} \text{test}_{ijk} \\
+\beta_{0ij} & = \gamma_{0j} + u_{ij} \\
+\beta_{1j} & = \gamma_{1j}  \\
+\gamma_{0j} & = \delta_{00} + \delta_{01} \text{group}_j + v_{0j} \\
+\gamma_{1j} & = \delta_{10} + \delta_{11} \text{group}_j + v_{1j} \\
+
+u_{ij} & \sim \mathcal N(0, \sigma_u) \\
+\begin{bmatrix} v_{0j} \\ v_{1j} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{SRS}) \\
+
+\mathbf S & = \begin{bmatrix} \sigma_{v_{0}} \\ 1 & \sigma_{v_{1}}\end{bmatrix} \\
+\mathbf R & = \begin{bmatrix} 1 \\ \rho & 1 \end{bmatrix}
+
+\end{align*}
+$$
+
+
+$$
+\begin{align*}
+y_{ijk} & \sim \mathcal N(\mu_{ijk}, \sigma_{ijk}) \\
+\mu_{ijk} & = \beta_{0ij} + \beta_{1j} \text{test}_{ijk} \\
+\beta_{0ij} & = \delta_{00} + \delta_{01} \text{group}_j + v_{0j} + u_{ij} \\
+\beta_{1j} & = \delta_{10} + \delta_{11} \text{group}_j + v_{1j}
+\end{align*}
+$$
+
+$$
+\begin{align*}
+y_{ijk} & \sim \mathcal N(\mu_{ijk}, \sigma_{ijk}) \\
+\mu_{ijk} & = \delta_{00} + \delta_{01} \text{group}_j + \delta_{10}\text{test}_{ijk} + \delta_{11} \text{group}_j \text{test}_{ijk} + [u_{ij} + v_{0j} + v_{1j} \text{test}_{ijk}] \\
+
+u_{ij} & \sim \mathcal N(0, \sigma_u) \\
+\begin{bmatrix} v_{0j} \\ v_{1j} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{SRS}) \\
+
+\mathbf S & = \begin{bmatrix} \sigma_{v_{0}} \\ 1 & \sigma_{v_{1}}\end{bmatrix} \\
+\mathbf R & = \begin{bmatrix} 1 \\ \rho & 1 \end{bmatrix}
+\end{align*}
+$$
+
+
+
+$$
+\begin{align*}
+y_{ijk} & \sim \mathcal N(\mu_{ijk}, \sigma_{ijk}) \\
+\mu_{ijk} & = b_{ij} \text{test}_{ijk} \\
+b_{ij} & = \beta_j + u_{ij} \\
+\beta_j & = \gamma_0 + \gamma_1 \text{group}_j + \gamma_2 \Big[ \log(\text{education}_j) - \overline{\log(\text{education})} \Big] + v_j \\
+
+u_{ij} & \sim \mathcal N(0, \sigma_u) \\
+v_j & \sim \mathcal N(0, \sigma_v)
+
+\end{align*}
+$$
+
+
+$$
+\begin{align*}
+y_{ijk} & \sim \mathcal N(\mu_{ijk}, \sigma_{ijk}) \\
+\mu_{ijk} & = b_{ij} \text{test}_{ijk} \\
+b_{ij} & = \gamma_0 + \gamma_1 \text{group}_j + \gamma_2 \Big[ \log(\text{education}_j) - \overline{\log(\text{education})} \Big] + v_j + u_{ij} \\
+\end{align*}
+$$
+
+$$
+\begin{align*}
+y_{ijk} & \sim \mathcal N(\mu_{ijk}, \sigma_{ijk}) \\
+\mu_{ijk} & = \Big (\gamma_0 + \gamma_1 \text{group}_j + \gamma_2 \Big[ \log(\text{education}_j) - \overline{\log(\text{education})} \Big] + v_j + u_{ij} \Big) \text{test}_{ijk} \\
+\end{align*}
+$$
+
+
+
+
+
+
+
+
+
