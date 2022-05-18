@@ -6,3 +6,5 @@ Most of the data files in his folder have been simulated, as documented in the [
 | - | - | - |
 | `aggregate_data.xlsx` | Milkman et al (2022) | https://osf.io/rn8tw/?view_only=546ed2d8473f4978b95948a52712a3c5 |
 | `Exp1.csv` | Kessler et al (2022) | https://osf.io/vt9xk/ |
+| `Combined Data (10-28-16).xlsx` | Wagenmakers et al (2016) | https://osf.io/pkd65/ |
+
