@@ -85,7 +85,6 @@ There are a handful of different models we might use to analyze these data. We'l
 
 The first model will be the unconditional growth model
 
-$$
 \begin{align*}
 \text{total}_{ij} & \sim \operatorname{Poisson}(\lambda_{ij}) \\
 \log(\lambda_{ij}) & = a_i + b_i \text{trial0}_{ij} \\
@@ -104,7 +103,6 @@ b_i & = \beta + v_i \\
 \sigma_v & \sim \operatorname{Exponential}(2) \\
 \rho    & \sim \operatorname{LKJ}(2),
 \end{align*}
-$$
 
 where the behavioral count variable `total` varies across $i$ behaviors and $j$ trials. There is an overall intercept $\alpha$ and `behavior`-specific deviations $(u_i)$ around that overall intercept. There is an overall slope across `trial0` $\beta$, which has `behavior`-specific deviations $(v_i)$ around that overall parameter. Per by convention, those two deviation parameters are modeled as multivariate normal with the variance/covariance $\mathbf \Sigma$ decomposed into a standard deviation matrix $\mathbf S$ and correlation matrix $\mathbf R$. 
 

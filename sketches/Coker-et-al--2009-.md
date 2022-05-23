@@ -1,7 +1,7 @@
 Coker et al (2009)
 ================
 A Solomon Kurz
-2022-02-28
+2022-05-23
 
 Load our primary packages.
 
@@ -126,46 +126,47 @@ will be nested within the three levels of `behavior`.
 
 The first model will be the unconditional growth model
 
-$$
-\\begin{align\*}
-\\text{total}\_{ij} & \\sim \\operatorname{Poisson}(\\lambda\_{ij}) \\\\
-\\log(\\lambda\_{ij}) & = a_i + b_i \\text{trial0}\_{ij} \\\\
-a_i & = \\alpha + u_i \\\\
-b_i & = \\beta + v_i \\\\
-\\begin{bmatrix} u_i \\\\ v_i \\end{bmatrix} & \\sim
-  \\operatorname{Normal} \\left ( 
-    \\begin{bmatrix} 0 \\\\ 0 \\end{bmatrix}, \\mathbf \\Sigma 
-    \\right) \\\\
-\\mathbf \\Sigma & = \\mathbf{SRS} \\\\
-\\mathbf S & =  \\begin{bmatrix} \\sigma_u & \\\\ 0 & \\sigma_v \\end{bmatrix} \\\\
-\\mathbf R & =  \\begin{bmatrix} 1 & \\\\ \\rho & 1 \\end{bmatrix} \\\\
-\\alpha & \\sim \\operatorname{Normal}(\\log(5), 0.5) \\\\
-\\beta  & \\sim \\operatorname{Normal}(0, 0.5) \\\\
-\\sigma_u & \\sim \\operatorname{Exponential}(2) \\\\
-\\sigma_v & \\sim \\operatorname{Exponential}(2) \\\\
-\\rho    & \\sim \\operatorname{LKJ}(2),
-\\end{align\*}
-$$
-
-where the behavioral count variable `total` varies across *i* behaviors
-and *j* trials. There is an overall intercept *α* and
-`behavior`-specific deviations (*u*<sub>*i*</sub>) around that overall
-intercept. There is an overall slope across `trial0` *β*, which has
-`behavior`-specific deviations (*v*<sub>*i*</sub>) around that overall
-parameter. Per by convention, those two deviation parameters are modeled
-as multivariate normal with the variance/covariance **Σ** decomposed
-into a standard deviation matrix **S** and correlation matrix **R**.
+where the behavioral count variable `total` varies across
+![i](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;i "i")
+behaviors and
+![j](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;j "j")
+trials. There is an overall intercept
+![\\alpha](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Calpha "\alpha")
+and `behavior`-specific deviations
+![(u_i)](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%28u_i%29 "(u_i)")
+around that overall intercept. There is an overall slope across `trial0`
+![\\beta](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Cbeta "\beta"),
+which has `behavior`-specific deviations
+![(v_i)](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%28v_i%29 "(v_i)")
+around that overall parameter. Per by convention, those two deviation
+parameters are modeled as multivariate normal with the
+variance/covariance
+![\\mathbf \\Sigma](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Cmathbf%20%5CSigma "\mathbf \Sigma")
+decomposed into a standard deviation matrix
+![\\mathbf S](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Cmathbf%20S "\mathbf S")
+and correlation matrix
+![\\mathbf R](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Cmathbf%20R "\mathbf R").
 
 The second model allows for `phase`-specific means:
 
 $$ $$
 
-Here the \[phase\] subscript indicates the *α* parameter is indexed by
-the four levels of `phase`, which all also vary across the three levels
-of `behavior` as indicated by the `behavior`-specific deviations around
-those four grand means *u*<sub>\[phase\]*i*</sub>. Those four deviation
-parameters are modeled as multivariate normal in the typical way, with
-the **S** and **R** matrices now following a 4 × 4 structure.
+Here the
+![{\[\\text{phase}\]}](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%7B%5B%5Ctext%7Bphase%7D%5D%7D "{[\text{phase}]}")
+subscript indicates the
+![\\alpha](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Calpha "\alpha")
+parameter is indexed by the four levels of `phase`, which all also vary
+across the three levels of `behavior` as indicated by the
+`behavior`-specific deviations around those four grand means
+![u\_{\[\\text{phase}\]i}](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;u_%7B%5B%5Ctext%7Bphase%7D%5Di%7D "u_{[\text{phase}]i}").
+Those four deviation parameters are modeled as multivariate normal in
+the typical way, with the
+![\\mathbf S](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Cmathbf%20S "\mathbf S")
+and
+![\\mathbf R](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Cmathbf%20R "\mathbf R")
+matrices now following a
+![4 \\times 4](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;4%20%5Ctimes%204 "4 \times 4")
+structure.
 
 The final model is what you might call the full or theory-based model.
 It’s a conditional growth model of the form
@@ -174,8 +175,13 @@ $$ $$
 
 where now the intercepts and `ptrial0` slopes vary across the four
 levels of `phase`. Given that all these also vary across the three
-levels of `behavior`, this results in an 8 × 8 structure for the **S**
-and **R** matrices.
+levels of `behavior`, this results in an
+![8 \\times 8](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;8%20%5Ctimes%208 "8 \times 8")
+structure for the
+![\\mathbf S](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Cmathbf%20S "\mathbf S")
+and
+![\\mathbf R](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Cmathbf%20R "\mathbf R")
+matrices.
 
 Here’s how to fit the models with **brms**.
 
@@ -356,13 +362,13 @@ fitted(fit3,
 sessionInfo()
 ```
 
-    ## R version 4.1.2 (2021-11-01)
+    ## R version 4.2.0 (2022-04-22)
     ## Platform: x86_64-apple-darwin17.0 (64-bit)
     ## Running under: macOS Catalina 10.15.7
     ## 
     ## Matrix products: default
-    ## BLAS:   /Library/Frameworks/R.framework/Versions/4.1/Resources/lib/libRblas.0.dylib
-    ## LAPACK: /Library/Frameworks/R.framework/Versions/4.1/Resources/lib/libRlapack.dylib
+    ## BLAS:   /Library/Frameworks/R.framework/Versions/4.2/Resources/lib/libRblas.0.dylib
+    ## LAPACK: /Library/Frameworks/R.framework/Versions/4.2/Resources/lib/libRlapack.dylib
     ## 
     ## locale:
     ## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
@@ -371,33 +377,34 @@ sessionInfo()
     ## [1] stats     graphics  grDevices utils     datasets  methods   base     
     ## 
     ## other attached packages:
-    ##  [1] tidybayes_3.0.2 brms_2.16.3     Rcpp_1.0.8      forcats_0.5.1   stringr_1.4.0   dplyr_1.0.7    
-    ##  [7] purrr_0.3.4     readr_2.0.1     tidyr_1.2.0     tibble_3.1.6    ggplot2_3.3.5   tidyverse_1.3.1
+    ##  [1] tidybayes_3.0.2      brms_2.17.3          Rcpp_1.0.8.3         forcats_0.5.1        stringr_1.4.0       
+    ##  [6] dplyr_1.0.9          purrr_0.3.4          readr_2.1.2          tidyr_1.2.0          tibble_3.1.7        
+    ## [11] ggplot2_3.3.6        tidyverse_1.3.1.9000
     ## 
     ## loaded via a namespace (and not attached):
-    ##   [1] readxl_1.3.1         backports_1.4.1      plyr_1.8.6           igraph_1.2.6         svUnit_1.0.6        
-    ##   [6] splines_4.1.2        crosstalk_1.1.1      TH.data_1.0-10       rstantools_2.1.1     inline_0.3.19       
-    ##  [11] digest_0.6.29        htmltools_0.5.2      rsconnect_0.8.24     fansi_1.0.2          magrittr_2.0.2      
-    ##  [16] checkmate_2.0.0      tzdb_0.1.2           modelr_0.1.8         RcppParallel_5.1.4   matrixStats_0.61.0  
-    ##  [21] xts_0.12.1           sandwich_3.0-1       prettyunits_1.1.1    colorspace_2.0-2     rvest_1.0.1         
-    ##  [26] ggdist_3.0.1         haven_2.4.3          xfun_0.25            callr_3.7.0          crayon_1.4.2        
-    ##  [31] jsonlite_1.7.3       lme4_1.1-27.1        survival_3.2-13      zoo_1.8-9            glue_1.6.1          
-    ##  [36] gtable_0.3.0         emmeans_1.7.1-1      distributional_0.2.2 pkgbuild_1.2.0       rstan_2.21.3        
-    ##  [41] abind_1.4-5          scales_1.1.1         mvtnorm_1.1-2        DBI_1.1.1            miniUI_0.1.1.1      
-    ##  [46] viridisLite_0.4.0    xtable_1.8-4         diffobj_0.3.4        stats4_4.1.2         StanHeaders_2.21.0-7
-    ##  [51] DT_0.19              htmlwidgets_1.5.3    httr_1.4.2           threejs_0.3.3        arrayhelpers_1.1-0  
-    ##  [56] posterior_1.1.0.9000 ellipsis_0.3.2       pkgconfig_2.0.3      loo_2.4.1            farver_2.1.0        
-    ##  [61] dbplyr_2.1.1         utf8_1.2.2           labeling_0.4.2       tidyselect_1.1.1     rlang_1.0.1         
-    ##  [66] reshape2_1.4.4       later_1.3.0          munsell_0.5.0        cellranger_1.1.0     tools_4.1.2         
-    ##  [71] cli_3.1.1            generics_0.1.2       broom_0.7.10         ggridges_0.5.3       evaluate_0.14       
-    ##  [76] fastmap_1.1.0        yaml_2.2.1           processx_3.5.2       knitr_1.33           fs_1.5.0            
-    ##  [81] nlme_3.1-153         mime_0.11            projpred_2.0.2       xml2_1.3.2           compiler_4.1.2      
-    ##  [86] bayesplot_1.8.1      shinythemes_1.2.0    rstudioapi_0.13      gamm4_0.2-6          reprex_2.0.1        
-    ##  [91] stringi_1.7.4        highr_0.9            ps_1.6.0             Brobdingnag_1.2-6    lattice_0.20-45     
-    ##  [96] Matrix_1.3-4         nloptr_1.2.2.2       markdown_1.1         shinyjs_2.0.0        tensorA_0.36.2      
-    ## [101] vctrs_0.3.8          pillar_1.7.0         lifecycle_1.0.1      bridgesampling_1.1-2 estimability_1.3    
-    ## [106] httpuv_1.6.2         R6_2.5.1             promises_1.2.0.1     gridExtra_2.3        codetools_0.2-18    
-    ## [111] boot_1.3-28          colourpicker_1.1.0   MASS_7.3-54          gtools_3.9.2         assertthat_0.2.1    
-    ## [116] withr_2.4.3          shinystan_2.5.0      multcomp_1.4-17      mgcv_1.8-38          parallel_4.1.2      
-    ## [121] hms_1.1.0            grid_4.1.2           coda_0.19-4          minqa_1.2.4          rmarkdown_2.10      
-    ## [126] shiny_1.6.0          lubridate_1.7.10     base64enc_0.1-3      dygraphs_1.1.1.6
+    ##   [1] readxl_1.4.0         backports_1.4.1      plyr_1.8.7           igraph_1.3.1         splines_4.2.0       
+    ##   [6] svUnit_1.0.6         crosstalk_1.2.0      TH.data_1.1-1        rstantools_2.2.0     inline_0.3.19       
+    ##  [11] digest_0.6.29        htmltools_0.5.2      fansi_1.0.3          magrittr_2.0.3       checkmate_2.1.0     
+    ##  [16] googlesheets4_1.0.0  tzdb_0.3.0           modelr_0.1.8         dtplyr_1.2.1         RcppParallel_5.1.5  
+    ##  [21] matrixStats_0.62.0   xts_0.12.1           sandwich_3.0-1       prettyunits_1.1.1    colorspace_2.0-3    
+    ##  [26] rvest_1.0.2          ggdist_3.1.1         haven_2.5.0          xfun_0.31            callr_3.7.0         
+    ##  [31] crayon_1.5.1         jsonlite_1.8.0       survival_3.3-1       zoo_1.8-10           glue_1.6.2          
+    ##  [36] gtable_0.3.0         gargle_1.2.0         emmeans_1.7.3        V8_4.1.0             distributional_0.3.0
+    ##  [41] pkgbuild_1.3.1       rstan_2.26.11        abind_1.4-5          scales_1.2.0         mvtnorm_1.1-3       
+    ##  [46] DBI_1.1.2            miniUI_0.1.1.1       viridisLite_0.4.0    xtable_1.8-4         diffobj_0.3.5       
+    ##  [51] stats4_4.2.0         StanHeaders_2.26.11  DT_0.22              htmlwidgets_1.5.4    httr_1.4.3          
+    ##  [56] threejs_0.3.3        arrayhelpers_1.1-0   posterior_1.2.1      ellipsis_0.3.2       pkgconfig_2.0.3     
+    ##  [61] loo_2.5.1            farver_2.1.0         dbplyr_2.1.1.9000    utf8_1.2.2           labeling_0.4.2      
+    ##  [66] tidyselect_1.1.2     rlang_1.0.2          reshape2_1.4.4       later_1.3.0          munsell_0.5.0       
+    ##  [71] cellranger_1.1.0     tools_4.2.0          cli_3.3.0            generics_0.1.2       broom_0.8.0         
+    ##  [76] ggridges_0.5.3       evaluate_0.15        fastmap_1.1.0        yaml_2.3.5           processx_3.5.3      
+    ##  [81] knitr_1.39           fs_1.5.2             nlme_3.1-157         mime_0.12            xml2_1.3.3          
+    ##  [86] compiler_4.2.0       bayesplot_1.9.0      shinythemes_1.2.0    rstudioapi_0.13      curl_4.3.2          
+    ##  [91] reprex_2.0.1         stringi_1.7.6        highr_0.9            ps_1.7.0             Brobdingnag_1.2-7   
+    ##  [96] lattice_0.20-45      Matrix_1.4-1         markdown_1.1         shinyjs_2.1.0        tensorA_0.36.2      
+    ## [101] vctrs_0.4.1          pillar_1.7.0         lifecycle_1.0.1      bridgesampling_1.1-2 estimability_1.3    
+    ## [106] data.table_1.14.2    httpuv_1.6.5         R6_2.5.1             promises_1.2.0.1     gridExtra_2.3       
+    ## [111] codetools_0.2-18     colourpicker_1.1.1   MASS_7.3-56          gtools_3.9.2         assertthat_0.2.1    
+    ## [116] withr_2.5.0          shinystan_2.6.0      multcomp_1.4-19      mgcv_1.8-40          parallel_4.2.0      
+    ## [121] hms_1.1.1            grid_4.2.0           coda_0.19-4          rmarkdown_2.14       googledrive_2.0.0   
+    ## [126] shiny_1.7.1          lubridate_1.8.0      base64enc_0.1-3      dygraphs_1.1.1.6
