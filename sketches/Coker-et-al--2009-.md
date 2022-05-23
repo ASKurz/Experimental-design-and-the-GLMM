@@ -126,6 +126,46 @@ will be nested within the three levels of `behavior`.
 
 The first model will be the unconditional growth model
 
+![
+\\begin{align\*}
+\\text{total}\_{ij} & \\sim \\operatorname{Poisson}(\\lambda\_{ij}) \\\\
+\\log(\\lambda\_{ij}) & = a_i + b_i \\text{trial0}\_{ij} \\\\
+a_i & = \\alpha + u_i \\\\
+b_i & = \\beta + v_i \\\\
+\\begin{bmatrix} u_i \\\\ v_i \\end{bmatrix} & \\sim
+  \\operatorname{Normal} \\left ( 
+    \\begin{bmatrix} 0 \\\\ 0 \\end{bmatrix}, \\mathbf \\Sigma 
+    \\right) \\\\
+\\mathbf \\Sigma & = \\mathbf{SRS} \\\\
+\\mathbf S & =  \\begin{bmatrix} \\sigma_u & \\\\ 0 & \\sigma_v \\end{bmatrix} \\\\
+\\mathbf R & =  \\begin{bmatrix} 1 & \\\\ \\rho & 1 \\end{bmatrix} \\\\
+\\alpha & \\sim \\operatorname{Normal}(\\log(5), 0.5) \\\\
+\\beta  & \\sim \\operatorname{Normal}(0, 0.5) \\\\
+\\sigma_u & \\sim \\operatorname{Exponential}(2) \\\\
+\\sigma_v & \\sim \\operatorname{Exponential}(2) \\\\
+\\rho    & \\sim \\operatorname{LKJ}(2),
+\\end{align\*}
+](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0A%5Ctext%7Btotal%7D_%7Bij%7D%20%26%20%5Csim%20%5Coperatorname%7BPoisson%7D%28%5Clambda_%7Bij%7D%29%20%5C%5C%0A%5Clog%28%5Clambda_%7Bij%7D%29%20%26%20%3D%20a_i%20%2B%20b_i%20%5Ctext%7Btrial0%7D_%7Bij%7D%20%5C%5C%0Aa_i%20%26%20%3D%20%5Calpha%20%2B%20u_i%20%5C%5C%0Ab_i%20%26%20%3D%20%5Cbeta%20%2B%20v_i%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20u_i%20%5C%5C%20v_i%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%0A%20%20%5Coperatorname%7BNormal%7D%20%5Cleft%20%28%20%0A%20%20%20%20%5Cbegin%7Bbmatrix%7D%200%20%5C%5C%200%20%5Cend%7Bbmatrix%7D%2C%20%5Cmathbf%20%5CSigma%20%0A%20%20%20%20%5Cright%29%20%5C%5C%0A%5Cmathbf%20%5CSigma%20%26%20%3D%20%5Cmathbf%7BSRS%7D%20%5C%5C%0A%5Cmathbf%20S%20%26%20%3D%20%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_u%20%26%20%5C%5C%200%20%26%20%5Csigma_v%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%20R%20%26%20%3D%20%20%5Cbegin%7Bbmatrix%7D%201%20%26%20%5C%5C%20%5Crho%20%26%201%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Calpha%20%26%20%5Csim%20%5Coperatorname%7BNormal%7D%28%5Clog%285%29%2C%200.5%29%20%5C%5C%0A%5Cbeta%20%20%26%20%5Csim%20%5Coperatorname%7BNormal%7D%280%2C%200.5%29%20%5C%5C%0A%5Csigma_u%20%26%20%5Csim%20%5Coperatorname%7BExponential%7D%282%29%20%5C%5C%0A%5Csigma_v%20%26%20%5Csim%20%5Coperatorname%7BExponential%7D%282%29%20%5C%5C%0A%5Crho%20%20%20%20%26%20%5Csim%20%5Coperatorname%7BLKJ%7D%282%29%2C%0A%5Cend%7Balign%2A%7D%0A "
+\begin{align*}
+\text{total}_{ij} & \sim \operatorname{Poisson}(\lambda_{ij}) \\
+\log(\lambda_{ij}) & = a_i + b_i \text{trial0}_{ij} \\
+a_i & = \alpha + u_i \\
+b_i & = \beta + v_i \\
+\begin{bmatrix} u_i \\ v_i \end{bmatrix} & \sim
+  \operatorname{Normal} \left ( 
+    \begin{bmatrix} 0 \\ 0 \end{bmatrix}, \mathbf \Sigma 
+    \right) \\
+\mathbf \Sigma & = \mathbf{SRS} \\
+\mathbf S & =  \begin{bmatrix} \sigma_u & \\ 0 & \sigma_v \end{bmatrix} \\
+\mathbf R & =  \begin{bmatrix} 1 & \\ \rho & 1 \end{bmatrix} \\
+\alpha & \sim \operatorname{Normal}(\log(5), 0.5) \\
+\beta  & \sim \operatorname{Normal}(0, 0.5) \\
+\sigma_u & \sim \operatorname{Exponential}(2) \\
+\sigma_v & \sim \operatorname{Exponential}(2) \\
+\rho    & \sim \operatorname{LKJ}(2),
+\end{align*}
+")
+
 where the behavioral count variable `total` varies across
 ![i](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;i "i")
 behaviors and
@@ -149,7 +189,53 @@ and correlation matrix
 
 The second model allows for `phase`-specific means:
 
-$$ $$
+![
+\\begin{align\*}
+\\text{total}\_{ij} & \\sim \\operatorname{Poisson}(\\lambda\_{ij}) \\\\
+\\log(\\lambda\_{ij}) & = a\_{\[\\text{phase}\]i} \\\\
+a\_{\[\\text{phase}\]i} & = \\alpha\_{\[\\text{phase}\]} + u\_{\[\\text{phase}\]i} \\\\
+\\begin{bmatrix} u\_{\[1\]i} \\\\ u\_{\[2\]i} \\\\ u\_{\[3\]i} \\\\ u\_{\[4\]i} \\end{bmatrix} & \\sim
+  \\operatorname{Normal} \\left ( 
+    \\begin{bmatrix} 0 \\\\ 0 \\\\ 0 \\\\ 0 \\end{bmatrix}, \\mathbf{SRS} 
+    \\right) \\\\
+\\mathbf S & = \\begin{bmatrix} 
+  \\sigma_1 & & & \\\\ 
+  0 & \\sigma_2 & & \\\\ 
+  0 & 0 & \\sigma_3 & \\\\ 
+  0 & 0 & 0 & \\sigma_4 \\end{bmatrix} \\\\
+\\mathbf R & = \\begin{bmatrix} 
+  1 & & & \\\\ 
+  \\rho\_{21} & 1 \\\\ 
+  \\rho\_{31} & \\rho\_{32} & 1 \\\\ 
+  \\rho\_{41} & \\rho\_{42} & \\rho\_{43} & 1 \\end{bmatrix} \\\\
+\\alpha\_{\[\\text{phase}\]} & \\sim \\operatorname{Normal}(\\log(5), 1) \\\\
+\\sigma_1, \\dots, \\sigma_4 & \\sim \\operatorname{Exponential}(2) \\\\
+\\mathbf R & \\sim \\operatorname{LKJ}(1).
+\\end{align\*}
+](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0A%5Ctext%7Btotal%7D_%7Bij%7D%20%26%20%5Csim%20%5Coperatorname%7BPoisson%7D%28%5Clambda_%7Bij%7D%29%20%5C%5C%0A%5Clog%28%5Clambda_%7Bij%7D%29%20%26%20%3D%20a_%7B%5B%5Ctext%7Bphase%7D%5Di%7D%20%5C%5C%0Aa_%7B%5B%5Ctext%7Bphase%7D%5Di%7D%20%26%20%3D%20%5Calpha_%7B%5B%5Ctext%7Bphase%7D%5D%7D%20%2B%20u_%7B%5B%5Ctext%7Bphase%7D%5Di%7D%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20u_%7B%5B1%5Di%7D%20%5C%5C%20u_%7B%5B2%5Di%7D%20%5C%5C%20u_%7B%5B3%5Di%7D%20%5C%5C%20u_%7B%5B4%5Di%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%0A%20%20%5Coperatorname%7BNormal%7D%20%5Cleft%20%28%20%0A%20%20%20%20%5Cbegin%7Bbmatrix%7D%200%20%5C%5C%200%20%5C%5C%200%20%5C%5C%200%20%5Cend%7Bbmatrix%7D%2C%20%5Cmathbf%7BSRS%7D%20%0A%20%20%20%20%5Cright%29%20%5C%5C%0A%5Cmathbf%20S%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%0A%20%20%5Csigma_1%20%26%20%26%20%26%20%5C%5C%20%0A%20%200%20%26%20%5Csigma_2%20%26%20%26%20%5C%5C%20%0A%20%200%20%26%200%20%26%20%5Csigma_3%20%26%20%5C%5C%20%0A%20%200%20%26%200%20%26%200%20%26%20%5Csigma_4%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%20R%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%0A%20%201%20%26%20%26%20%26%20%5C%5C%20%0A%20%20%5Crho_%7B21%7D%20%26%201%20%5C%5C%20%0A%20%20%5Crho_%7B31%7D%20%26%20%5Crho_%7B32%7D%20%26%201%20%5C%5C%20%0A%20%20%5Crho_%7B41%7D%20%26%20%5Crho_%7B42%7D%20%26%20%5Crho_%7B43%7D%20%26%201%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Calpha_%7B%5B%5Ctext%7Bphase%7D%5D%7D%20%26%20%5Csim%20%5Coperatorname%7BNormal%7D%28%5Clog%285%29%2C%201%29%20%5C%5C%0A%5Csigma_1%2C%20%5Cdots%2C%20%5Csigma_4%20%26%20%5Csim%20%5Coperatorname%7BExponential%7D%282%29%20%5C%5C%0A%5Cmathbf%20R%20%26%20%5Csim%20%5Coperatorname%7BLKJ%7D%281%29.%0A%5Cend%7Balign%2A%7D%0A "
+\begin{align*}
+\text{total}_{ij} & \sim \operatorname{Poisson}(\lambda_{ij}) \\
+\log(\lambda_{ij}) & = a_{[\text{phase}]i} \\
+a_{[\text{phase}]i} & = \alpha_{[\text{phase}]} + u_{[\text{phase}]i} \\
+\begin{bmatrix} u_{[1]i} \\ u_{[2]i} \\ u_{[3]i} \\ u_{[4]i} \end{bmatrix} & \sim
+  \operatorname{Normal} \left ( 
+    \begin{bmatrix} 0 \\ 0 \\ 0 \\ 0 \end{bmatrix}, \mathbf{SRS} 
+    \right) \\
+\mathbf S & = \begin{bmatrix} 
+  \sigma_1 & & & \\ 
+  0 & \sigma_2 & & \\ 
+  0 & 0 & \sigma_3 & \\ 
+  0 & 0 & 0 & \sigma_4 \end{bmatrix} \\
+\mathbf R & = \begin{bmatrix} 
+  1 & & & \\ 
+  \rho_{21} & 1 \\ 
+  \rho_{31} & \rho_{32} & 1 \\ 
+  \rho_{41} & \rho_{42} & \rho_{43} & 1 \end{bmatrix} \\
+\alpha_{[\text{phase}]} & \sim \operatorname{Normal}(\log(5), 1) \\
+\sigma_1, \dots, \sigma_4 & \sim \operatorname{Exponential}(2) \\
+\mathbf R & \sim \operatorname{LKJ}(1).
+\end{align*}
+")
 
 Here the
 ![{\[\\text{phase}\]}](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%7B%5B%5Ctext%7Bphase%7D%5D%7D "{[\text{phase}]}")
@@ -171,7 +257,45 @@ structure.
 The final model is what you might call the full or theory-based model.
 It’s a conditional growth model of the form
 
-$$ $$
+![
+\\begin{align\*}
+\\text{total}\_{ij} & \\sim \\operatorname{Poisson}(\\lambda\_{ij}) \\\\
+\\log(\\lambda\_{ij}) & = b\_{0i} + b_1 \\text{B1}\_{ij} + b\_{2i} \\text{A2}\_{ij} + b\_{3i} \\text{B2}\_{ij} + b\_{4i} \\text{trial0}\_{ij} + b\_{5i} (\\text{B1} \\cdot \\text{trial0})\_{ij}+ b\_{6i} (\\text{A2} \\cdot \\text{trial0})\_{ij} + b\_{7i} (\\text{B2} \\cdot \\text{trial0})\_{ij} \\\\
+b\_{0i} & = \\beta_0 + u\_{0i}  \\\\
+b\_{1i} & = \\beta_1 + u\_{1i}  \\\\
+b\_{2i} & = \\beta_2 + u\_{2i}  \\\\
+b\_{3i} & = \\beta_3 + u\_{3i}  \\\\
+b\_{4i} & = \\beta_4 + u\_{4i}  \\\\
+b\_{5i} & = \\beta_5 + u\_{5i}  \\\\
+b\_{6i} & = \\beta_6 + u\_{6i}  \\\\
+b\_{7i} & = \\beta_7 + u\_{7i}  \\\\
+\\begin{bmatrix} u\_{0i} \\\\ \\vdots \\\\ u\_{7i} \\end{bmatrix} & \\sim
+  \\operatorname{Normal}(\\mathbf 0, \\mathbf{SRS}) \\\\
+\\beta_0 & \\sim \\operatorname{Normal}(\\log(5), 0.5) \\\\
+\\beta_1, \\dots, \\beta_7  & \\sim \\operatorname{Normal}(0, 0.5) \\\\
+\\sigma_1, \\dots, \\sigma_8 & \\sim \\operatorname{Exponential}(2) \\\\
+\\mathbf R & \\sim \\operatorname{LKJ}(1),
+\\end{align\*}
+](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0A%5Ctext%7Btotal%7D_%7Bij%7D%20%26%20%5Csim%20%5Coperatorname%7BPoisson%7D%28%5Clambda_%7Bij%7D%29%20%5C%5C%0A%5Clog%28%5Clambda_%7Bij%7D%29%20%26%20%3D%20b_%7B0i%7D%20%2B%20b_1%20%5Ctext%7BB1%7D_%7Bij%7D%20%2B%20b_%7B2i%7D%20%5Ctext%7BA2%7D_%7Bij%7D%20%2B%20b_%7B3i%7D%20%5Ctext%7BB2%7D_%7Bij%7D%20%2B%20b_%7B4i%7D%20%5Ctext%7Btrial0%7D_%7Bij%7D%20%2B%20b_%7B5i%7D%20%28%5Ctext%7BB1%7D%20%5Ccdot%20%5Ctext%7Btrial0%7D%29_%7Bij%7D%2B%20b_%7B6i%7D%20%28%5Ctext%7BA2%7D%20%5Ccdot%20%5Ctext%7Btrial0%7D%29_%7Bij%7D%20%2B%20b_%7B7i%7D%20%28%5Ctext%7BB2%7D%20%5Ccdot%20%5Ctext%7Btrial0%7D%29_%7Bij%7D%20%5C%5C%0Ab_%7B0i%7D%20%26%20%3D%20%5Cbeta_0%20%2B%20u_%7B0i%7D%20%20%5C%5C%0Ab_%7B1i%7D%20%26%20%3D%20%5Cbeta_1%20%2B%20u_%7B1i%7D%20%20%5C%5C%0Ab_%7B2i%7D%20%26%20%3D%20%5Cbeta_2%20%2B%20u_%7B2i%7D%20%20%5C%5C%0Ab_%7B3i%7D%20%26%20%3D%20%5Cbeta_3%20%2B%20u_%7B3i%7D%20%20%5C%5C%0Ab_%7B4i%7D%20%26%20%3D%20%5Cbeta_4%20%2B%20u_%7B4i%7D%20%20%5C%5C%0Ab_%7B5i%7D%20%26%20%3D%20%5Cbeta_5%20%2B%20u_%7B5i%7D%20%20%5C%5C%0Ab_%7B6i%7D%20%26%20%3D%20%5Cbeta_6%20%2B%20u_%7B6i%7D%20%20%5C%5C%0Ab_%7B7i%7D%20%26%20%3D%20%5Cbeta_7%20%2B%20u_%7B7i%7D%20%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20u_%7B0i%7D%20%5C%5C%20%5Cvdots%20%5C%5C%20u_%7B7i%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%0A%20%20%5Coperatorname%7BNormal%7D%28%5Cmathbf%200%2C%20%5Cmathbf%7BSRS%7D%29%20%5C%5C%0A%5Cbeta_0%20%26%20%5Csim%20%5Coperatorname%7BNormal%7D%28%5Clog%285%29%2C%200.5%29%20%5C%5C%0A%5Cbeta_1%2C%20%5Cdots%2C%20%5Cbeta_7%20%20%26%20%5Csim%20%5Coperatorname%7BNormal%7D%280%2C%200.5%29%20%5C%5C%0A%5Csigma_1%2C%20%5Cdots%2C%20%5Csigma_8%20%26%20%5Csim%20%5Coperatorname%7BExponential%7D%282%29%20%5C%5C%0A%5Cmathbf%20R%20%26%20%5Csim%20%5Coperatorname%7BLKJ%7D%281%29%2C%0A%5Cend%7Balign%2A%7D%0A "
+\begin{align*}
+\text{total}_{ij} & \sim \operatorname{Poisson}(\lambda_{ij}) \\
+\log(\lambda_{ij}) & = b_{0i} + b_1 \text{B1}_{ij} + b_{2i} \text{A2}_{ij} + b_{3i} \text{B2}_{ij} + b_{4i} \text{trial0}_{ij} + b_{5i} (\text{B1} \cdot \text{trial0})_{ij}+ b_{6i} (\text{A2} \cdot \text{trial0})_{ij} + b_{7i} (\text{B2} \cdot \text{trial0})_{ij} \\
+b_{0i} & = \beta_0 + u_{0i}  \\
+b_{1i} & = \beta_1 + u_{1i}  \\
+b_{2i} & = \beta_2 + u_{2i}  \\
+b_{3i} & = \beta_3 + u_{3i}  \\
+b_{4i} & = \beta_4 + u_{4i}  \\
+b_{5i} & = \beta_5 + u_{5i}  \\
+b_{6i} & = \beta_6 + u_{6i}  \\
+b_{7i} & = \beta_7 + u_{7i}  \\
+\begin{bmatrix} u_{0i} \\ \vdots \\ u_{7i} \end{bmatrix} & \sim
+  \operatorname{Normal}(\mathbf 0, \mathbf{SRS}) \\
+\beta_0 & \sim \operatorname{Normal}(\log(5), 0.5) \\
+\beta_1, \dots, \beta_7  & \sim \operatorname{Normal}(0, 0.5) \\
+\sigma_1, \dots, \sigma_8 & \sim \operatorname{Exponential}(2) \\
+\mathbf R & \sim \operatorname{LKJ}(1),
+\end{align*}
+")
 
 where now the intercepts and `ptrial0` slopes vary across the four
 levels of `phase`. Given that all these also vary across the three

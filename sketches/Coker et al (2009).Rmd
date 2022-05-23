@@ -85,6 +85,7 @@ There are a handful of different models we might use to analyze these data. We'l
 
 The first model will be the unconditional growth model
 
+$$
 \begin{align*}
 \text{total}_{ij} & \sim \operatorname{Poisson}(\lambda_{ij}) \\
 \log(\lambda_{ij}) & = a_i + b_i \text{trial0}_{ij} \\
@@ -103,6 +104,7 @@ b_i & = \beta + v_i \\
 \sigma_v & \sim \operatorname{Exponential}(2) \\
 \rho    & \sim \operatorname{LKJ}(2),
 \end{align*}
+$$
 
 where the behavioral count variable `total` varies across $i$ behaviors and $j$ trials. There is an overall intercept $\alpha$ and `behavior`-specific deviations $(u_i)$ around that overall intercept. There is an overall slope across `trial0` $\beta$, which has `behavior`-specific deviations $(v_i)$ around that overall parameter. Per by convention, those two deviation parameters are modeled as multivariate normal with the variance/covariance $\mathbf \Sigma$ decomposed into a standard deviation matrix $\mathbf S$ and correlation matrix $\mathbf R$. 
 
@@ -117,19 +119,16 @@ a_{[\text{phase}]i} & = \alpha_{[\text{phase}]} + u_{[\text{phase}]i} \\
   \operatorname{Normal} \left ( 
     \begin{bmatrix} 0 \\ 0 \\ 0 \\ 0 \end{bmatrix}, \mathbf{SRS} 
     \right) \\
-
 \mathbf S & = \begin{bmatrix} 
   \sigma_1 & & & \\ 
   0 & \sigma_2 & & \\ 
   0 & 0 & \sigma_3 & \\ 
   0 & 0 & 0 & \sigma_4 \end{bmatrix} \\
-
 \mathbf R & = \begin{bmatrix} 
   1 & & & \\ 
   \rho_{21} & 1 \\ 
   \rho_{31} & \rho_{32} & 1 \\ 
   \rho_{41} & \rho_{42} & \rho_{43} & 1 \end{bmatrix} \\
-
 \alpha_{[\text{phase}]} & \sim \operatorname{Normal}(\log(5), 1) \\
 \sigma_1, \dots, \sigma_4 & \sim \operatorname{Exponential}(2) \\
 \mathbf R & \sim \operatorname{LKJ}(1).
@@ -143,9 +142,7 @@ The final model is what you might call the full or theory-based model. It's a co
 $$
 \begin{align*}
 \text{total}_{ij} & \sim \operatorname{Poisson}(\lambda_{ij}) \\
-
 \log(\lambda_{ij}) & = b_{0i} + b_1 \text{B1}_{ij} + b_{2i} \text{A2}_{ij} + b_{3i} \text{B2}_{ij} + b_{4i} \text{trial0}_{ij} + b_{5i} (\text{B1} \cdot \text{trial0})_{ij}+ b_{6i} (\text{A2} \cdot \text{trial0})_{ij} + b_{7i} (\text{B2} \cdot \text{trial0})_{ij} \\
-
 b_{0i} & = \beta_0 + u_{0i}  \\
 b_{1i} & = \beta_1 + u_{1i}  \\
 b_{2i} & = \beta_2 + u_{2i}  \\
@@ -154,7 +151,6 @@ b_{4i} & = \beta_4 + u_{4i}  \\
 b_{5i} & = \beta_5 + u_{5i}  \\
 b_{6i} & = \beta_6 + u_{6i}  \\
 b_{7i} & = \beta_7 + u_{7i}  \\
-
 \begin{bmatrix} u_{0i} \\ \vdots \\ u_{7i} \end{bmatrix} & \sim
   \operatorname{Normal}(\mathbf 0, \mathbf{SRS}) \\
 \beta_0 & \sim \operatorname{Normal}(\log(5), 0.5) \\
