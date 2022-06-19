@@ -5,6 +5,10 @@ date: "`r format(Sys.Date())`"
 output: github_document
 ---
 
+```{r, echo = F}
+knitr::opts_chunk$set(fig.retina = 2.5)
+```
+
 The purpose of this file is to simulate the data from Berg et al (2020; https://doi.org/10.3389/fpsyt.2020.00503). We don't have their actual data file, but they displayed information about sample size, mean, and standard deviations for the primary outcomes in Figure 2 (p. 4) and Table 2 (p. 9).
 
 Participants were adolescents (15 to 19 years old, with a mean age of about 17; 81% female) in Sweden with elevated levels of anxiety and comorbid depression. Participants were randomized into four groups and data were collected at three time points. The four groups were:
