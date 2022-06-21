@@ -1,0 +1,86 @@
+---
+title: "wagenmakers2016"
+author: "A Solomon Kurz"
+date: "`r format(Sys.Date())`"
+output: github_document
+---
+
+The purpose of this file is to consolidate and reformat the data from Wagenmakers et al (2016; https://doi.org/10.1177/1745691616674458). The original data are openly available on the OSF at https://osf.io/9j72u/, downloadable in a zip file called `Data_FINAL.zip`. However, within that file, the data are saved in 17 separate `.csv` files, by research lab. We want them saved in a single file.
+
+Load the **tidyverse**.
+
+```{r, warning = F, message = F}
+# library(tidyverse)
+
+library(ggplot2)
+library(tibble)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(purrr)
+library(readr)
+```
+
+Load the files and wrangle.
+
+```{r}
+# data path and individual lab file names
+data_path <- "Data_FINAL/"
+
+# column names for the .csv data
+col_names <- c("subject_no", "participant_id", "condition", str_c("correct", 1:4), "correct_total", str_c("task", 1:2), str_c("rating", 1:4), "self_reported_task_performance", "comprehended_cartoons", "aware_of_the_goal", "participants_guess_of_the_studys_goal", "age", "gender", "student", "occupation_or_field_of_study")
+
+wagenmakers2016 <- tibble(files = list.files(data_path, pattern = "*_Data.csv")) %>% 
+  mutate(path = str_c(data_path, files)) %>% 
+  mutate(data = map(path, ~read_csv(., 
+                                    col_names = col_names, 
+                                    skip = 2, 
+                                    col_select = 1:22, 
+                                    col_types = "dcdddddddddddddddcdddc"))) %>% 
+  unnest(data) %>% 
+  mutate(lab = str_extract(files, "[^_]+")) %>% 
+  # update one of the lab names
+  mutate(lab = ifelse(lab == "檢dogru", "Özdoğru", lab)) %>% 
+  # add unique participant identifier
+  mutate(sn = 1:n()) %>% 
+  # rearrange columns
+  select(lab, sn, everything(), -files, -path) 
+
+# what?
+glimpse(wagenmakers2016)
+```
+
+Do note, the `wagenmakers2016` data frame contains all cases, even those which are to be dropped by the exclusion criteria. Wagenmakers and colleagues had several exclusion criteria, which they detailed in the *Exclusion criteria* subsection of their *Method* (pp. 4-5). They excluded the data from participants:
+
+* whose average cartoon rating exceeded 2.5 standard deviations from the group mean in their condition,
+* who correctly guessed the goal of the study (see `aware_of_the_goal`),
+* who answered "No" to the question "Did you understand the cartoons?" (see `comprehended_cartoons`), and
+* who held the pen incorrectly for two or more of the four cartoons (see `correct_total`).
+
+Here's how one might filter based on the last 3 of the 4 criteria.
+
+```{r}
+# start with n = 2612
+wagenmakers2016 %>%
+  # n = 2436 (drop 87 who were 1 and 89 who were NA)
+  filter(aware_of_the_goal == 0) %>% 
+  # n = 2190 (drop 232 who were 0, 8 who were 2, and 6 who were NA)
+  filter(comprehended_cartoons == 1) %>% 
+  # n = 1913 (drop 199 who were 0, 27 who were 1, 49 who were 2, and 2 who were NA)
+  filter(correct_total > 2)
+```
+
+## Save
+
+Now save the results in an external `.rda` file.
+
+```{r}
+save(wagenmakers2016, file = "wagenmakers2016.rda")
+```
+
+## Session information
+
+```{r}
+sessionInfo()
+```
+
