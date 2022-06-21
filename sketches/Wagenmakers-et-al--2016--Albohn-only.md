@@ -511,14 +511,8 @@ w_i & \\sim \\mathcal N(0, \\sigma_w) \\\\
 \\begin{bmatrix} x\_{0k} \\\\ x\_{1k} \\end{bmatrix} & \\sim \\mathcal N(\\mathbf 0, \\mathbf{S_xR_xS_x}) \\\\
 \\mathbf{S_x} & = \\begin{bmatrix} \\sigma\_{2k} \\\\ 1 & \\sigma\_{3k} \\end{bmatrix} \\\\
 \\mathbf{R_x} & = \\begin{bmatrix} 1 \\\\ \\rho_x & 1 \\end{bmatrix} \\\\
-\\beta_0 & \\sim \\mathcal N(4.4, 1) \\\\ 
-\\beta_1 & \\sim \\mathcal N(0, 1) \\\\ 
-\\eta_0 & \\sim \\mathcal N(\\log(2.3), 1/3) \\\\ 
-\\eta_1 & \\sim \\mathcal N(0, 0.5) \\\\ 
-\\sigma\_\\epsilon, \\dots, \\sigma\_{3k} & \\sim \\operatorname{Exponential}(1 / 2.3) \\\\
-\\mathbf R & \\sim \\operatorname{LKJ}(2),
 \\end{align\*}
-](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0A%5Ctext%7Brating%7D_%7Bijk%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmu_%7Bijk%7D%2C%20%5Csigma%29%20%5C%5C%0A%5Cmu_%7Bijk%7D%20%26%20%3D%20%5Cbeta_0%20%2B%20%5Cbeta_1%20%5Ctext%7BCondition%7D_%7Bik%7D%20%2B%20u_i%20%2B%20v_%7B0k%7D%20%2B%20v_%7B1k%7D%20%5Ctext%7BCondition%7D_%7Bik%7D%20%5C%5C%0A%5Clog%28%5Csigma_%7Bijk%7D%29%20%26%20%3D%20%5Ceta_0%20%2B%20%5Ceta_1%20%5Ctext%7BCondition%7D_%7Bik%7D%20%2B%20w_i%20%2B%20x_%7B0k%7D%20%2B%20x_%7B1k%7D%20%5Ctext%7BCondition%7D_%7Bik%7D%20%5C%5C%0Au_i%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Csigma_u%29%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20v_%7B0k%7D%20%5C%5C%20v_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmathbf%200%2C%20%5Cmathbf%7BS_vR_vS_v%7D%29%20%5C%5C%0A%5Cmathbf%7BS_v%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_%7B0k%7D%20%5C%5C%201%20%26%20%5Csigma_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%7BR_v%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%20%5Crho_v%20%26%201%20%5Cend%7Bbmatrix%7D%20%5C%5C%0Aw_i%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Csigma_w%29%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20x_%7B0k%7D%20%5C%5C%20x_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmathbf%200%2C%20%5Cmathbf%7BS_xR_xS_x%7D%29%20%5C%5C%0A%5Cmathbf%7BS_x%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_%7B2k%7D%20%5C%5C%201%20%26%20%5Csigma_%7B3k%7D%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%7BR_x%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%20%5Crho_x%20%26%201%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cbeta_0%20%26%20%5Csim%20%5Cmathcal%20N%284.4%2C%201%29%20%5C%5C%20%0A%5Cbeta_1%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%201%29%20%5C%5C%20%0A%5Ceta_0%20%26%20%5Csim%20%5Cmathcal%20N%28%5Clog%282.3%29%2C%201%2F3%29%20%5C%5C%20%0A%5Ceta_1%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%200.5%29%20%5C%5C%20%0A%5Csigma_%5Cepsilon%2C%20%5Cdots%2C%20%5Csigma_%7B3k%7D%20%26%20%5Csim%20%5Coperatorname%7BExponential%7D%281%20%2F%202.3%29%20%5C%5C%0A%5Cmathbf%20R%20%26%20%5Csim%20%5Coperatorname%7BLKJ%7D%282%29%2C%0A%5Cend%7Balign%2A%7D%0A "
+](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0A%5Ctext%7Brating%7D_%7Bijk%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmu_%7Bijk%7D%2C%20%5Csigma%29%20%5C%5C%0A%5Cmu_%7Bijk%7D%20%26%20%3D%20%5Cbeta_0%20%2B%20%5Cbeta_1%20%5Ctext%7BCondition%7D_%7Bik%7D%20%2B%20u_i%20%2B%20v_%7B0k%7D%20%2B%20v_%7B1k%7D%20%5Ctext%7BCondition%7D_%7Bik%7D%20%5C%5C%0A%5Clog%28%5Csigma_%7Bijk%7D%29%20%26%20%3D%20%5Ceta_0%20%2B%20%5Ceta_1%20%5Ctext%7BCondition%7D_%7Bik%7D%20%2B%20w_i%20%2B%20x_%7B0k%7D%20%2B%20x_%7B1k%7D%20%5Ctext%7BCondition%7D_%7Bik%7D%20%5C%5C%0Au_i%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Csigma_u%29%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20v_%7B0k%7D%20%5C%5C%20v_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmathbf%200%2C%20%5Cmathbf%7BS_vR_vS_v%7D%29%20%5C%5C%0A%5Cmathbf%7BS_v%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_%7B0k%7D%20%5C%5C%201%20%26%20%5Csigma_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%7BR_v%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%20%5Crho_v%20%26%201%20%5Cend%7Bbmatrix%7D%20%5C%5C%0Aw_i%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Csigma_w%29%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20x_%7B0k%7D%20%5C%5C%20x_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmathbf%200%2C%20%5Cmathbf%7BS_xR_xS_x%7D%29%20%5C%5C%0A%5Cmathbf%7BS_x%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_%7B2k%7D%20%5C%5C%201%20%26%20%5Csigma_%7B3k%7D%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%7BR_x%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%20%5Crho_x%20%26%201%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cend%7Balign%2A%7D%0A "
 \begin{align*}
 \text{rating}_{ijk} & \sim \mathcal N(\mu_{ijk}, \sigma) \\
 \mu_{ijk} & = \beta_0 + \beta_1 \text{Condition}_{ik} + u_i + v_{0k} + v_{1k} \text{Condition}_{ik} \\
@@ -531,6 +525,22 @@ w_i & \sim \mathcal N(0, \sigma_w) \\
 \begin{bmatrix} x_{0k} \\ x_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{S_xR_xS_x}) \\
 \mathbf{S_x} & = \begin{bmatrix} \sigma_{2k} \\ 1 & \sigma_{3k} \end{bmatrix} \\
 \mathbf{R_x} & = \begin{bmatrix} 1 \\ \rho_x & 1 \end{bmatrix} \\
+\end{align*}
+")
+
+with priors
+
+![
+\\begin{align\*}
+\\beta_0 & \\sim \\mathcal N(4.4, 1) \\\\ 
+\\beta_1 & \\sim \\mathcal N(0, 1) \\\\ 
+\\eta_0 & \\sim \\mathcal N(\\log(2.3), 1/3) \\\\ 
+\\eta_1 & \\sim \\mathcal N(0, 0.5) \\\\ 
+\\sigma\_\\epsilon, \\dots, \\sigma\_{3k} & \\sim \\operatorname{Exponential}(1 / 2.3) \\\\
+\\mathbf R & \\sim \\operatorname{LKJ}(2),
+\\end{align\*}
+](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0A%5Cbeta_0%20%26%20%5Csim%20%5Cmathcal%20N%284.4%2C%201%29%20%5C%5C%20%0A%5Cbeta_1%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%201%29%20%5C%5C%20%0A%5Ceta_0%20%26%20%5Csim%20%5Cmathcal%20N%28%5Clog%282.3%29%2C%201%2F3%29%20%5C%5C%20%0A%5Ceta_1%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%200.5%29%20%5C%5C%20%0A%5Csigma_%5Cepsilon%2C%20%5Cdots%2C%20%5Csigma_%7B3k%7D%20%26%20%5Csim%20%5Coperatorname%7BExponential%7D%281%20%2F%202.3%29%20%5C%5C%0A%5Cmathbf%20R%20%26%20%5Csim%20%5Coperatorname%7BLKJ%7D%282%29%2C%0A%5Cend%7Balign%2A%7D%0A "
+\begin{align*}
 \beta_0 & \sim \mathcal N(4.4, 1) \\ 
 \beta_1 & \sim \mathcal N(0, 1) \\ 
 \eta_0 & \sim \mathcal N(\log(2.3), 1/3) \\ 
@@ -1151,7 +1161,23 @@ p(\\text{ratingf} = l \| \\{ \\tau_l \\}, \\mu\_{ijk}, \\alpha = 1) & = \\Phi(\\
 u_i & \\sim \\mathcal N(0, \\sigma_u) \\\\
 \\begin{bmatrix} v\_{0k} \\\\ v\_{1k} \\end{bmatrix} & \\sim \\mathcal N(\\mathbf 0, \\mathbf{SRS}) \\\\
 \\mathbf S & = \\begin{bmatrix} \\sigma\_{0k} \\\\ 1 & \\sigma\_{1k} \\end{bmatrix} \\\\
-\\mathbf R & = \\begin{bmatrix} 1 \\\\ \\rho & 1 \\end{bmatrix} \\\\
+\\mathbf R & = \\begin{bmatrix} 1 \\\\ \\rho & 1 \\end{bmatrix}, \\\\
+\\end{align\*}
+](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0Ap%28%5Ctext%7Bratingf%7D%20%3D%20l%20%7C%20%5C%7B%20%5Ctau_l%20%5C%7D%2C%20%5Cmu_%7Bijk%7D%2C%20%5Calpha%20%3D%201%29%20%26%20%3D%20%5CPhi%28%5Calpha%5B%5Ctau_l%20-%20%5Cmu_%7Bijk%7D%5D%29%20-%20%5CPhi%28%5Calpha%5B%5Ctau_%7Bl%20-%201%7D%20-%20%5Cmu_%7Bijk%7D%5D%29%20%5C%5C%0A%5Cmu_%7Bijk%7D%20%26%20%3D%200%20%2B%20%5Cbeta_1%20%5Ctext%7BCondition%7D_%7Bik%7D%20%2B%20u_i%20%2B%20v_%7B0k%7D%20%2B%20v_%7B1k%7D%20%5Ctext%7BCondition%7D_%7Bik%7D%20%5C%5C%20%0Au_i%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Csigma_u%29%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20v_%7B0k%7D%20%5C%5C%20v_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmathbf%200%2C%20%5Cmathbf%7BSRS%7D%29%20%5C%5C%0A%5Cmathbf%20S%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_%7B0k%7D%20%5C%5C%201%20%26%20%5Csigma_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%20R%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%20%5Crho%20%26%201%20%5Cend%7Bbmatrix%7D%2C%20%5C%5C%0A%5Cend%7Balign%2A%7D%0A "
+\begin{align*}
+p(\text{ratingf} = l | \{ \tau_l \}, \mu_{ijk}, \alpha = 1) & = \Phi(\alpha[\tau_l - \mu_{ijk}]) - \Phi(\alpha[\tau_{l - 1} - \mu_{ijk}]) \\
+\mu_{ijk} & = 0 + \beta_1 \text{Condition}_{ik} + u_i + v_{0k} + v_{1k} \text{Condition}_{ik} \\ 
+u_i & \sim \mathcal N(0, \sigma_u) \\
+\begin{bmatrix} v_{0k} \\ v_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{SRS}) \\
+\mathbf S & = \begin{bmatrix} \sigma_{0k} \\ 1 & \sigma_{1k} \end{bmatrix} \\
+\mathbf R & = \begin{bmatrix} 1 \\ \rho & 1 \end{bmatrix}, \\
+\end{align*}
+")
+
+with priors
+
+![
+\\begin{align\*}
 \\tau\_{1} & \\sim \\mathcal N(-1.7506861, 0.5) \\\\
 \\tau\_{2} & \\sim \\mathcal N(-1.2265281, 0.5) \\\\
 \\tau\_{3} & \\sim \\mathcal N(-0.8064212, 0.5) \\\\
@@ -1165,14 +1191,8 @@ u_i & \\sim \\mathcal N(0, \\sigma_u) \\\\
 \\sigma_u, \\dots, \\sigma\_{1k} & \\sim \\operatorname{Exponential}(1) \\\\
 \\mathbf R & \\sim \\operatorname{LKJ}(2),
 \\end{align\*}
-](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0Ap%28%5Ctext%7Bratingf%7D%20%3D%20l%20%7C%20%5C%7B%20%5Ctau_l%20%5C%7D%2C%20%5Cmu_%7Bijk%7D%2C%20%5Calpha%20%3D%201%29%20%26%20%3D%20%5CPhi%28%5Calpha%5B%5Ctau_l%20-%20%5Cmu_%7Bijk%7D%5D%29%20-%20%5CPhi%28%5Calpha%5B%5Ctau_%7Bl%20-%201%7D%20-%20%5Cmu_%7Bijk%7D%5D%29%20%5C%5C%0A%5Cmu_%7Bijk%7D%20%26%20%3D%200%20%2B%20%5Cbeta_1%20%5Ctext%7BCondition%7D_%7Bik%7D%20%2B%20u_i%20%2B%20v_%7B0k%7D%20%2B%20v_%7B1k%7D%20%5Ctext%7BCondition%7D_%7Bik%7D%20%5C%5C%20%0Au_i%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Csigma_u%29%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20v_%7B0k%7D%20%5C%5C%20v_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmathbf%200%2C%20%5Cmathbf%7BSRS%7D%29%20%5C%5C%0A%5Cmathbf%20S%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_%7B0k%7D%20%5C%5C%201%20%26%20%5Csigma_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%20R%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%20%5Crho%20%26%201%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Ctau_%7B1%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-1.7506861%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B2%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-1.2265281%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B3%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-0.8064212%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B4%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-0.4124631%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B5%7D%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B6%7D%20%26%20%5Csim%20%5Cmathcal%20N%280.4124631%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B7%7D%20%26%20%5Csim%20%5Cmathcal%20N%280.8064212%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B8%7D%20%26%20%5Csim%20%5Cmathcal%20N%281.2265281%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B9%7D%20%26%20%5Csim%20%5Cmathcal%20N%281.7506861%2C%200.5%29%20%5C%5C%0A%5Cbeta_1%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%201%29%20%5C%5C%20%0A%5Csigma_u%2C%20%5Cdots%2C%20%5Csigma_%7B1k%7D%20%26%20%5Csim%20%5Coperatorname%7BExponential%7D%281%29%20%5C%5C%0A%5Cmathbf%20R%20%26%20%5Csim%20%5Coperatorname%7BLKJ%7D%282%29%2C%0A%5Cend%7Balign%2A%7D%0A "
+](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0A%5Ctau_%7B1%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-1.7506861%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B2%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-1.2265281%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B3%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-0.8064212%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B4%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-0.4124631%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B5%7D%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B6%7D%20%26%20%5Csim%20%5Cmathcal%20N%280.4124631%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B7%7D%20%26%20%5Csim%20%5Cmathcal%20N%280.8064212%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B8%7D%20%26%20%5Csim%20%5Cmathcal%20N%281.2265281%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B9%7D%20%26%20%5Csim%20%5Cmathcal%20N%281.7506861%2C%200.5%29%20%5C%5C%0A%5Cbeta_1%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%201%29%20%5C%5C%20%0A%5Csigma_u%2C%20%5Cdots%2C%20%5Csigma_%7B1k%7D%20%26%20%5Csim%20%5Coperatorname%7BExponential%7D%281%29%20%5C%5C%0A%5Cmathbf%20R%20%26%20%5Csim%20%5Coperatorname%7BLKJ%7D%282%29%2C%0A%5Cend%7Balign%2A%7D%0A "
 \begin{align*}
-p(\text{ratingf} = l | \{ \tau_l \}, \mu_{ijk}, \alpha = 1) & = \Phi(\alpha[\tau_l - \mu_{ijk}]) - \Phi(\alpha[\tau_{l - 1} - \mu_{ijk}]) \\
-\mu_{ijk} & = 0 + \beta_1 \text{Condition}_{ik} + u_i + v_{0k} + v_{1k} \text{Condition}_{ik} \\ 
-u_i & \sim \mathcal N(0, \sigma_u) \\
-\begin{bmatrix} v_{0k} \\ v_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{SRS}) \\
-\mathbf S & = \begin{bmatrix} \sigma_{0k} \\ 1 & \sigma_{1k} \end{bmatrix} \\
-\mathbf R & = \begin{bmatrix} 1 \\ \rho & 1 \end{bmatrix} \\
 \tau_{1} & \sim \mathcal N(-1.7506861, 0.5) \\
 \tau_{2} & \sim \mathcal N(-1.2265281, 0.5) \\
 \tau_{3} & \sim \mathcal N(-0.8064212, 0.5) \\
@@ -1327,7 +1347,28 @@ u_i & \\sim \\mathcal N(0, \\sigma_u) \\\\
 w_i & \\sim \\mathcal N(0, \\sigma_w) \\\\
 \\begin{bmatrix} x\_{0k} \\\\ x\_{1k} \\end{bmatrix} & \\sim \\mathcal N(\\mathbf 0, \\mathbf{S_xR_xS_x}) \\\\
 \\mathbf{S_x} & = \\begin{bmatrix} \\sigma\_{2k} \\\\ 1 & \\sigma\_{3k} \\end{bmatrix} \\\\
-\\mathbf{R_x} & = \\begin{bmatrix} 1 \\\\ \\rho_x & 1 \\end{bmatrix} \\\\
+\\mathbf{R_x} & = \\begin{bmatrix} 1 \\\\ \\rho_x & 1 \\end{bmatrix}, \\\\
+\\end{align\*}
+](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0Ap%28%5Ctext%7Bratingf%7D%20%3D%20l%20%7C%20%5C%7B%20%5Ctau_l%20%5C%7D%2C%20%5Cmu_%7Bijk%7D%2C%20%5Calpha_%7Bijk%7D%29%20%26%20%3D%20%5CPhi%28%5Calpha_%7Bijk%7D%5B%5Ctau_l%20-%20%5Cmu_%7Bijk%7D%5D%29%20-%20%5CPhi%28%5Calpha_%7Bijk%7D%5B%5Ctau_%7Bl%20-%201%7D%20-%20%5Cmu_%7Bijk%7D%5D%29%20%5C%5C%0A%5Cmu_%7Bijk%7D%20%26%20%3D%200%20%2B%20%5Cbeta_1%20%5Ctext%7BCondition%7D_%7Bik%7D%20%2B%20u_i%20%2B%20v_%7B0k%7D%20%2B%20v_%7B1k%7D%20%5Ctext%7BCondition%7D_%7Bik%7D%20%5C%5C%20%0A%5Clog%28%5Calpha_%7Bijk%7D%29%20%26%20%3D%200%20%2B%20%5Ceta_1%20%5Ctext%7BCondition%7D_%7Bik%7D%20%2B%20w_i%20%2B%20x_%7B0k%7D%20%2B%20x_%7B1k%7D%20%5Ctext%7BCondition%7D_%7Bik%7D%20%5C%5C%20%0Au_i%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Csigma_u%29%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20v_%7B0k%7D%20%5C%5C%20v_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmathbf%200%2C%20%5Cmathbf%7BS_vR_vS_v%7D%29%20%5C%5C%0A%5Cmathbf%7BS_v%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_%7B0k%7D%20%5C%5C%201%20%26%20%5Csigma_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%7BR_v%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%20%5Crho_v%20%26%201%20%5Cend%7Bbmatrix%7D%20%5C%5C%0Aw_i%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Csigma_w%29%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20x_%7B0k%7D%20%5C%5C%20x_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmathbf%200%2C%20%5Cmathbf%7BS_xR_xS_x%7D%29%20%5C%5C%0A%5Cmathbf%7BS_x%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_%7B2k%7D%20%5C%5C%201%20%26%20%5Csigma_%7B3k%7D%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%7BR_x%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%20%5Crho_x%20%26%201%20%5Cend%7Bbmatrix%7D%2C%20%5C%5C%0A%5Cend%7Balign%2A%7D%0A "
+\begin{align*}
+p(\text{ratingf} = l | \{ \tau_l \}, \mu_{ijk}, \alpha_{ijk}) & = \Phi(\alpha_{ijk}[\tau_l - \mu_{ijk}]) - \Phi(\alpha_{ijk}[\tau_{l - 1} - \mu_{ijk}]) \\
+\mu_{ijk} & = 0 + \beta_1 \text{Condition}_{ik} + u_i + v_{0k} + v_{1k} \text{Condition}_{ik} \\ 
+\log(\alpha_{ijk}) & = 0 + \eta_1 \text{Condition}_{ik} + w_i + x_{0k} + x_{1k} \text{Condition}_{ik} \\ 
+u_i & \sim \mathcal N(0, \sigma_u) \\
+\begin{bmatrix} v_{0k} \\ v_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{S_vR_vS_v}) \\
+\mathbf{S_v} & = \begin{bmatrix} \sigma_{0k} \\ 1 & \sigma_{1k} \end{bmatrix} \\
+\mathbf{R_v} & = \begin{bmatrix} 1 \\ \rho_v & 1 \end{bmatrix} \\
+w_i & \sim \mathcal N(0, \sigma_w) \\
+\begin{bmatrix} x_{0k} \\ x_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{S_xR_xS_x}) \\
+\mathbf{S_x} & = \begin{bmatrix} \sigma_{2k} \\ 1 & \sigma_{3k} \end{bmatrix} \\
+\mathbf{R_x} & = \begin{bmatrix} 1 \\ \rho_x & 1 \end{bmatrix}, \\
+\end{align*}
+")
+
+with priors
+
+![
+\\begin{align\*}
 \\tau\_{1} & \\sim \\mathcal N(-1.7506861, 0.5) \\\\
 \\tau\_{2} & \\sim \\mathcal N(-1.2265281, 0.5) \\\\
 \\tau\_{3} & \\sim \\mathcal N(-0.8064212, 0.5) \\\\
@@ -1342,19 +1383,8 @@ w_i & \\sim \\mathcal N(0, \\sigma_w) \\\\
 \\sigma_u, \\dots, \\sigma\_{1k} & \\sim \\operatorname{Exponential}(1) \\\\
 \\mathbf R & \\sim \\operatorname{LKJ}(2),
 \\end{align\*}
-](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0Ap%28%5Ctext%7Bratingf%7D%20%3D%20l%20%7C%20%5C%7B%20%5Ctau_l%20%5C%7D%2C%20%5Cmu_%7Bijk%7D%2C%20%5Calpha_%7Bijk%7D%29%20%26%20%3D%20%5CPhi%28%5Calpha_%7Bijk%7D%5B%5Ctau_l%20-%20%5Cmu_%7Bijk%7D%5D%29%20-%20%5CPhi%28%5Calpha_%7Bijk%7D%5B%5Ctau_%7Bl%20-%201%7D%20-%20%5Cmu_%7Bijk%7D%5D%29%20%5C%5C%0A%5Cmu_%7Bijk%7D%20%26%20%3D%200%20%2B%20%5Cbeta_1%20%5Ctext%7BCondition%7D_%7Bik%7D%20%2B%20u_i%20%2B%20v_%7B0k%7D%20%2B%20v_%7B1k%7D%20%5Ctext%7BCondition%7D_%7Bik%7D%20%5C%5C%20%0A%5Clog%28%5Calpha_%7Bijk%7D%29%20%26%20%3D%200%20%2B%20%5Ceta_1%20%5Ctext%7BCondition%7D_%7Bik%7D%20%2B%20w_i%20%2B%20x_%7B0k%7D%20%2B%20x_%7B1k%7D%20%5Ctext%7BCondition%7D_%7Bik%7D%20%5C%5C%20%0Au_i%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Csigma_u%29%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20v_%7B0k%7D%20%5C%5C%20v_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmathbf%200%2C%20%5Cmathbf%7BS_vR_vS_v%7D%29%20%5C%5C%0A%5Cmathbf%7BS_v%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_%7B0k%7D%20%5C%5C%201%20%26%20%5Csigma_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%7BR_v%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%20%5Crho_v%20%26%201%20%5Cend%7Bbmatrix%7D%20%5C%5C%0Aw_i%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Csigma_w%29%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20x_%7B0k%7D%20%5C%5C%20x_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmathbf%200%2C%20%5Cmathbf%7BS_xR_xS_x%7D%29%20%5C%5C%0A%5Cmathbf%7BS_x%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_%7B2k%7D%20%5C%5C%201%20%26%20%5Csigma_%7B3k%7D%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%7BR_x%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%20%5Crho_x%20%26%201%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Ctau_%7B1%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-1.7506861%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B2%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-1.2265281%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B3%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-0.8064212%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B4%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-0.4124631%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B5%7D%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B6%7D%20%26%20%5Csim%20%5Cmathcal%20N%280.4124631%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B7%7D%20%26%20%5Csim%20%5Cmathcal%20N%280.8064212%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B8%7D%20%26%20%5Csim%20%5Cmathcal%20N%281.2265281%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B9%7D%20%26%20%5Csim%20%5Cmathcal%20N%281.7506861%2C%200.5%29%20%5C%5C%0A%5Cbeta_1%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%201%29%20%5C%5C%20%0A%5Ceta_1%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Clog%282%29%20%2F%202%29%20%5C%5C%20%0A%5Csigma_u%2C%20%5Cdots%2C%20%5Csigma_%7B1k%7D%20%26%20%5Csim%20%5Coperatorname%7BExponential%7D%281%29%20%5C%5C%0A%5Cmathbf%20R%20%26%20%5Csim%20%5Coperatorname%7BLKJ%7D%282%29%2C%0A%5Cend%7Balign%2A%7D%0A "
+](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0A%5Ctau_%7B1%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-1.7506861%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B2%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-1.2265281%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B3%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-0.8064212%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B4%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-0.4124631%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B5%7D%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B6%7D%20%26%20%5Csim%20%5Cmathcal%20N%280.4124631%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B7%7D%20%26%20%5Csim%20%5Cmathcal%20N%280.8064212%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B8%7D%20%26%20%5Csim%20%5Cmathcal%20N%281.2265281%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B9%7D%20%26%20%5Csim%20%5Cmathcal%20N%281.7506861%2C%200.5%29%20%5C%5C%0A%5Cbeta_1%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%201%29%20%5C%5C%20%0A%5Ceta_1%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Clog%282%29%20%2F%202%29%20%5C%5C%20%0A%5Csigma_u%2C%20%5Cdots%2C%20%5Csigma_%7B1k%7D%20%26%20%5Csim%20%5Coperatorname%7BExponential%7D%281%29%20%5C%5C%0A%5Cmathbf%20R%20%26%20%5Csim%20%5Coperatorname%7BLKJ%7D%282%29%2C%0A%5Cend%7Balign%2A%7D%0A "
 \begin{align*}
-p(\text{ratingf} = l | \{ \tau_l \}, \mu_{ijk}, \alpha_{ijk}) & = \Phi(\alpha_{ijk}[\tau_l - \mu_{ijk}]) - \Phi(\alpha_{ijk}[\tau_{l - 1} - \mu_{ijk}]) \\
-\mu_{ijk} & = 0 + \beta_1 \text{Condition}_{ik} + u_i + v_{0k} + v_{1k} \text{Condition}_{ik} \\ 
-\log(\alpha_{ijk}) & = 0 + \eta_1 \text{Condition}_{ik} + w_i + x_{0k} + x_{1k} \text{Condition}_{ik} \\ 
-u_i & \sim \mathcal N(0, \sigma_u) \\
-\begin{bmatrix} v_{0k} \\ v_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{S_vR_vS_v}) \\
-\mathbf{S_v} & = \begin{bmatrix} \sigma_{0k} \\ 1 & \sigma_{1k} \end{bmatrix} \\
-\mathbf{R_v} & = \begin{bmatrix} 1 \\ \rho_v & 1 \end{bmatrix} \\
-w_i & \sim \mathcal N(0, \sigma_w) \\
-\begin{bmatrix} x_{0k} \\ x_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{S_xR_xS_x}) \\
-\mathbf{S_x} & = \begin{bmatrix} \sigma_{2k} \\ 1 & \sigma_{3k} \end{bmatrix} \\
-\mathbf{R_x} & = \begin{bmatrix} 1 \\ \rho_x & 1 \end{bmatrix} \\
 \tau_{1} & \sim \mathcal N(-1.7506861, 0.5) \\
 \tau_{2} & \sim \mathcal N(-1.2265281, 0.5) \\
 \tau_{3} & \sim \mathcal N(-0.8064212, 0.5) \\

@@ -291,6 +291,13 @@ w_i & \sim \mathcal N(0, \sigma_w) \\
 \begin{bmatrix} x_{0k} \\ x_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{S_xR_xS_x}) \\
 \mathbf{S_x} & = \begin{bmatrix} \sigma_{2k} \\ 1 & \sigma_{3k} \end{bmatrix} \\
 \mathbf{R_x} & = \begin{bmatrix} 1 \\ \rho_x & 1 \end{bmatrix} \\
+\end{align*}
+$$
+
+with priors
+
+$$
+\begin{align*}
 \beta_0 & \sim \mathcal N(4.4, 1) \\ 
 \beta_1 & \sim \mathcal N(0, 1) \\ 
 \eta_0 & \sim \mathcal N(\log(2.3), 1/3) \\ 
@@ -634,7 +641,14 @@ p(\text{ratingf} = l | \{ \tau_l \}, \mu_{ijk}, \alpha = 1) & = \Phi(\alpha[\tau
 u_i & \sim \mathcal N(0, \sigma_u) \\
 \begin{bmatrix} v_{0k} \\ v_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{SRS}) \\
 \mathbf S & = \begin{bmatrix} \sigma_{0k} \\ 1 & \sigma_{1k} \end{bmatrix} \\
-\mathbf R & = \begin{bmatrix} 1 \\ \rho & 1 \end{bmatrix} \\
+\mathbf R & = \begin{bmatrix} 1 \\ \rho & 1 \end{bmatrix}, \\
+\end{align*}
+$$
+
+with priors
+
+$$
+\begin{align*}
 \tau_{1} & \sim \mathcal N(-1.7506861, 0.5) \\
 \tau_{2} & \sim \mathcal N(-1.2265281, 0.5) \\
 \tau_{3} & \sim \mathcal N(-0.8064212, 0.5) \\
@@ -725,7 +739,14 @@ u_i & \sim \mathcal N(0, \sigma_u) \\
 w_i & \sim \mathcal N(0, \sigma_w) \\
 \begin{bmatrix} x_{0k} \\ x_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{S_xR_xS_x}) \\
 \mathbf{S_x} & = \begin{bmatrix} \sigma_{2k} \\ 1 & \sigma_{3k} \end{bmatrix} \\
-\mathbf{R_x} & = \begin{bmatrix} 1 \\ \rho_x & 1 \end{bmatrix} \\
+\mathbf{R_x} & = \begin{bmatrix} 1 \\ \rho_x & 1 \end{bmatrix}, \\
+\end{align*}
+$$
+
+with priors
+
+$$
+\begin{align*}
 \tau_{1} & \sim \mathcal N(-1.7506861, 0.5) \\
 \tau_{2} & \sim \mathcal N(-1.2265281, 0.5) \\
 \tau_{3} & \sim \mathcal N(-0.8064212, 0.5) \\
