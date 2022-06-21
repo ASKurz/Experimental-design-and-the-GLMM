@@ -1,0 +1,117 @@
+---
+title: "Wagenmakers et al (2016), Albohn only"
+subtitle: "Posttest-only control group design"
+author: "A Solomon Kurz"
+date: "`r format(Sys.Date())`"
+output: github_document
+---
+
+```{r, echo = F}
+knitr::opts_chunk$set(fig.retina = 2.5)
+options(width = 110)
+```
+
+Using a registered replication report approach, Wagenmakers and colleagues (2016; https://doi.org/10.1177/1745691616674458) replicated Study 1 from the highly-cited paper by Strack, Martin, and Stepper (1988; https://doi.org/10.1037/0022-3514.54.5.768). In 17 labs across several countries, participants were randomized into the *pout* or *smile* conditions. The primary variable is the ratings on 4 moderately-funny cartoons. For the sake of this file, we will analyze the data from one of the labs.
+
+## Data
+
+Wagenmakers and colleagues kindly made their data, materials, and code public on the OSF at https://osf.io/hgi2y/.
+
+Load the data and the primary **R** packages.
+
+```{r, warning = F, message = F}
+# packages
+# library(tidyverse)
+
+library(ggplot2)
+library(tibble)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(purrr)
+library(readr)
+
+library(brms)
+
+# load the data
+load(file = "data/wagenmakers2016.rda")
+
+# what is this?
+glimpse(wagenmakers2016)
+```
+
+The full `wagenmakers2016` data set contains data from 17 reserach labs. In this file, we'll focus on the data collected by the Albohn lab. Here we filter the `wagenmakers2016` and save the results as `albohn`.
+
+```{r}
+albohn <- wagenmakers2016 %>% 
+  filter(lab == "Albohn")
+```
+
+Wagenmakers and colleagues had several exclusion criteria, which they detailed in the *Exclusion criteria* subsection of their *Method* (pp. 4-5). They excluded the data from participants
+
+* whose average cartoon rating exceeded 2.5 standard deviations from the group mean in their condition,
+* who correctly guessed the goal of the study,
+* who answered "No" to the question "Did you understand the cartoons?", and
+* who held the pen incorrectly for two or more of the four cartoons.
+
+In this analysis, we will exclude participants based on the latter three criteria. However, I am apposed to removing data from those whose average ratings are 2.5 standard deviations from the group mean. A good model should be able to handle unusual observations, like that. Here we prune the data.
+
+```{r}
+# start with n = 166
+albohn <- albohn %>% 
+  # n = 161 (drop 2 who were 1 and 3 who were NA)
+  filter(aware_of_the_goal == 0) %>% 
+  # n = 151 (drop 8 who were 2 and 2 who were NA)
+  filter(comprehended_cartoons == 1) %>% 
+  # n = 140 (drop 11 who were 0)
+  filter(correct_total > 2)
+
+# new sample size
+albohn %>% 
+  count(condition)
+```
+
+Data from 140 participants remain. Happily, the group sizes are similar.
+
+Now we'll simplify the data by removing the unnecessary columns and then make the data long with respect to the four cartoons.
+
+```{r}
+albohn <- albohn %>% 
+  select(sn, rating1:rating4, condition) %>% 
+  # convert to the long format W/R/T cartoon
+  pivot_longer(rating1:rating4,
+               names_to = "cartoon",
+               values_to = "rating") %>% 
+  mutate(cartoon = str_remove(cartoon, "rating") %>% as.double()) %>% 
+  mutate(ratingf    = factor(rating, levels = 0:9, ordered = TRUE),
+         conditionf = ifelse(condition == 0, "pout", "smile"))
+
+# what is this?
+head(albohn)
+```
+
+The remaining columns in the data are:
+
+* `sn` is the participant index.
+* `condition` is the dummy-coded experimental index for which `0` is the pout condition and `1` is the smiling condition.
+* `cartoon` is the index for the four *Far Side* cartoons.
+* `rating` is the rating for the cartoons on the 0-9 Likert-type scale, saved as a numeral.
+* `ratingf` is the ordered factor version of `rating`.
+* `conditionf` is the factor version of `Condition`.
+
+### EDA.
+
+For our exploratory data analyses, it might help if we start with faceted bar plot.
+
+```{r, warning = F}
+albohn %>% 
+  mutate(cartoon = str_c("cartoon: ", cartoon)) %>% 
+  
+  ggplot(aes(x = rating)) +
+  geom_bar() +
+  scale_x_continuous(breaks = 0:9) +
+  facet_grid(conditionf ~ cartoon) +
+  theme(panel.grid = element_blank())
+```
+
+
