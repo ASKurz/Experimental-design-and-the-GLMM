@@ -30,8 +30,11 @@ library(tidyr)
 library(stringr)
 library(purrr)
 library(readr)
+library(forcats)
 
 library(brms)
+library(tidybayes)
+library(patchwork)
 
 # load the data
 load(file = "data/wagenmakers2016.rda")
@@ -114,4 +117,1063 @@ albohn %>%
   theme(panel.grid = element_blank())
 ```
 
+Here are some of the descriptive statistics.
+
+```{r, warning = F}
+albohn %>% 
+  group_by(condition, cartoon) %>% 
+  summarise(mean = mean(rating, na.rm = T),
+            sd = sd(rating, na.rm = T),
+            min = min(rating, na.rm = T),
+            max = max(rating, na.rm = T),
+            n = n(),
+            n_missing = sum(is.na(rating)))
+```
+
+To get a sense of the participant-level variation in these, we'll plot.
+
+```{r, warning = F, message = F}
+albohn %>% 
+  group_by(conditionf, sn) %>% 
+  summarise(mean = mean(rating, na.rm = T),
+            sd = sd(rating, na.rm = T),
+            min = min(rating, na.rm = T),
+            max = max(rating, na.rm = T)) %>% 
+  pivot_longer(mean:max, names_to = "statistic") %>% 
+  mutate(statistic = factor(statistic, levels = c("mean", "sd", "min", "max"))) %>% 
+  
+  ggplot(aes(x = value)) +
+  geom_histogram(binwidth = 0.25) +
+  facet_grid(conditionf ~ statistic, scales = "free_x") +
+  theme(panel.grid = element_blank())
+```
+
+So some of the challenges for these data are:
+
+* one missing value,
+* differences in variances across cartoons and participants,
+* clear lower and upper boundaries, and
+* a multi-factorial multilevel structure.
+
+## Modeling strategy
+
+In this lesson, we'll explore two broad analytic strategies:
+
+A) The first class of strategies will be to model the data as approximately continuous with the conventional Gaussian likelihood. After first fitting a simple multilevel model, we will then expand to a full mixed-effects location and scale (MELSM) model.
+B) The second class of strategies will be modeling the data as ordinal. After first fitting a multilevel cumulative probit model, we will then expand to a cumulative-probit variant of the MELSM.
+
+## Gaussian models
+
+### Conventional multilevel model.
+
+If were to think of the `rating` values as varying across $i$ persons, $j$ experimental trials and $k$ cartoons, we could describe them as approximately-normally distributed with the model
+
+$$
+\begin{align*}
+\text{rating}_{ijk} & \sim \mathcal N(\mu_{ijk}, \sigma_\epsilon) \\
+\mu_{ijk} & = \beta_0 + \beta_1 \text{Condition}_{ik} + u_i + v_{0k} + v_{1k} \text{Condition}_{ik} \\
+u_i & \sim \mathcal N(0, \sigma_u) \\
+\begin{bmatrix} v_{0k} \\ v_{1k} \end{bmatrix} & \sim \mathcal N \left ( 
+  \mathbf 0, \mathbf{SRS}
+  \right) \\
+\mathbf S & = \begin{bmatrix} \sigma_{0k} \\ 1 & \sigma_{1k} \end{bmatrix} \\
+\mathbf R & = \begin{bmatrix} 1 \\ \rho & 1 \end{bmatrix},
+\end{align*}
+$$
+
+where $\beta_0$ is the grand mean for the pout condition (`condition == 0`) and $\beta_1$ is the deviation in the grand mean for the smile condition (`condition == 1`), relative to the pout condition. The $u_i$ parameter captures person-level deviations around the grand mean, across conditions, which is modeled as normal with a standard deviation $\sigma_u$. The $v_{0k}$ parameter captures cartoon-level deviations around the grand mean in the pout condition and $v_{1k}$ captures cartoon-level deviations around the difference in the grand mean for the smile condition. The two cartoon-level deviation parameters are modeled as bivariate normal with a variance/covariance matrix that has been decomposed into $2 \times 2$ matrix for the standard deviations $(\mathbf S)$ and a $2 \times 2$ matrix for their correlation $(\mathbf R)$.
+
+Note that we have grouped our three deviation parameters into one parameter capturing person-level differences and two parameters capturing cartoon-level differences. These two groups are modeled as orthogonal in that $\sigma_u$ does not covary with $\sigma_{0k}$ or $\sigma_{1k}$. Thus, you could describe this model as *cross-classified*.
+
+The next challenge is determining how to set the priors. On page 3, Wagenmakers and colleagues reported their four cartoons were based on pilot data from $N = 120$ students of the University of Amsterdam. If you look through the supplemental materials on the OSF, you will find the means and standard deviations for those cartoons at https://osf.io/6qnhg/. Here we use those to compute the grand mean and pooled standard deviation.
+
+```{r}
+# grand mean
+mean(c(4.37, 4.05, 4.53, 4.64))
+
+# pooled standard deviation
+sqrt((2.42^2 + 2.08^2 + 2.37^2 + 2.31^2) / 4)
+```
+
+If you look at the Table 1 (p. 772), you'll see the means are similar to those reported in the original study by Strack and colleagues. You'll further learn that in the original study, the grand mean for the pout condition was 4.32 and the grand mean for the smile condition was 5.14, for a mean difference of 0.82.
+
+One way to use this information would be be to set a $\mathcal N(4.4, 1)$ prior on the grand mean for the frown condition $(\beta_0)$ and a fairly permissive $\mathcal N(0, 1)$ prior on the difference in the smile condition $(\beta_1)$. In this model, $\sigma_\epsilon$ is our analogue to the pooled standard deviation, so we might use $\operatorname{Exponential}(1 / 2.3)$. To give a sense, here are the area plots for $\mathcal N(4.4, 1)$ and $\operatorname{Exponential}(1 / 2.3)$ on the scale of the data.
+
+```{r, fig.width = 4.5, fig.height = 2.75}
+tibble(rating = seq(from = 0, to = 9, by = 0.05)) %>% 
+  mutate(density = dnorm(rating, mean = 4.4, sd = 1)) %>% 
+  ggplot(aes(x = rating, y = density)) +
+  geom_area() +
+  scale_x_continuous(breaks = 0:9) +
+  theme(panel.grid = element_blank())
+
+# 1 / 2.298684 is about 0.435
+tibble(sd = seq(from = 0, to = 5, by = 0.05)) %>% 
+  mutate(density = dexp(sd, rate = 0.435)) %>% 
+  ggplot(aes(x = sd, y = density)) +
+  geom_area() +
+  scale_x_continuous(expression(sigma),
+                     breaks = c(0, 2.298684, 4.5),
+                     labels = c("0", 2.298684, "4.5")) +
+  coord_cartesian(xlim = c(0, 4.5)) +
+  theme(panel.grid = element_blank())
+```
+
+Notice the restricted range we showed for the $\sigma$ prior. Based on [Popoviciu's inequality](https://en.wikipedia.org/wiki/Popoviciu%27s_inequality_on_variances), we can compute the upper bound for a variance parameter for data with clearly-defined lower and upper bounds. With our 0-9 rating scale, the largest variance possible is 20.25 which means the largest standard deviation possible is 4.5.
+
+```{r}
+highest <- 9
+lowest <- 0
+
+# max variance
+(highest - lowest)^2 / 4
+
+# max SD
+sqrt((highest - lowest)^2 / 4)
+```
+
+With the $\operatorname{Exponential}(0.435)$ prior, 86% of the prior mass is below the upper limit.
+
+```{r}
+pexp(q = 4.5, rate = 0.435)
+```
+
+We might further use the $\operatorname{Exponential}(1 / 2.3)$ prior for the level-2 $\sigma$ parameters, though one could argue for using a more conservative prior, like $\operatorname{Exponential}(1)$. Finally, we might use the weakly-regularizing LKJ with $\eta = 2$ for the $\mathbf R$ matrix. That would make the full model
+
+$$
+\begin{align*}
+\text{rating}_{ijk} & \sim \mathcal N(\mu_{ijk}, \sigma_\epsilon) \\
+\mu_{ijk} & = \beta_0 + \beta_1 \text{Condition}_{ik} + u_i + v_{0k} + v_{1k} \text{Condition}_{ik} \\
+u_i & \sim \mathcal N(0, \sigma_u) \\
+\begin{bmatrix} v_{0k} \\ v_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{SRS}) \\
+\mathbf S & = \begin{bmatrix} \sigma_{0k} \\ 1 & \sigma_{1k} \end{bmatrix} \\
+\mathbf R & = \begin{bmatrix} 1 \\ \rho & 1 \end{bmatrix} \\
+\beta_0 & \sim \mathcal N(4.4, 1) \\ 
+\beta_1 & \sim \mathcal N(0, 1) \\ 
+\sigma_\epsilon, \dots, \sigma_{1k} & \sim \operatorname{Exponential}(1 / 2.3) \\
+\mathbf R & \sim \operatorname{LKJ}(2).
+\end{align*}
+$$
+
+Here is how to fit the model with `brm()`.
+
+```{r}
+fit1 <- brm(
+  data = albohn,
+  family = gaussian,
+  rating ~ 0 + Intercept + condition + (1 | sn) + (1 + condition | cartoon),
+  prior = c(prior(normal(4.4, 1), class = b, coef = Intercept),
+            prior(normal(0, 1), class = b, coef = condition),
+            prior(exponential(0.435), class = sd), 
+            prior(exponential(0.435), class = sigma),
+            prior(lkj(2), class = cor)),
+  chains = 4, cores = 4, 
+  seed = 1,
+  control = list(adapt_delta = .95),
+  file = "fits/fit1.wagenmakers2016albohn"
+)
+```
+
+### Gaussian MELSM.
+
+A major limitation of the conventional approach is it ignores heterogeneity across persons and cartoons. We can relax that assumption by assigning a linear model to $\sigma_\epsilon$, which would bring us into the MELSM paradigm. To ensure the model always predicts non-negative values, we will actually model $\log(\sigma_\epsilon)$. This would look like
+
+$$
+\begin{align*}
+\text{rating}_{ijk} & \sim \mathcal N(\mu_{ijk}, \sigma) \\
+\mu_{ijk} & = \beta_0 + \beta_1 \text{Condition}_{ik} + u_i + v_{0k} + v_{1k} \text{Condition}_{ik} \\
+\log(\sigma_{ijk}) & = \eta_0 + \eta_1 \text{Condition}_{ik} + w_i + x_{0k} + x_{1k} \text{Condition}_{ik} \\
+u_i & \sim \mathcal N(0, \sigma_u) \\
+\begin{bmatrix} v_{0k} \\ v_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{S_vR_vS_v}) \\
+\mathbf{S_v} & = \begin{bmatrix} \sigma_{0k} \\ 1 & \sigma_{1k} \end{bmatrix} \\
+\mathbf{R_v} & = \begin{bmatrix} 1 \\ \rho_v & 1 \end{bmatrix} \\
+w_i & \sim \mathcal N(0, \sigma_w) \\
+\begin{bmatrix} x_{0k} \\ x_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{S_xR_xS_x}) \\
+\mathbf{S_x} & = \begin{bmatrix} \sigma_{2k} \\ 1 & \sigma_{3k} \end{bmatrix} \\
+\mathbf{R_x} & = \begin{bmatrix} 1 \\ \rho_x & 1 \end{bmatrix} \\
+\beta_0 & \sim \mathcal N(4.4, 1) \\ 
+\beta_1 & \sim \mathcal N(0, 1) \\ 
+\eta_0 & \sim \mathcal N(\log(2.3), 1/3) \\ 
+\eta_1 & \sim \mathcal N(0, 0.5) \\ 
+\sigma_\epsilon, \dots, \sigma_{3k} & \sim \operatorname{Exponential}(1 / 2.3) \\
+\mathbf R & \sim \operatorname{LKJ}(2),
+\end{align*}
+$$
+
+where the model for $\mu_{ijk}$ is the same as before, but we now have a similar model for $\log(\sigma_{ijk})$. For the sake of clarity, we call the two population parameters for the new model $\eta_0$ and $\eta_1$, but you could call them something like $\beta_2$ and $\beta_3$, if you wanted. In a similar way, the three deviation parameters for the $\log(\sigma_{ijk})$ model are $w_i$,  $x_{0k}$, and $x_{1k}$. For simplicity, we've kept the $\operatorname{Exponential}(1 / 2.3)$ prior for all the level-2 $\sigma$ parameters, but you could use a different prior for the new level-2 $\sigma$ parameters, if desired.
+
+Probably of greater interest are the priors for $\eta_0$ and $\eta_1$. Centering the prior for $\eta_0$ on $\log(2.3)$ is very similar to how we used $\operatorname{Exponential}(1 / 2.3)$ in the first model for $\sigma_\epsilon$. By setting the the standard deviation of the prior to $1/3$, we set the 95% range of the prior mass to about half of the mean to 2 times the mean, on the natural scale.
+
+```{r}
+sigma <- 2.298684
+
+exp(log(sigma) + c(-2/3, 0, 2/3))
+```
+
+Here's what that looks like in a plot.
+
+```{r, fig.width = 4.5, fig.height = 2.75}
+set.seed(1)
+
+tibble(prior = rnorm(n = 1e6, mean = log(sigma), sd = 1/3)) %>% 
+  mutate(sigma = exp(prior)) %>% 
+  
+  ggplot(aes(x = sigma)) +
+  geom_histogram(binwidth = 0.05) +
+  scale_x_continuous(expression(eta[0]),
+                     breaks = c(0, 2.298684, 4.5),
+                     labels = c("0", 2.298684, "4.5")) +
+  coord_cartesian(xlim = c(0, 4.5)) +
+  theme(panel.grid = element_blank())
+```
+
+```{r, eval = F, echo = F}
+set.seed(1)
+
+tibble(prior = rnorm(n = 1e6, mean = log(sigma), sd = 1/3)) %>% 
+  mutate(sigma = exp(prior)) %>%
+  summarise(q02.5 = quantile(sigma, probs = .025),
+            q97.5 = quantile(sigma, probs = .975))
+```
+
+The $\mathcal N(0, 0.5)$ prior for $\eta_1$ suggests we expect the difference in standard deviations for the smile condition, versus the pout condition, to be within a one-unit decrease or increase on the log scale, which is seems generous, to me. Since researchers don't often model $\sigma_\epsilon$, one might argue in favor of a more conservative prior for $\eta_1$, like $\mathcal N(0, 0.25)$ or even $\mathcal N(0, 0.1)$.
+
+Here's how to fit the model with `brm()`.
+
+```{r}
+fit2 <- brm(
+  data = albohn,
+  family = gaussian,
+  bf(rating ~ 0 + Intercept + condition + (1 | sn) + (1 + condition | cartoon),
+     sigma  ~ 0 + Intercept + condition + (1 | sn) + (1 + condition | cartoon)),
+  prior = c(prior(normal(4.4, 1), class = b, coef = Intercept),
+            prior(normal(0, 1),   class = b, coef = condition),
+            prior(normal(log(2.298684), 0.333), class = b, coef = Intercept, dpar = sigma),
+            prior(normal(0, 0.5),               class = b, coef = condition, dpar = sigma),
+            prior(exponential(0.435), class = sd),
+            prior(lkj(2), class = cor)),
+  chains = 4, cores = 4, 
+  seed = 1,
+  control = list(adapt_delta = .99),
+  file = "fits/fit2.wagenmakers2016albohn"
+)
+```
+
+### Summarize.
+
+Here are the parameter summaries for both versions of the model.
+
+```{r}
+print(fit1)
+print(fit2)
+```
+
+As the big difference between the two models is whether we included a linear model on the level-1 standard deviation, we might explore those differences in a couple plots. Here's a look at the posteriors for the level-1 standard deviation parameter $\sigma_\epsilon$ from `fit1` and the conditional parameters from the MELSM `fit2`, what we might call $\sigma_\text{pout}$ and $\sigma_\text{smile}$.
+
+```{r, fig.width = 5, fig.height = 3, warning = F}
+bind_cols(
+  as_draws_df(fit1) %>% 
+    transmute(`sigma[epsilon]` = sigma),
+  as_draws_df(fit2) %>% 
+    transmute(`sigma[pout]`  = exp(b_sigma_Intercept),
+              `sigma[smile]` = exp(b_sigma_Intercept + b_sigma_condition))
+) %>% 
+  pivot_longer(everything()) %>% 
+  mutate(fit = ifelse(name == "sigma[epsilon]", "fit1", "fit2")) %>% 
+  
+  ggplot(aes(x = value, y = name, fill = fit)) +
+  geom_vline(xintercept = 2.298684, color = "white") +
+  stat_halfeye(.width = .95, size = 2) +
+  scale_fill_viridis_d(option = "H", begin = .1, end = .9, alpha = .8) +
+  scale_y_discrete(NULL, labels = ggplot2:::parse_safe) +
+  labs(title = "The (conditional) level-1 standard deviation parameter",
+       subtitle = "The vertical white line marks the expected value from the pilot data.",
+       x = "marginal posterior") +
+  coord_cartesian(xlim = c(0, 4.5)) +
+  theme(panel.grid = element_blank())
+```
+
+In this case, the difference between $\sigma_\text{pout}$ and $\sigma_\text{smile}$ was trivial, and both are centered around the same parameter space as $\sigma_\epsilon$. In all three cases, the posteriors were smaller than our pilot data led us to expect, but not alarmingly so. Here are the coefficient plots for the level-2 $\sigma$ parameters.
+
+```{r, fig.width = 5, fig.height = 3}
+sigma_names <- c(
+  "sigma[0][italic(k)]", "sigma[1][italic(k)]", "sigma[italic(u)]", 
+  "sigma[2][italic(k)]", "sigma[3][italic(k)]", "sigma[italic(w)]"
+  )
+
+rbind(
+  posterior_summary(fit1)[3:5, -2],
+  posterior_summary(fit2)[5:10, -2]
+  ) %>% 
+  data.frame() %>% 
+  mutate(fit   = rep(str_c("fit", 1:2), times = c(3, 6)),
+         param = c(sigma_names[1:3], sigma_names)) %>% 
+  mutate(param = factor(param, levels = sigma_names[c(3, 1, 2, 6, 4, 5)])) %>% 
+  
+  ggplot(aes(x = param, y = Estimate, ymin = Q2.5, ymax = Q97.5,
+             color = fit, group = fit)) +
+  geom_pointrange(fatten = 1.25, position = position_dodge2(width = 0.5)) + 
+  scale_color_viridis_d(option = "H", begin = .1, end = .9) +
+  scale_x_discrete(NULL, labels = ggplot2:::parse_safe) +
+  labs(title = "The level-2 standard deviation parameters",
+       y = "marginal posterior") +
+  coord_flip() +
+  theme(panel.grid = element_blank())
+```
+
+The three new parameters for the MELSM--$\sigma_w$, $\sigma_{2k}$, and $\sigma_{3k}$--are all rather small. This suggests that in the population, persons are not expected to vary greatly in how variable their ratings are for the cartoons. In a similar way, this suggests that in the population of similar Far Side cartoons, the way people rate them will not vary greatly across cartoons. Note, however, that the participants in this study were relatively homogeneous and the cartoons were specifically chosen for their similarity. If future studies increased the heterogeneity in either or both, we would expect increases in the level-2 $\sigma$ parameters. 
+
+If desired, we could compare the two models by their LOO-CV estimates
+
+```{r}
+# compute
+fit1 <- add_criterion(fit1, criterion = "loo")
+fit2 <- add_criterion(fit2, criterion = "loo")
+
+# compare
+loo_compare(fit1, fit2, criterion = "loo") %>% print(simplify = F)
+```
+
+In this case, the MELSM is numerically superior, but by a very small degree. We would expect the models to predict new data values with a similar degree of success.
+
+### Effect sizes.
+
+For approximately-continuous data of this kind, we might express the effect sizes in terms of un-standardized mean differences and standardized mean differences. For either approach, one could focus on the population-level mean difference across the cartoons, the cartoon-specific mean differences, or both.
+
+For the un-standardized mean differences, the approach is the same for `fit1` or `fit2`. The overall mean difference across cartoons is captured by the $\beta_1$ parameter. For the cartoon-specific mean differences, we compute the value with $\beta_1 + v_{1k}$. Here are those values with the `fit2` MELSM.
+
+```{r, fig.width = 5, fig.height = 2.75, warning = F}
+k <- c("Population mean", str_c("Cartoon ", 1:4))
+
+# compute
+dif <- data.frame(dif = c(
+  fixef(fit2, summary = F)[, "condition"],
+  coef(fit2, summary = F)$cartoon[, 1, "condition"],
+  coef(fit2, summary = F)$cartoon[, 2, "condition"],
+  coef(fit2, summary = F)$cartoon[, 3, "condition"],
+  coef(fit2, summary = F)$cartoon[, 4, "condition"]
+)) %>% 
+  mutate(population = rep(k, each = n() / 5)) %>% 
+  mutate(population = factor(population, levels = k))
+
+# plot
+dif %>% 
+  ggplot(aes(x = dif, y = population)) +
+  geom_vline(xintercept = 0, color = "white") +
+  stat_halfeye(.width = .95, size = 1/2) +
+  scale_x_continuous(breaks = c(-9, -4.5, 0, 4.5, 9), 
+                     labels = c(-9, "-4.5", 0, "4.5", 9),
+                     limits = c(-9, 9)) +
+  labs(x = "unstandardized mean difference (0-9 Likert-type scale)",
+       y = NULL) +
+  theme(axis.text.y = element_text(hjust = 0),
+        panel.grid = element_blank())
+```
+
+If you needed them for a table or prose, here are the exact values for their posterior means and 95% intervals.
+
+```{r}
+dif %>% 
+  group_by(population) %>% 
+  mean_qi(dif)
+```
+
+Whether you focus on the population mean $(\beta_1)$ or the cartoon-specific results $(\beta_1 + v_{1k})$, the differences are much smaller than those Strack and colleagues reported in their original (1988) study.
+
+As far as the standardized mean differences go, we can compute a model-based Cohen's $d$-like effect size for the overall population with the equation
+
+$$
+d = \frac{\beta_1}{\sqrt{\big[\exp(\eta_0)^2 + \exp(\eta_0 + \eta_1)^2 \big] / 2}},
+$$
+
+where the bottom term is the pooled standard deviation in the population. In this case, we're *pooling* the standard deviation across the two levels of the experimental manipulation. If we want to compute the model-based Cohen's $d$ like effect size for each of the cartoons, the equation expands to
+
+$$
+d_k = \frac{\beta_1 + v_{1k}}{\sqrt{\big[\exp(\eta_0 + x_{0k})^2 + \exp(\eta_0 + \eta_1 + x_{0k} + x_{1k})^2 \big] / 2}}.
+$$
+
+You can use a simple `as_draws_df()`-based workflow to compute the overall $d$.
+
+```{r, fig.width = 4.5, fig.height = 2.75, warning = F}
+as_draws_df(fit2) %>% 
+  select(b_Intercept:b_sigma_condition) %>% 
+  transmute(d = b_condition / sqrt( (exp(b_sigma_Intercept)^2 + exp(b_sigma_Intercept + b_sigma_condition)^2) / 2)) %>% 
+  
+  ggplot(aes(x = d, y = 0)) +
+  stat_halfeye(.width = .95) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  labs(x = expression("Cohen's "*italic(d))) +
+  coord_cartesian(xlim = c(-1, 1)) +
+  theme(panel.grid = element_blank())
+```
+
+The workflow for the $d_k$ effect sizes require more work. To my mind, the `fitted()` approach is probably the easiest.
+
+```{r, fig.width = 4.5, fig.height = 3, warning = F}
+nd <- albohn %>% 
+  distinct(cartoon, condition) %>% 
+  mutate(row = 1:n())
+
+fitted(fit2, 
+       newdata = nd,
+       re_formula = ~ (1 + condition | cartoon),
+       dpar = "sigma",
+       summary = F) %>% 
+  data.frame() %>% 
+  set_names(nd %>% pull(row)) %>% 
+  mutate(draw = 1:n()) %>% 
+  pivot_longer(-draw, names_to = "row", values_to = "sigma") %>% 
+  mutate(row = as.double(row)) %>% 
+  left_join(nd, by = "row") %>% 
+  mutate(condition = str_c("sigma", condition)) %>% 
+  select(-row) %>%
+  pivot_wider(names_from = condition, values_from = sigma) %>% 
+  mutate(sigma_pooled = sqrt((sigma0^2 + sigma1^2) / 2)) %>% 
+  left_join(coef(fit2, summary = F)$cartoon[, , "condition"] %>% 
+              data.frame() %>% 
+              set_names(1:4) %>% 
+              mutate(draw = 1:n()) %>% 
+              pivot_longer(-draw, names_to = "cartoon", values_to = "delta") %>% 
+              mutate(cartoon = as.double(cartoon)),
+            by = c("draw", "cartoon")) %>% 
+  mutate(d = delta / sigma_pooled) %>% 
+  
+  ggplot(aes(x = d, y = factor(cartoon))) +
+  stat_halfeye(.width = .95) +
+  labs(x = expression("Cohen's "*italic(d)[italic(k)]),
+       y = "cartoon") +
+  coord_cartesian(xlim = c(-1, 1)) +
+  theme(panel.grid = element_blank())
+```
+
+Much like the un-standardized mean differences, the standardized mean differences are all centered around zero.
+
+### Shortcommings.
+
+If all you care about are model-based conditional means, the Gaussian approaches we used for `fit1` and `fit2` do a descent job describing the data. For example, here's a plot of the model-based means and their 95% intervals from `fit1` versus the means computed with simple sample statistics.
+
+```{r, fig.width = 5.5, fig.height = 2.5, message = F}
+nd <- albohn %>% 
+  distinct(cartoon, condition, conditionf)
+
+fitted(fit1,
+       re_formula = ~ (1 + condition | cartoon),
+       newdata = nd) %>% 
+  data.frame() %>% 
+  bind_cols(nd) %>% 
+  left_join(albohn %>% 
+              group_by(cartoon, condition) %>% 
+              summarise(mean = mean(rating, na.rm = T)),
+            by = c("condition", "cartoon")) %>% 
+  
+  ggplot(aes(y = cartoon)) +
+  geom_pointrange(aes(x = Estimate, xmin = Q2.5, xmax = Q97.5),
+                  fatten = 1.5) +
+  geom_point(aes(x = mean),
+             shape = 4, size = 4, color = "red3") +
+  scale_x_continuous("rating (0-9 Likert-type scale)", 
+                     breaks = 0:9, limits = c(0, 9)) +
+  labs(title = "Gaussian model versus sample statistics",
+       subtitle = "The black dots and horizontal lines are the fit1-based population estimates.\nThe red X's are the corresponding sample statistics.") +
+  facet_wrap(~ conditionf) +
+  theme(panel.grid = element_blank())
+```
+
+However, both models presume the data can be legitimately described using the normal distribution. Given the data can only take on integer values between 0 and 9, this isn't a great assumption. For example, take a look at the posterior-predictive distributions from the two models.
+
+```{r, fig.width = 7, fig.height = 3.5, warning = F}
+# fit1
+set.seed(1)
+p1 <- pp_check(fit1, type = "hist", ndraws = 3, binwidth = 0.5) +
+  geom_vline(xintercept = c(-0.5, 9.5), linetype = 2, size = 1/4) +
+  scale_x_continuous(breaks = 0:9) +
+  coord_cartesian(xlim = c(-3, 12)) +
+  ggtitle("Conventional Gaussian multilevel model\n(fit1)") +
+  theme(title = element_text(size = 9))
+
+# fit2
+set.seed(1)
+p2 <- pp_check(fit2, type = "hist", ndraws = 3, binwidth = 0.5) +
+  geom_vline(xintercept = c(-0.5, 9.5), linetype = 2, size = 1/4) +
+  scale_x_continuous(breaks = 0:9) +
+  coord_cartesian(xlim = c(-3, 12)) +
+  ggtitle("Gaussian MELSM\n(fit2)") +
+  theme(title = element_text(size = 9))
+
+# combine
+p1 + p2 + 
+  plot_layout(guides = "collect") +
+  plot_annotation(title = "Posterior-predictive checks",
+                  theme = theme(plot.title = element_text(family = "Times")))
+```
+
+Simulated data from both versions of the model exceed below and above the boundaries of the original data. Further, all simulated data sets are markedly more bell-shaped than the original data. When possible, it's generally a good idea to analyze experimental data with models that produce data resembling the original data. In next section, we consider ordinal models which do.
+
+## Ordinal models
+
+With **brms**, there are multiple ways to model data with ordinal likelihoods. In the next sections, we'll practice with the cumulative probit likelihood, which has desirable qualities for the data at hand. Though we won't do so, here, it wouldn't be unreasonable to use the cumulative logit framework, instead.
+
+### Conventional multilevel ordinal model.
+
+For the ordinal models, we'll switch from the numeric `rating` variable to the ordered factor variable `ratingf`. As in the models from the last section, we can think of the `ratinfg` values as varying across $i$ persons, $j$ experimental trials, and $k$ cartoons. Now we further describe the `ratingf` values as having $L + 1 = 10$ response options, given they are from questions which used a 0-to-9 Likert-type scale. With the cumulative probit model, you can model the relative probability of each ordinal category as
+
+$$p(\text{ratingf} = l | \{ \tau_l \}) = \Phi(\tau_l) - \Phi(\tau_{l - 1}),$$
+
+where $\tau_l$ is the $l^\text{th}$ threshold, $\{ \tau_l \}$ is a shorthand for the set of nine thresholds $\{l_1, \dots, l_9\}$, and $\Phi$ is the cumulative standard normal distribution. As our ultimate goal is to examine meaningful differences in the mean and variances of the `ratingf` values across the $i$ persons, $j$ experimental trials and $k$ cartoons in the data, we will expand the above equation to
+
+$$p(\text{ratingf} = l | \{ \tau_l \}, \mu, \alpha) = \Phi(\alpha[\tau_l - \mu]) - \Phi(\alpha[\tau_{l - 1} - \mu]),$$
+
+where $\mu$ is the mean of the cumulative normal distribution and $\alpha$ is the *discrimination* parameter, which is the reciprocal of the standard deviation of the cumulative normal distribution, such that $\sigma = 1 / \alpha$. In the empty model, $\mu = 0$ and $\alpha = 1$ for identification purposes and if you substitute those values into the equation, above, you'll see the terms on the right-side of the equation drop out and you end up with the simplified version of the equation from earlier.
+
+With this parameterization, we can analyze our experimental data with the model
+
+$$
+\begin{align*}
+p(\text{ratingf} = l | \{ \tau_l \}, \mu_{ijk}, \alpha = 1) & = \Phi(\alpha[\tau_l - \mu_{ijk}]) - \Phi(\alpha[\tau_{l - 1} - \mu_{ijk}]) \\
+\mu_{ijk} & = 0 + \beta_1 \text{Condition}_{ik} + u_i + v_{0k} + v_{1k} \text{Condition}_{ik} \\ 
+u_i & \sim \mathcal N(0, \sigma_u) \\
+\begin{bmatrix} v_{0k} \\ v_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{SRS}) \\
+\mathbf S & = \begin{bmatrix} \sigma_{0k} \\ 1 & \sigma_{1k} \end{bmatrix} \\
+\mathbf R & = \begin{bmatrix} 1 \\ \rho & 1 \end{bmatrix} \\
+\tau_{1} & \sim \mathcal N(-1.7506861, 0.5) \\
+\tau_{2} & \sim \mathcal N(-1.2265281, 0.5) \\
+\tau_{3} & \sim \mathcal N(-0.8064212, 0.5) \\
+\tau_{4} & \sim \mathcal N(-0.4124631, 0.5) \\
+\tau_{5} & \sim \mathcal N(0, 0.5) \\
+\tau_{6} & \sim \mathcal N(0.4124631, 0.5) \\
+\tau_{7} & \sim \mathcal N(0.8064212, 0.5) \\
+\tau_{8} & \sim \mathcal N(1.2265281, 0.5) \\
+\tau_{9} & \sim \mathcal N(1.7506861, 0.5) \\
+\beta_1 & \sim \mathcal N(0, 1) \\ 
+\sigma_u, \dots, \sigma_{1k} & \sim \operatorname{Exponential}(1) \\
+\mathbf R & \sim \operatorname{LKJ}(2),
+\end{align*}
+$$
+
+where the model for $\mu_{ijk}$ is similar to the model in `fit1`. The big difference is that $\beta_0$, the population mean for the pout condition, is fixed to zero for identification purposes. 
+
+As to the priors, we should walk out how we came to the unusually specific values for the $\tau$ priors. If you navigate to the `PanelPlot_SelectedCartoons.pdf` file on the OSF at https://osf.io/6qnhg/, you can look at the histograms of the four cartoons from the pilot trial. To my eye, the histograms are all similar in that the rating distributions are roughly symmetric and triangular with modes near the middle of the 0-to-9 scale and lesser response frequencies at the ends of the scale. They also show the pattern that the options in the middle of the scale are about 4 times more frequent than those at the ends. To give a sense, here's a histogram of the idealized shape.
+
+```{r, fig.width = 4, fig.height = 2.75}
+pilot_ratings <- tibble(rating = 0:9) %>% 
+  mutate(weight = c(seq(from = 1, to = 4, length.out = 5),
+                    seq(from = 4, to = 1, length.out = 5)))
+
+pilot_ratings %>% 
+  ggplot(aes(x = rating, y = weight)) +
+  geom_col() +
+  scale_x_continuous(breaks = 0:9) +
+  theme(panel.grid = element_blank()) +
+  ylim(0, 5) +
+  ggtitle("Idealized distribution of the pilot ratings")
+```
+
+If you divide each `weight` value by the sum of all `weight` values, you will have a vector of proportions. If you insert those `proportion` values into the `cumsum()` function, you will have a vector of cumulative proportions. You can then use the cumulative proportions to compute your prior thresholds with the `qnorm()` function, which will be on the scale of the link function $\Phi$.
+
+```{r}
+pilot_ratings %>% 
+  mutate(proportion = weight / sum(weight)) %>% 
+  mutate(cumulative_proportion = cumsum(proportion)) %>% 
+  mutate(right_hand_threshold = qnorm(cumulative_proportion, mean = 0, sd = 1))
+```
+
+Those `right_hand_threshold` values in the right-most column are where we got the $\mu$ hyperparameters for our Gaussian $\tau$ priors. Setting the $\sigma$ hyperparameter for each to $0.5$ might seem strong at first, but it still allows the posterior for each to veer about $1$ to the left or right of the $\Phi$ scale. Given the quality of these pilot data, I think that's pretty generous.
+
+Here's how to fit the model with `brm()`.
+
+```{r}
+# 1.163268 mins
+fit3 <- brm(
+  data = albohn,
+  family = cumulative(probit),
+  ratingf ~ 1 + condition + (1 | sn) + (1 + condition | cartoon),
+  prior = c(prior(normal(-1.7506861, 0.5), class = Intercept, coef = 1),
+            prior(normal(-1.2265281, 0.5), class = Intercept, coef = 2),
+            prior(normal(-0.8064212, 0.5), class = Intercept, coef = 3),
+            prior(normal(-0.4124631, 0.5), class = Intercept, coef = 4),
+            prior(normal(0.0000000, 0.5), class = Intercept, coef = 5),
+            prior(normal(0.4124631, 0.5), class = Intercept, coef = 6),
+            prior(normal(0.8064212, 0.5), class = Intercept, coef = 7),
+            prior(normal(1.2265281, 0.5), class = Intercept, coef = 8),
+            prior(normal(1.7506861, 0.5), class = Intercept, coef = 9),
+            prior(normal(0, 1), class = b, coef = condition),
+            prior(exponential(1), class = sd),
+            prior(lkj(2), class = cor)),
+  chains = 4, cores = 4,
+  seed = 1,
+  control = list(adapt_delta = .99),
+  init_r = 0.1,
+  file = "fits/fit3.wagenmakers2016albohn"
+)
+```
+
+Another way of describing this model is through the lens of item response theory (IRT). Following sensibilities in Bürkner's IRT paper (https://arxiv.org/pdf/1905.09501.pdf), this is an conditional ordinal probit IRT model.
+
+### A cumulative probit MELSM.
+
+A shortcomming of the multilevel cumulative probit model in the last section is that although the latent means are allowed to vary across persons and cartoons, the latent standard deviations are all constrained to equality. However, we can relax that assumption by modeling the discrimination parameter $\alpha$, which would return what you might call a cumulative probit MELSM or distributional multilevel cumulative probit model. We might describe the model as
+
+$$
+\begin{align*}
+p(\text{ratingf} = l | \{ \tau_l \}, \mu_{ijk}, \alpha_{ijk}) & = \Phi(\alpha_{ijk}[\tau_l - \mu_{ijk}]) - \Phi(\alpha_{ijk}[\tau_{l - 1} - \mu_{ijk}]) \\
+\mu_{ijk} & = 0 + \beta_1 \text{Condition}_{ik} + u_i + v_{0k} + v_{1k} \text{Condition}_{ik} \\ 
+\log(\alpha_{ijk}) & = 0 + \eta_1 \text{Condition}_{ik} + w_i + x_{0k} + x_{1k} \text{Condition}_{ik} \\ 
+u_i & \sim \mathcal N(0, \sigma_u) \\
+\begin{bmatrix} v_{0k} \\ v_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{S_vR_vS_v}) \\
+\mathbf{S_v} & = \begin{bmatrix} \sigma_{0k} \\ 1 & \sigma_{1k} \end{bmatrix} \\
+\mathbf{R_v} & = \begin{bmatrix} 1 \\ \rho_v & 1 \end{bmatrix} \\
+w_i & \sim \mathcal N(0, \sigma_w) \\
+\begin{bmatrix} x_{0k} \\ x_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{S_xR_xS_x}) \\
+\mathbf{S_x} & = \begin{bmatrix} \sigma_{2k} \\ 1 & \sigma_{3k} \end{bmatrix} \\
+\mathbf{R_x} & = \begin{bmatrix} 1 \\ \rho_x & 1 \end{bmatrix} \\
+\tau_{1} & \sim \mathcal N(-1.7506861, 0.5) \\
+\tau_{2} & \sim \mathcal N(-1.2265281, 0.5) \\
+\tau_{3} & \sim \mathcal N(-0.8064212, 0.5) \\
+\tau_{4} & \sim \mathcal N(-0.4124631, 0.5) \\
+\tau_{5} & \sim \mathcal N(0, 0.5) \\
+\tau_{6} & \sim \mathcal N(0.4124631, 0.5) \\
+\tau_{7} & \sim \mathcal N(0.8064212, 0.5) \\
+\tau_{8} & \sim \mathcal N(1.2265281, 0.5) \\
+\tau_{9} & \sim \mathcal N(1.7506861, 0.5) \\
+\beta_1 & \sim \mathcal N(0, 1) \\ 
+\eta_1 & \sim \mathcal N(0, \log(2) / 2) \\ 
+\sigma_u, \dots, \sigma_{1k} & \sim \operatorname{Exponential}(1) \\
+\mathbf R & \sim \operatorname{LKJ}(2),
+\end{align*}
+$$
+
+where now $\alpha$ varies across $i$ persons, $j$ experimental trials, and $k$ cartoons. Much like when we modeled $\log(\sigma_{ijk})$ with the Gaussian MELSM, we model $\log(\alpha_{ijk})$ here to ensure the model only predicts positive $\alpha$ values. For identification purposes, the $\eta_0$ parameter is fixed to zero, which is the same as fixing it to one after exponentiating out of the log scale. This is why that parameter is absent from the equation and why it does not receive a prior. Speaking of priors, notice how we used $\eta_1 \sim \mathcal N(0, \log(2) / 2)$. If you simulate, that distribution puts 95% of the prior mass on the possibility the discrimination parameter for the smile condition will be between half and 2 time the size of the pout condition.
+
+```{r, fig.width = 4, fig.height = 2.75}
+set.seed(1)
+
+prior <- tibble(prior = rnorm(n = 1e6, mean = 0, sd = log(2) / 2)) %>% 
+  mutate(alpha = exp(prior)) 
+
+prior %>% 
+  ggplot(aes(x = alpha)) +
+  geom_histogram(binwidth = 0.1, boundary = 0) +
+  coord_cartesian(xlim = c(0, 4)) +
+  theme(panel.grid = element_blank())
+
+prior %>% 
+  median_qi(alpha)
+```
+
+Since $\sigma$ is just the reciprocal of $\alpha$, the $\mathcal N(0, \log(2) / 2)$ has the same consequences on the $\sigma$ scale.
+
+Here's how to fit the model with `brm()`.
+
+```{r}
+# 2.575521 mins
+fit4 <- brm(
+  data = albohn,
+  family = cumulative(probit),
+  bf(ratingf ~ 1 + condition + (1 | sn) + (1 + condition | cartoon)) +
+    lf(disc  ~ 0 + condition + (1 | sn) + (1 + condition | cartoon),
+       # this is really important
+       cmc = FALSE),
+  prior = c(prior(normal(-1.7506861, 0.5), class = Intercept, coef = 1),
+            prior(normal(-1.2265281, 0.5), class = Intercept, coef = 2),
+            prior(normal(-0.8064212, 0.5), class = Intercept, coef = 3),
+            prior(normal(-0.4124631, 0.5), class = Intercept, coef = 4),
+            prior(normal(0.0000000, 0.5), class = Intercept, coef = 5),
+            prior(normal(0.4124631, 0.5), class = Intercept, coef = 6),
+            prior(normal(0.8064212, 0.5), class = Intercept, coef = 7),
+            prior(normal(1.2265281, 0.5), class = Intercept, coef = 8),
+            prior(normal(1.7506861, 0.5), class = Intercept, coef = 9),
+            prior(normal(0, 1),          class = b, coef = condition),
+            prior(normal(0, log(2) / 2), class = b, dpar = disc),
+            prior(exponential(1), class = sd),
+            prior(lkj(2), class = cor)),
+  chains = 4, cores = 4,
+  seed = 1,
+  control = list(adapt_delta = .995),
+  init_r = 0.1,
+  file = "fits/fit4.wagenmakers2016albohn"
+)
+```
+
+### Summarize the ordinal models.
+
+Here are the parameter summaries for both versions of the cumulative probit model.
+
+```{r}
+print(fit3)
+print(fit4)
+```
+
+As with the two Gaussian models, here are the coefficient plots for the level-2 $\sigma$ parameters for our ordinal models.
+
+```{r, fig.width = 5, fig.height = 3}
+sigma_names <- c(
+  "sigma[0][italic(k)]", "sigma[1][italic(k)]", "sigma[italic(u)]", 
+  "sigma[2][italic(k)]", "sigma[3][italic(k)]", "sigma[italic(w)]"
+  )
+
+rbind(
+  posterior_summary(fit3)[11:13, -2],
+  posterior_summary(fit4)[12:17, -2]
+  ) %>% 
+  data.frame() %>% 
+  mutate(fit   = rep(str_c("fit", 3:4), times = c(3, 6)),
+         param = c(sigma_names[1:3], sigma_names)) %>% 
+  mutate(param = factor(param, levels = sigma_names[c(3, 1, 2, 6, 4, 5)])) %>% 
+  
+  ggplot(aes(x = param, y = Estimate, ymin = Q2.5, ymax = Q97.5,
+             color = fit, group = fit)) +
+  geom_pointrange(fatten = 1.25, position = position_dodge2(width = 0.5)) + 
+  scale_color_viridis_d(option = "H", begin = .1, end = .9) +
+  scale_x_discrete(NULL, labels = ggplot2:::parse_safe) +
+  labs(title = "The level-2 standard deviation parameters",
+       y = "marginal posterior") +
+  coord_flip() +
+  theme(panel.grid = element_blank())
+```
+
+Comparatively speaking, the parameters unique to the MELSM--$\sigma_w$, $\sigma_{2k}$, and $\sigma_{3k}$--are larger in the ordinal version of the model (`fit4`) than they were for the more-conventional Gaussian version of the model (`fit2`). Yet, they're still on the small side relative to the others.
+
+We might compare the two ordinal models by their LOO-CV estimates.
+
+```{r}
+# compute
+fit3 <- add_criterion(fit3, criterion = "loo")
+fit4 <- add_criterion(fit4, criterion = "loo")
+
+# compare
+loo_compare(fit3, fit4, criterion = "loo") %>% print(simplify = F)
+```
+
+For the ordinal models, the MELSM `fit4` was more clearly superior than the simpler version of the model `fit3`.
+
+### Effect sizes for the ordinal models.
+
+The ordinal models will allow for standardized and un-standardized effect sizes, not unlike with the Gaussian models. However, it's perhaps more natural to first compute the standardized effect sizes.
+
+#### Standardized mean differences.
+
+Since there is one common $\alpha$ parameter for the simpler `fit3` version of the model, that means there is also one common latent standard deviation $\sigma$. As a consequence, this puts the overall $\beta_1$ parameter in a standardized mean difference metric. It's basically a latent Cohen's $d$.
+
+```{r}
+fixef(fit3)["condition", ] %>% round(digits = 2)
+```
+
+Thus, the overall effect of the smile versus pout condition is a modest standardized mean difference of 0.06, 95% CI [-0.29, 0.42]. To get the cartoon-specific effect size, $d_k$, it's probably easiest to use the `coef()` approach.
+
+```{r}
+coef(fit3)$cartoon[, , "condition"] %>% round(digits = 2)
+```
+
+The varying discrimination parameters in the full `fit4` model complicate our workflow. To compute the overall latent Cohen's $d$, we now use the equation
+
+$$
+d = \frac{\beta_1}{\sqrt{\big([1 /\exp(0)]^2 + [1/\exp(0 + \eta_1)]^2 \big) \big/ 2}},
+$$
+
+where $[1 /\exp(0)]$ is the latent standard deviation for the pout condition and $[1/\exp(0 + \eta_1)]$ is the latent standard deviation for the smile condition. In a similar way, the equations for the cartoon-specific latent $d_k$'s now become 
+
+$$
+d_k = \frac{\beta_1 + v_{1k}}{\sqrt{\big([1/\exp(0 + x_{0k})]^2 + [1 / \exp(0 + \eta_1 + x_{0k} + x_{1k})]^2 \big) \big/ 2}},
+$$
+
+where $[1/\exp(0 + x_{0k})]^2$ is the latent standard deviation for the $k$th cartoon in the pout condition and $[1 / \exp(0 + \eta_1 + x_{0k} + x_{1k})]^2$ is the latent standard deviation for the $k$th cartoon in the smile condition.
+
+Here's an example of how to compute the population $d$ manually with the `as_draws_df()` output.
+
+```{r, warning = F}
+draws <- as_draws_df(fit4)
+
+population <- draws %>% 
+  rename(`beta[1]` = b_condition, 
+         `eta[1]`  = b_disc_condition) %>% 
+  mutate(d = `beta[1]` / sqrt((1 + (1 / exp(`eta[1]`))^2) / 2)) %>% 
+  select(d) %>% 
+  mean_qi(d)
+
+population
+```
+
+Here's how to compute the $d_k$ effects manually with the `as_draws_df()` output.
+
+```{r, warning = F}
+k <- draws %>% 
+  select(.draw, 
+         b_condition, b_disc_condition,
+         `r_cartoon[1,condition]`:`r_cartoon[4,condition]`,
+         `r_cartoon__disc[1,Intercept]`:`r_cartoon__disc[4,Intercept]`, 
+         `r_cartoon__disc[1,condition]`:`r_cartoon__disc[4,condition]`) %>% 
+  set_names(c(".draw", 
+              "beta[1]", "eta[1]",
+              str_c(1:4, "_v[1]"), 
+              str_c(1:4, "_x[0]"), 
+              str_c(1:4, "_x[1]"))) %>% 
+  pivot_longer(contains("_")) %>% 
+  separate(name, into = c("k", "name"), sep = "_") %>% 
+  pivot_wider(names_from = name, values_from = value) %>% 
+  mutate(d = (`beta[1]` + `v[1]`) / sqrt(((1 / exp(`x[0]`))^2 + (1 / exp(`eta[1]` + `x[0]` + `x[1]`))^2) / 2)) %>% 
+  group_by(k) %>% 
+  mean_qi(d)
+
+k
+```
+
+Here we combine the two and visualize them in a coefficient plot.
+
+```{r, fig.width = 5, fig.height = 2.5}
+bind_rows(
+  population %>% select(d:.upper),
+  k %>% select(d:.upper)
+  ) %>% 
+  mutate(effect = c("italic(d)[population]", str_c("italic(d)[", 1:4, "]"))) %>% 
+  mutate(effect = fct_rev(effect)) %>% 
+  
+  ggplot(aes(x = d, xmin = .lower, xmax = .upper, y = effect)) +
+  geom_vline(xintercept = 0, color = "white") +
+  geom_pointrange() +
+  scale_x_continuous("latent effect size", limits = c(-0.5, 0.5)) +
+  scale_y_discrete(NULL, labels = ggplot2:::parse_safe) +
+  theme(panel.grid = element_blank())
+```
+
+#### Unstandardized mean differences.
+
+Even with the complicated `fit4` model, the latent Cohen's $d$ approach is attractive in it returns an effect size in a familiar metric. However, some may feel uneasy about leaning into the latent-variable interpretation of the cumulative-probit model. Happily, the cumulative-probit model can also return unstandardized mean differences in the original metric of the 0-9 Likert-type ratings. You just need to know how to work with the thresholds. 
+
+Probably the easiest way to compute the unstandardized mean differences is with the `fitted()` approach. Here we'll demonstrate with `fit3`. First, we'll compute the overall means by experimental condition and their difference.
+
+```{r}
+nd <- albohn %>% 
+  distinct(condition)
+
+
+f <- fitted(fit3,
+            newdata = nd,
+            re_formula = NA,
+            type = "response",
+            summary = F)
+
+# what do we have?
+f %>% str()
+```
+
+Here's how to work with the `fitted()` output to compute the overall means, by condition, and their difference.
+
+```{r}
+rbind(f[, 1, ],
+      f[, 2, ]) %>% 
+  data.frame() %>% 
+  set_names(str_c("p", 0:9)) %>% 
+  mutate(draw = rep(1:4000, times = 2),
+         condition = rep(c("pout", "smile"), each = 4000)) %>% 
+  pivot_longer(p0:p9, values_to = "p") %>% 
+  mutate(rating = str_remove(name, "p") %>% as.double()) %>% 
+  mutate(`p * rating` = p * rating) %>% 
+  group_by(draw, condition) %>% 
+  summarise(mean_rating = sum(`p * rating`)) %>% 
+  ungroup(condition) %>% 
+  pivot_wider(names_from = condition, values_from = mean_rating) %>% 
+  mutate(dif = smile - pout) %>% 
+  pivot_longer(-draw, values_to = "mu") %>% 
+  group_by(name) %>% 
+  mean_qi(mu)
+```
+
+Here's the same, by cartoon.
+
+```{r, message = F}
+nd <- albohn %>% 
+  distinct(condition, cartoon) %>%
+  mutate(row = 1:n())
+
+f <- fitted(fit3,
+            newdata = nd,
+            re_formula = ~ (1 + condition | cartoon),
+            type = "response",
+            summary = F)
+
+rbind(
+  f[, 1, ],
+  f[, 2, ],
+  f[, 3, ],
+  f[, 4, ],
+  f[, 5, ],
+  f[, 6, ],
+  f[, 7, ],
+  f[, 8, ]) %>% 
+  data.frame() %>% 
+  set_names(str_c("p", 0:9)) %>% 
+  mutate(draw      = rep(1:4000, times = 4 * 2),
+         condition = rep(c("pout", "smile"), each = n() / 2),
+         cartoon   = rep(c(1:4, 1:4), each = 4000)) %>% 
+  pivot_longer(p0:p9, values_to = "p") %>% 
+  mutate(rating = str_remove(name, "p") %>% as.double()) %>% 
+  mutate(`p * rating` = p * rating) %>% 
+  group_by(draw, condition, cartoon) %>% 
+  summarise(mean_rating = sum(`p * rating`)) %>% 
+  ungroup() %>% 
+  group_by(condition, cartoon) %>% 
+  pivot_wider(names_from = condition, values_from = mean_rating) %>% 
+  mutate(dif = smile - pout) %>% 
+  pivot_longer(cols = pout:dif, values_to = "mu") %>% 
+  group_by(name, cartoon) %>% 
+  mean_qi(mu)
+```
+
+You could follow the same basic workflow to compute the overall and cartoon-specific mean differences for the full cumulative-probit model `fit4`. However, it might be instructive to show how to compute the unstandardized mean differences with the `as_draws_df()` output. Here's how to compute the population-level means and their difference.
+
+```{r, message = F, warning = F}
+as_draws_df(fit4) %>% 
+  select(.draw, starts_with("b_")) %>% 
+  set_names(".draw", str_c("tau[", 1:9, "]"), "beta[1]", "eta[1]") %>% 
+  bind_rows(., .) %>% 
+  mutate(condition = rep(0:1, each = n() / 2)) %>% 
+  # compute the conditional mu and sigma values
+  mutate(mu_i    = 0 + condition * `beta[1]`,
+         sigma_i = 1 / exp(0 + condition * `eta[1]`)) %>%
+  # compute the p_k values conditional on the condition dummy and the mu_i and sigma_i values
+  mutate(p1 = pnorm(`tau[1]`, mean = mu_i, sd = sigma_i),
+         p2 = pnorm(`tau[2]`, mean = mu_i, sd = sigma_i) - pnorm(`tau[1]`, mean = mu_i, sd = sigma_i),
+         p3 = pnorm(`tau[3]`, mean = mu_i, sd = sigma_i) - pnorm(`tau[2]`, mean = mu_i, sd = sigma_i),
+         p4 = pnorm(`tau[4]`, mean = mu_i, sd = sigma_i) - pnorm(`tau[3]`, mean = mu_i, sd = sigma_i),
+         p5 = pnorm(`tau[5]`, mean = mu_i, sd = sigma_i) - pnorm(`tau[4]`, mean = mu_i, sd = sigma_i),
+         p6 = pnorm(`tau[6]`, mean = mu_i, sd = sigma_i) - pnorm(`tau[5]`, mean = mu_i, sd = sigma_i),
+         p7 = pnorm(`tau[7]`, mean = mu_i, sd = sigma_i) - pnorm(`tau[6]`, mean = mu_i, sd = sigma_i),
+         p8 = pnorm(`tau[8]`, mean = mu_i, sd = sigma_i) - pnorm(`tau[7]`, mean = mu_i, sd = sigma_i),
+         p9 = pnorm(`tau[9]`, mean = mu_i, sd = sigma_i) - pnorm(`tau[8]`, mean = mu_i, sd = sigma_i),
+         p10 = 1 - pnorm(`tau[9]`, mean = mu_i, sd = sigma_i)) %>%
+  # the rest is now the same as before
+  pivot_longer(starts_with("p"), values_to = "p") %>% 
+  mutate(rating = (str_extract(name, "\\d+") %>% as.double()) - 1) %>% 
+  mutate(`p * rating` = p * rating) %>% 
+  group_by(.draw, condition) %>% 
+  summarise(mean_rating = sum(`p * rating`)) %>% 
+  mutate(condition = ifelse(condition == 0, "pout", "smile")) %>% 
+  pivot_wider(names_from = condition, values_from = mean_rating) %>% 
+  mutate(dif = smile - pout) %>% 
+  pivot_longer(-.draw, values_to = "mu") %>% 
+  group_by(name) %>% 
+  mean_qi(mu)
+```
+
+The cartoon-specific means and their differences requires a generalized workflow that accounts for the $\beta_1$, $\eta_1$, $v_{0k}$, $v_{1k}$, $x_{0k}$, and $x_{1k}$ parameters from the `as_draws_df()` output.
+
+```{r, warning = F, message = F}
+unstandardized_means <- draws %>% 
+  select(.draw, 
+         starts_with("b_"),
+         `r_cartoon[1,Intercept]`:`r_cartoon[4,Intercept]`,
+         `r_cartoon[1,condition]`:`r_cartoon[4,condition]`,
+         `r_cartoon__disc[1,Intercept]`:`r_cartoon__disc[4,Intercept]`, 
+         `r_cartoon__disc[1,condition]`:`r_cartoon__disc[4,condition]`)  %>% 
+  set_names(c(".draw", 
+              str_c("tau[", 1:9, "]"),
+              "beta[1]", "eta[1]",
+              str_c(1:4, "_v[0]"), 
+              str_c(1:4, "_v[1]"), 
+              str_c(1:4, "_x[0]"), 
+              str_c(1:4, "_x[1]"))) %>% 
+  pivot_longer(contains("_")) %>% 
+  separate(name, into = c("k", "name"), sep = "_") %>% 
+  pivot_wider(names_from = name, values_from = value) %>% 
+  bind_rows(., .) %>% 
+  mutate(condition = rep(0:1, each = n() / 2)) %>% 
+  # compute the conditional mu and sigma values
+  mutate(mu_ik    = 0 + `beta[1]` * condition + `v[0]` + `v[1]` * condition,
+         sigma_ik = 1 / exp(0 + `eta[1]` * condition + `x[0]` + `x[1]` * condition)) %>%
+  # compute the p_l values conditional on the condition dummy and the mu_ik and sigma_ik values
+  mutate(p1 = pnorm(`tau[1]`, mean = mu_ik, sd = sigma_ik),
+         p2 = pnorm(`tau[2]`, mean = mu_ik, sd = sigma_ik) - pnorm(`tau[1]`, mean = mu_ik, sd = sigma_ik),
+         p3 = pnorm(`tau[3]`, mean = mu_ik, sd = sigma_ik) - pnorm(`tau[2]`, mean = mu_ik, sd = sigma_ik),
+         p4 = pnorm(`tau[4]`, mean = mu_ik, sd = sigma_ik) - pnorm(`tau[3]`, mean = mu_ik, sd = sigma_ik),
+         p5 = pnorm(`tau[5]`, mean = mu_ik, sd = sigma_ik) - pnorm(`tau[4]`, mean = mu_ik, sd = sigma_ik),
+         p6 = pnorm(`tau[6]`, mean = mu_ik, sd = sigma_ik) - pnorm(`tau[5]`, mean = mu_ik, sd = sigma_ik),
+         p7 = pnorm(`tau[7]`, mean = mu_ik, sd = sigma_ik) - pnorm(`tau[6]`, mean = mu_ik, sd = sigma_ik),
+         p8 = pnorm(`tau[8]`, mean = mu_ik, sd = sigma_ik) - pnorm(`tau[7]`, mean = mu_ik, sd = sigma_ik),
+         p9 = pnorm(`tau[9]`, mean = mu_ik, sd = sigma_ik) - pnorm(`tau[8]`, mean = mu_ik, sd = sigma_ik),
+         p10 = 1 - pnorm(`tau[9]`, mean = mu_ik, sd = sigma_ik)) %>%
+  # the rest is now the same as before
+  pivot_longer(starts_with("p"), values_to = "p") %>% 
+  mutate(rating = (str_extract(name, "\\d+") %>% as.double()) - 1) %>% 
+  mutate(`p * rating` = p * rating) %>% 
+  group_by(.draw, k, condition) %>% 
+  summarise(mean_rating = sum(`p * rating`)) %>% 
+  mutate(condition = ifelse(condition == 0, "pout", "smile")) %>% 
+  pivot_wider(names_from = condition, values_from = mean_rating) %>% 
+  mutate(dif = smile - pout) %>% 
+  pivot_longer(cols = pout:dif, values_to = "mu") %>% 
+  group_by(name, k) %>% 
+  mean_qi(mu)
+
+unstandardized_means
+```
+
+Here's an example of how these model-based posteriors compare with the sample means.
+
+```{r, fig.width = 5.5, fig.height = 2.5, message = F}
+unstandardized_means %>% 
+  filter(name != "dif") %>% 
+  rename(condition = name) %>% 
+  mutate(cartoon = as.double(k)) %>% 
+  left_join(
+    albohn %>%
+      mutate(condition = ifelse(condition == 0, "pout", "smile")) %>% 
+      group_by(cartoon, condition) %>%
+      summarise(mean = mean(rating, na.rm = T)),
+    by = c("condition", "cartoon")
+  ) %>% 
+  
+  ggplot(aes(y = cartoon)) +
+  geom_pointrange(aes(x = mu, xmin = .lower, xmax = .upper),
+                  fatten = 1.5) +
+  geom_point(aes(x = mean),
+             shape = 4, size = 4, color = "red3") +
+  scale_x_continuous("rating (0-9 Likert-type scale)", 
+                     breaks = 0:9, limits = c(0, 9)) +
+  labs(title = "Distributional cumulative-probit model versus sample statistics",
+       subtitle = "The black dots and horizontal lines are the fit4-based population estimates.\nThe red X's are the corresponding sample statistics.") +
+  facet_wrap(~ condition) +
+  theme(panel.grid = element_blank())
+```
+
+#### Major strength.
+
+Whereas the Gaussian models were limited by their presumption data might be legitimately described using the normal distribution, the cumulative-probit models are fully capable of presuming the data can only take on integer values between 0 and 9. To highlight this strength, take a look at the posterior-predictive distributions from the two models.
+
+```{r, fig.width = 7, fig.height = 3.5, warning = F}
+# fit3
+set.seed(1)
+p1 <- pp_check(fit3, type = "hist", ndraws = 3, binwidth = 0.5) +
+  geom_vline(xintercept = c(0.5, 10.5), linetype = 2, size = 1/4) +
+  scale_x_continuous(breaks = 1:10, labels = 0:9) +
+  ggtitle("Conventional cumulative-probit multilevel\nmodel (fit3)") +
+  theme(title = element_text(size = 9))
+
+# fit4
+set.seed(1)
+p2 <- pp_check(fit4, type = "hist", ndraws = 3, binwidth = 0.5) +
+  geom_vline(xintercept = c(0.5, 10.5), linetype = 2, size = 1/4) +
+  scale_x_continuous(breaks = 1:10, labels = 0:9) +
+  ggtitle("Cumulative-probit MELSM\n(fit4)") +
+  theme(title = element_text(size = 9))
+
+# combine
+p1 + p2 + 
+  plot_layout(guides = "collect") +
+  plot_annotation(title = "Posterior-predictive checks",
+                  theme = theme(plot.title = element_text(family = "Times")))
+```
+
+Both versions of the cumulative-probit model do a great job simulating new data that have the same basic characteristics as the empirical data. Both models respected the ordinal nature of the data, including the lower and upper limits. They also respected the asymmetric shape of the overall distribution.
+
+#### Next steps.
+
+As complicated as it is, our distributional cumulative-probit model could be made more general in a couple ways. First, did you notice that the thresholds $\tau_{1}, \dots, \tau_{9}$ were held constant across the four cartoons and the two experimental conditions? You could allow them to vary with the `thres()` function and its `gr` argument. For this data set, the differences were so small between the experimental conditions an across the four cartoons that this would have made very little difference. But in cases with greater heterogeneity, you might explore this option.
+
+Another option is category-specific effects. That is, the linear models for $\mu_{ijk}$ and $\log(\alpha_{ijk})$ allowed for overall or averaged effects of the experimental condition on the latent mean and standard deviation. The `cs()` helper function can allow predictor variables in an ordinal **brms** model have rating-specific effects, instead.
+
+## Session information
+
+```{r}
+sessionInfo()
+```
 
