@@ -2123,6 +2123,52 @@ Both models respected the ordinal nature of the data, including the
 lower and upper limits. They also respected the asymmetric shape of the
 overall distribution.
 
+#### Kicks and giggles.
+
+Jut for kicks and giggles, here’s how you might pot the conditional
+means from the full cumulative-probit MELSM along with the sample data.
+For reference, the layout of this plot came from a nice twitter
+discussion, which you can find
+[here](https://twitter.com/SolomonKurz/status/1517871041271549955).
+
+``` r
+# update
+unstandardized_means <- unstandardized_means %>% 
+  filter(name != "dif") %>% 
+  mutate(cartoon = as.double(k))
+
+# wrangle
+albohn %>% 
+  mutate(condition = ifelse(condition == 1, "smile", "pout")) %>% 
+
+  # plot!
+  ggplot(aes(x = rating)) +
+  geom_bar(data = . %>% filter(condition == "smile"),
+           aes(fill = condition)) +
+  geom_bar(data = . %>% filter(condition == "pout"),
+           aes(y = -..count.., fill = condition)) +
+  geom_hline(yintercept = 0, size = 1, color = "gray96") +
+  geom_pointrange(data = unstandardized_means %>% filter(name == "smile"),
+                  aes(x = mu, xmin = .lower, xmax = .upper, y = -0.7),
+                  fatten = 1, size = .65) +
+  geom_pointrange(data = unstandardized_means %>% filter(name == "pout"),
+                  aes(x = mu, xmin = .lower, xmax = .upper, y = 0.7),
+                  fatten = 1, size = .65) +
+  scale_fill_viridis_d("condition:", option = "D", begin = .4, end = .7, alpha = .6) +
+  scale_x_continuous("funniness rating", breaks = 0:9) +
+  scale_y_continuous("count",
+                     breaks = -2:2 * 10, labels = c(2:1, 0:2) * 10,
+                     limits = c(-20, 20)) +
+  labs(title = "(2016) Strack [failed] replication results (Albohn lab only)",
+       subtitle = "The sideways histograms show the sample data. The black point-intervals show the conditional\nmeans and their 95% intervals from the cumulative-probit MELSM. The similarity of the two point-\nintervals within each facet go against the predictions from the original Strack study. Tricking\nparticipants into smiling or frowning did not meaningfully effect show they rated the cratoons.") +
+  theme(panel.grid = element_blank(),
+        legend.position = "bottom") +
+  facet_wrap(~ cartoon, labeller = label_both, nrow = 1) +
+  coord_flip()
+```
+
+<img src="Wagenmakers-et-al--2016--Albohn-only_files/figure-gfm/unnamed-chunk-48-1.png" width="672" />
+
 #### Next steps.
 
 As complicated as it is, our distributional cumulative-probit model
