@@ -102,7 +102,7 @@ The remaining columns in the data are:
 * `cartoon` is the index for the four *Far Side* cartoons.
 * `rating` is the rating for the cartoons on the 0-9 Likert-type scale, saved as a numeral.
 * `ratingf` is the ordered factor version of `rating`.
-* `conditionf` is the factor version of `Condition`.
+* `conditionf` is the factor version of `condition`.
 
 ### EDA.
 
@@ -282,7 +282,7 @@ A major limitation of the conventional approach is it ignores heterogeneity acro
 
 $$
 \begin{align*}
-\text{rating}_{ijk} & \sim \mathcal N(\mu_{ijk}, \sigma) \\
+\text{rating}_{ijk} & \sim \mathcal N(\mu_{ijk}, \sigma_{ijk}) \\
 \mu_{ijk} & = \beta_0 + \beta_1 \text{condition}_{ik} + u_i + v_{0k} + v_{1k} \text{condition}_{ik} \\
 \log(\sigma_{ijk}) & = \eta_0 + \eta_1 \text{condition}_{ik} + w_i + x_{0k} + x_{1k} \text{condition}_{ik} \\
 u_i & \sim \mathcal N(0, \sigma_u) \\

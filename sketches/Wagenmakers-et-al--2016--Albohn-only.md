@@ -160,7 +160,7 @@ The remaining columns in the data are:
 -   `rating` is the rating for the cartoons on the 0-9 Likert-type
     scale, saved as a numeral.
 -   `ratingf` is the ordered factor version of `rating`.
--   `conditionf` is the factor version of `Condition`.
+-   `conditionf` is the factor version of `condition`.
 
 ### EDA.
 
@@ -503,7 +503,7 @@ This would look like
 
 ![
 \\begin{align\*}
-\\text{rating}\_{ijk} & \\sim \\mathcal N(\\mu\_{ijk}, \\sigma) \\\\
+\\text{rating}\_{ijk} & \\sim \\mathcal N(\\mu\_{ijk}, \\sigma\_{ijk}) \\\\
 \\mu\_{ijk} & = \\beta_0 + \\beta_1 \\text{condition}\_{ik} + u_i + v\_{0k} + v\_{1k} \\text{condition}\_{ik} \\\\
 \\log(\\sigma\_{ijk}) & = \\eta_0 + \\eta_1 \\text{condition}\_{ik} + w_i + x\_{0k} + x\_{1k} \\text{condition}\_{ik} \\\\
 u_i & \\sim \\mathcal N(0, \\sigma_u) \\\\
@@ -515,9 +515,9 @@ w_i & \\sim \\mathcal N(0, \\sigma_w) \\\\
 \\mathbf{S_x} & = \\begin{bmatrix} \\sigma\_{2k} \\\\ 1 & \\sigma\_{3k} \\end{bmatrix} \\\\
 \\mathbf{R_x} & = \\begin{bmatrix} 1 \\\\ \\rho_x & 1 \\end{bmatrix} \\\\
 \\end{align\*}
-](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0A%5Ctext%7Brating%7D_%7Bijk%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmu_%7Bijk%7D%2C%20%5Csigma%29%20%5C%5C%0A%5Cmu_%7Bijk%7D%20%26%20%3D%20%5Cbeta_0%20%2B%20%5Cbeta_1%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%2B%20u_i%20%2B%20v_%7B0k%7D%20%2B%20v_%7B1k%7D%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%5C%5C%0A%5Clog%28%5Csigma_%7Bijk%7D%29%20%26%20%3D%20%5Ceta_0%20%2B%20%5Ceta_1%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%2B%20w_i%20%2B%20x_%7B0k%7D%20%2B%20x_%7B1k%7D%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%5C%5C%0Au_i%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Csigma_u%29%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20v_%7B0k%7D%20%5C%5C%20v_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmathbf%200%2C%20%5Cmathbf%7BS_vR_vS_v%7D%29%20%5C%5C%0A%5Cmathbf%7BS_v%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_%7B0k%7D%20%5C%5C%201%20%26%20%5Csigma_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%7BR_v%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%20%5Crho_v%20%26%201%20%5Cend%7Bbmatrix%7D%20%5C%5C%0Aw_i%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Csigma_w%29%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20x_%7B0k%7D%20%5C%5C%20x_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmathbf%200%2C%20%5Cmathbf%7BS_xR_xS_x%7D%29%20%5C%5C%0A%5Cmathbf%7BS_x%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_%7B2k%7D%20%5C%5C%201%20%26%20%5Csigma_%7B3k%7D%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%7BR_x%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%20%5Crho_x%20%26%201%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cend%7Balign%2A%7D%0A "
+](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0A%5Ctext%7Brating%7D_%7Bijk%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmu_%7Bijk%7D%2C%20%5Csigma_%7Bijk%7D%29%20%5C%5C%0A%5Cmu_%7Bijk%7D%20%26%20%3D%20%5Cbeta_0%20%2B%20%5Cbeta_1%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%2B%20u_i%20%2B%20v_%7B0k%7D%20%2B%20v_%7B1k%7D%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%5C%5C%0A%5Clog%28%5Csigma_%7Bijk%7D%29%20%26%20%3D%20%5Ceta_0%20%2B%20%5Ceta_1%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%2B%20w_i%20%2B%20x_%7B0k%7D%20%2B%20x_%7B1k%7D%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%5C%5C%0Au_i%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Csigma_u%29%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20v_%7B0k%7D%20%5C%5C%20v_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmathbf%200%2C%20%5Cmathbf%7BS_vR_vS_v%7D%29%20%5C%5C%0A%5Cmathbf%7BS_v%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_%7B0k%7D%20%5C%5C%201%20%26%20%5Csigma_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%7BR_v%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%20%5Crho_v%20%26%201%20%5Cend%7Bbmatrix%7D%20%5C%5C%0Aw_i%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Csigma_w%29%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20x_%7B0k%7D%20%5C%5C%20x_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmathbf%200%2C%20%5Cmathbf%7BS_xR_xS_x%7D%29%20%5C%5C%0A%5Cmathbf%7BS_x%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_%7B2k%7D%20%5C%5C%201%20%26%20%5Csigma_%7B3k%7D%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%7BR_x%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%20%5Crho_x%20%26%201%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cend%7Balign%2A%7D%0A "
 \begin{align*}
-\text{rating}_{ijk} & \sim \mathcal N(\mu_{ijk}, \sigma) \\
+\text{rating}_{ijk} & \sim \mathcal N(\mu_{ijk}, \sigma_{ijk}) \\
 \mu_{ijk} & = \beta_0 + \beta_1 \text{condition}_{ik} + u_i + v_{0k} + v_{1k} \text{condition}_{ik} \\
 \log(\sigma_{ijk}) & = \eta_0 + \eta_1 \text{condition}_{ik} + w_i + x_{0k} + x_{1k} \text{condition}_{ik} \\
 u_i & \sim \mathcal N(0, \sigma_u) \\
