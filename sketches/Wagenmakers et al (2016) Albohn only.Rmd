@@ -1221,7 +1221,7 @@ albohn %>%
                      breaks = -2:2 * 10, labels = c(2:1, 0:2) * 10,
                      limits = c(-20, 20)) +
   labs(title = "(2016) Strack [failed] replication results (Albohn lab only)",
-       subtitle = "The sideways histograms show the sample data. The black point-intervals show the conditional\nmeans and their 95% intervals from the cumulative-probit MELSM. The similarity of the two point-\nintervals within each facet go against the predictions from the original Strack study. Tricking\nparticipants into smiling or frowning did not meaningfully effect show they rated the cratoons.") +
+       subtitle = "The sideways histograms show the sample data. The black point-intervals show the conditional\nmeans and their 95% intervals from the cumulative-probit MELSM. The similarity of the two point-\nintervals within each facet go against the predictions from the original Strack study. Tricking\nparticipants into smiling or frowning did not meaningfully effect how they rated the cratoons.") +
   theme(panel.grid = element_blank(),
         legend.position = "bottom") +
   facet_wrap(~ cartoon, labeller = label_both, nrow = 1) +
