@@ -14,3 +14,8 @@ These files contain content sketches. They aren’t necessarily full chapters or
 | Marlatt et al (1975) | Quasi-experimental 2 X 3 factorial design |
 | Mason et al (2014) | Multiple baseline AB design | 
 | Milkman et al (2022) | Post-test only designs with a large number of conditions| 
+| Wagenmakers et al (2016), Albohn only | Posttest-only 2-group design| 
+
+
+
+
