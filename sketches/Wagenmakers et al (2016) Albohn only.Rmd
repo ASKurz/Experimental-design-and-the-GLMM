@@ -11,7 +11,9 @@ knitr::opts_chunk$set(fig.retina = 2.5)
 options(width = 110)
 ```
 
-Using a registered replication report approach, Wagenmakers and colleagues (2016; https://doi.org/10.1177/1745691616674458) replicated Study 1 from the highly-cited paper by Strack, Martin, and Stepper (1988; https://doi.org/10.1037/0022-3514.54.5.768). In 17 labs across several countries, participants were randomized into the *pout* or *smile* conditions. The primary variable is the ratings on 4 moderately-funny cartoons. For the sake of this file, we will analyze the data from one of the labs.
+Using a registered replication report approach, Wagenmakers and colleagues (2016; https://doi.org/10.1177/1745691616674458) replicated Study 1 from the highly-cited paper by Strack, Martin, and Stepper (1988; https://doi.org/10.1037/0022-3514.54.5.768). In 17 labs across several countries, participants were randomized into the *pout* or *smile* conditions. The primary variable is the ratings on 4 moderately-funny cartoons. Within our experimental design framework, we can think of this as a posttest-only two-group design. 
+
+For the sake of this file, we will analyze the data from one of the labs.
 
 ## Data
 
@@ -43,7 +45,7 @@ load(file = "data/wagenmakers2016.rda")
 glimpse(wagenmakers2016)
 ```
 
-The full `wagenmakers2016` data set contains data from 17 reserach labs. In this file, we'll focus on the data collected by the Albohn lab. Here we filter the `wagenmakers2016` and save the results as `albohn`.
+The full `wagenmakers2016` data set contains data from 17 reserach labs. In this file, we'll focus on the data collected by the Albohn lab. Here we subset the `wagenmakers2016` data frame and save the results as `albohn`.
 
 ```{r}
 albohn <- wagenmakers2016 %>% 
@@ -69,7 +71,7 @@ albohn <- albohn %>%
   # n = 140 (drop 11 who were 0)
   filter(correct_total > 2)
 
-# new sample size
+# new sample size, by condition
 albohn %>% 
   count(condition)
 ```
@@ -119,7 +121,7 @@ albohn %>%
 
 Here are some of the descriptive statistics.
 
-```{r, warning = F}
+```{r, warning = F, message = F}
 albohn %>% 
   group_by(condition, cartoon) %>% 
   summarise(mean = mean(rating, na.rm = T),
@@ -130,7 +132,7 @@ albohn %>%
             n_missing = sum(is.na(rating)))
 ```
 
-To get a sense of the participant-level variation in these, we'll plot.
+To get a sense of the participant- and condition-level variation in these, we'll plot.
 
 ```{r, warning = F, message = F}
 albohn %>% 
@@ -157,10 +159,10 @@ So some of the challenges for these data are:
 
 ## Modeling strategy
 
-In this lesson, we'll explore two broad analytic strategies:
+In this file, we'll explore two broad analytic strategies:
 
-A) The first class of strategies will be to model the data as approximately continuous with the conventional Gaussian likelihood. After first fitting a simple multilevel model, we will then expand to a full mixed-effects location and scale (MELSM) model.
-B) The second class of strategies will be modeling the data as ordinal. After first fitting a multilevel cumulative probit model, we will then expand to a cumulative-probit variant of the MELSM.
+A) The first class of strategies include modeling the data as approximately continuous with the conventional Gaussian likelihood. After first fitting a simple multilevel model, we will then expand to a full mixed-effects location and scale (MELSM) model.
+B) The second class of strategies include modeling the data as ordinal. After first fitting a multilevel cumulative probit model, we will then expand to a cumulative-probit variant of the MELSM.
 
 ## Gaussian models
 
@@ -171,7 +173,7 @@ If were to think of the `rating` values as varying across $i$ persons, $j$ exper
 $$
 \begin{align*}
 \text{rating}_{ijk} & \sim \mathcal N(\mu_{ijk}, \sigma_\epsilon) \\
-\mu_{ijk} & = \beta_0 + \beta_1 \text{Condition}_{ik} + u_i + v_{0k} + v_{1k} \text{Condition}_{ik} \\
+\mu_{ijk} & = \beta_0 + \beta_1 \text{condition}_{ik} + u_i + v_{0k} + v_{1k} \text{condition}_{ik} \\
 u_i & \sim \mathcal N(0, \sigma_u) \\
 \begin{bmatrix} v_{0k} \\ v_{1k} \end{bmatrix} & \sim \mathcal N \left ( 
   \mathbf 0, \mathbf{SRS}
@@ -219,7 +221,7 @@ tibble(sd = seq(from = 0, to = 5, by = 0.05)) %>%
   theme(panel.grid = element_blank())
 ```
 
-Notice the restricted range we showed for the $\sigma$ prior. Based on [Popoviciu's inequality](https://en.wikipedia.org/wiki/Popoviciu%27s_inequality_on_variances), we can compute the upper bound for a variance parameter for data with clearly-defined lower and upper bounds. With our 0-9 rating scale, the largest variance possible is 20.25 which means the largest standard deviation possible is 4.5.
+Notice the restricted range in the plot for the $\sigma$ prior. Based on [Popoviciu's inequality](https://en.wikipedia.org/wiki/Popoviciu%27s_inequality_on_variances), we can compute the upper bound for a variance parameter for data with clearly-defined lower and upper bounds. With our 0-9 rating scale, the largest variance possible is 20.25 which means the largest standard deviation possible is 4.5.
 
 ```{r}
 highest <- 9
@@ -243,7 +245,7 @@ We might further use the $\operatorname{Exponential}(1 / 2.3)$ prior for the lev
 $$
 \begin{align*}
 \text{rating}_{ijk} & \sim \mathcal N(\mu_{ijk}, \sigma_\epsilon) \\
-\mu_{ijk} & = \beta_0 + \beta_1 \text{Condition}_{ik} + u_i + v_{0k} + v_{1k} \text{Condition}_{ik} \\
+\mu_{ijk} & = \beta_0 + \beta_1 \text{condition}_{ik} + u_i + v_{0k} + v_{1k} \text{condition}_{ik} \\
 u_i & \sim \mathcal N(0, \sigma_u) \\
 \begin{bmatrix} v_{0k} \\ v_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{SRS}) \\
 \mathbf S & = \begin{bmatrix} \sigma_{0k} \\ 1 & \sigma_{1k} \end{bmatrix} \\
@@ -281,8 +283,8 @@ A major limitation of the conventional approach is it ignores heterogeneity acro
 $$
 \begin{align*}
 \text{rating}_{ijk} & \sim \mathcal N(\mu_{ijk}, \sigma) \\
-\mu_{ijk} & = \beta_0 + \beta_1 \text{Condition}_{ik} + u_i + v_{0k} + v_{1k} \text{Condition}_{ik} \\
-\log(\sigma_{ijk}) & = \eta_0 + \eta_1 \text{Condition}_{ik} + w_i + x_{0k} + x_{1k} \text{Condition}_{ik} \\
+\mu_{ijk} & = \beta_0 + \beta_1 \text{condition}_{ik} + u_i + v_{0k} + v_{1k} \text{condition}_{ik} \\
+\log(\sigma_{ijk}) & = \eta_0 + \eta_1 \text{condition}_{ik} + w_i + x_{0k} + x_{1k} \text{condition}_{ik} \\
 u_i & \sim \mathcal N(0, \sigma_u) \\
 \begin{bmatrix} v_{0k} \\ v_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{S_vR_vS_v}) \\
 \mathbf{S_v} & = \begin{bmatrix} \sigma_{0k} \\ 1 & \sigma_{1k} \end{bmatrix} \\
@@ -580,8 +582,8 @@ fitted(fit1,
              shape = 4, size = 4, color = "red3") +
   scale_x_continuous("rating (0-9 Likert-type scale)", 
                      breaks = 0:9, limits = c(0, 9)) +
-  labs(title = "Gaussian model versus sample statistics",
-       subtitle = "The black dots and horizontal lines are the fit1-based population estimates.\nThe red X's are the corresponding sample statistics.") +
+  labs(title = "MLM-based conditional means versus sample statistics",
+       subtitle = "The black dots and horizontal lines are the fit1-based population estimates.\nThe red X's are the corresponding sample means.") +
   facet_wrap(~ conditionf) +
   theme(panel.grid = element_blank())
 ```
@@ -618,7 +620,7 @@ Simulated data from both versions of the model exceed below and above the bounda
 
 ## Ordinal models
 
-With **brms**, there are multiple ways to model data with ordinal likelihoods. In the next sections, we'll practice with the cumulative probit likelihood, which has desirable qualities for the data at hand. Though we won't do so, here, it wouldn't be unreasonable to use the cumulative logit framework, instead.
+With **brms**, there are multiple ways to model data with ordinal likelihoods. In the next sections, we'll practice with the cumulative probit likelihood, which has desirable qualities for the data at hand. Though we won't do so, here, it wouldn't be unreasonable to use the cumulative-*logit* framework, instead.
 
 ### Conventional multilevel ordinal model.
 
@@ -637,7 +639,7 @@ With this parameterization, we can analyze our experimental data with the model
 $$
 \begin{align*}
 p(\text{ratingf} = l | \{ \tau_l \}, \mu_{ijk}, \alpha = 1) & = \Phi(\alpha[\tau_l - \mu_{ijk}]) - \Phi(\alpha[\tau_{l - 1} - \mu_{ijk}]) \\
-\mu_{ijk} & = 0 + \beta_1 \text{Condition}_{ik} + u_i + v_{0k} + v_{1k} \text{Condition}_{ik} \\ 
+\mu_{ijk} & = 0 + \beta_1 \text{condition}_{ik} + u_i + v_{0k} + v_{1k} \text{condition}_{ik} \\ 
 u_i & \sim \mathcal N(0, \sigma_u) \\
 \begin{bmatrix} v_{0k} \\ v_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{SRS}) \\
 \mathbf S & = \begin{bmatrix} \sigma_{0k} \\ 1 & \sigma_{1k} \end{bmatrix} \\
@@ -730,8 +732,8 @@ A shortcomming of the multilevel cumulative probit model in the last section is 
 $$
 \begin{align*}
 p(\text{ratingf} = l | \{ \tau_l \}, \mu_{ijk}, \alpha_{ijk}) & = \Phi(\alpha_{ijk}[\tau_l - \mu_{ijk}]) - \Phi(\alpha_{ijk}[\tau_{l - 1} - \mu_{ijk}]) \\
-\mu_{ijk} & = 0 + \beta_1 \text{Condition}_{ik} + u_i + v_{0k} + v_{1k} \text{Condition}_{ik} \\ 
-\log(\alpha_{ijk}) & = 0 + \eta_1 \text{Condition}_{ik} + w_i + x_{0k} + x_{1k} \text{Condition}_{ik} \\ 
+\mu_{ijk} & = 0 + \beta_1 \text{condition}_{ik} + u_i + v_{0k} + v_{1k} \text{condition}_{ik} \\ 
+\log(\alpha_{ijk}) & = 0 + \eta_1 \text{condition}_{ik} + w_i + x_{0k} + x_{1k} \text{condition}_{ik} \\ 
 u_i & \sim \mathcal N(0, \sigma_u) \\
 \begin{bmatrix} v_{0k} \\ v_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{S_vR_vS_v}) \\
 \mathbf{S_v} & = \begin{bmatrix} \sigma_{0k} \\ 1 & \sigma_{1k} \end{bmatrix} \\
@@ -879,7 +881,7 @@ Since there is one common $\alpha$ parameter for the simpler `fit3` version of t
 fixef(fit3)["condition", ] %>% round(digits = 2)
 ```
 
-Thus, the overall effect of the smile versus pout condition is a modest standardized mean difference of 0.06, 95% CI [-0.29, 0.42]. To get the cartoon-specific effect size, $d_k$, it's probably easiest to use the `coef()` approach.
+Thus, the overall effect of the smile versus pout condition is a modest standardized mean difference of 0.06, 95% CI [-0.30, 0.45]. To get the cartoon-specific effect size, $d_k$, it's probably easiest to use the `coef()` approach.
 
 ```{r}
 coef(fit3)$cartoon[, , "condition"] %>% round(digits = 2)
@@ -979,7 +981,7 @@ f %>% str()
 
 Here's how to work with the `fitted()` output to compute the overall means, by condition, and their difference.
 
-```{r}
+```{r, message = F}
 rbind(f[, 1, ],
       f[, 2, ]) %>% 
   data.frame() %>% 
@@ -1151,7 +1153,7 @@ unstandardized_means %>%
   scale_x_continuous("rating (0-9 Likert-type scale)", 
                      breaks = 0:9, limits = c(0, 9)) +
   labs(title = "Distributional cumulative-probit model versus sample statistics",
-       subtitle = "The black dots and horizontal lines are the fit4-based population estimates.\nThe red X's are the corresponding sample statistics.") +
+       subtitle = "The black dots and horizontal lines are the fit4-based population estimates.\nThe red X's are the corresponding sample means.") +
   facet_wrap(~ condition) +
   theme(panel.grid = element_blank())
 ```
@@ -1184,7 +1186,7 @@ p1 + p2 +
                   theme = theme(plot.title = element_text(family = "Times")))
 ```
 
-Both versions of the cumulative-probit model do a great job simulating new data that have the same basic characteristics as the empirical data. Both models respected the ordinal nature of the data, including the lower and upper limits. They also respected the asymmetric shape of the overall distribution.
+Both versions of the cumulative-probit model do a great job simulating new data boasting the same basic characteristics as the empirical data. Both models respected the ordinal nature of the data, including the lower and upper limits. They also respected the asymmetric shape of the overall distribution.
 
 #### Next steps.
 
