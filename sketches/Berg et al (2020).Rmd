@@ -341,7 +341,7 @@ fitted(fit2,
 
 For reference, the white vertical line is the BAI grand mean at baseline. You can also use the posterior draws to compute the contrasts for the three experimental versions of the treatment with standard ICBT.
 
-```{r}
+```{r, warning = F}
 as_draws_df(fit1) %>% 
   transmute(`support - standard`        = b_support,
             `chat - standard`           = b_chat,
@@ -466,7 +466,7 @@ f3 %>%
   stat_lineribbon(.width = .95, fill = "grey60") +
   geom_line(data = berg2020_long,
             aes(y = bai, group = id),
-            size = 1/6, alpha = 1/4) +
+            size = 1/4, alpha = 1/4) +
   scale_x_continuous(NULL, breaks = 0:1, labels = c("pre", "post"), expand = c(0.15, 0.15)) +
   scale_y_continuous("BAI sum score", limits = c(0, 63)) +
   facet_wrap(~ icbt)
@@ -837,7 +837,7 @@ f5 %>%
   stat_lineribbon(.width = .95, fill = "grey60") +
   geom_line(data = berg2020_long,
             aes(y = bai, group = id),
-            size = 1/6, alpha = 1/4) +
+            size = 1/4, alpha = 1/4) +
   scale_x_continuous(NULL, breaks = 0:1, labels = c("pre", "post"), expand = c(0.15, 0.15)) +
   scale_y_continuous("BAI sum score", limits = c(0, 63)) +
   facet_wrap(~ icbt)

@@ -605,8 +605,6 @@ as_draws_df(fit1) %>%
   mean_qi(value)
 ```
 
-    ## Warning: Dropping 'draws_df' class as required metadata was removed.
-
     ## # A tibble: 3 × 7
     ##   name                       value .lower .upper .width .point .interval
     ##   <chr>                      <dbl>  <dbl>  <dbl>  <dbl> <chr>  <chr>    
@@ -857,7 +855,7 @@ f3 %>%
   stat_lineribbon(.width = .95, fill = "grey60") +
   geom_line(data = berg2020_long,
             aes(y = bai, group = id),
-            size = 1/6, alpha = 1/4) +
+            size = 1/4, alpha = 1/4) +
   scale_x_continuous(NULL, breaks = 0:1, labels = c("pre", "post"), expand = c(0.15, 0.15)) +
   scale_y_continuous("BAI sum score", limits = c(0, 63)) +
   facet_wrap(~ icbt)
@@ -1532,7 +1530,7 @@ f5 %>%
   stat_lineribbon(.width = .95, fill = "grey60") +
   geom_line(data = berg2020_long,
             aes(y = bai, group = id),
-            size = 1/6, alpha = 1/4) +
+            size = 1/4, alpha = 1/4) +
   scale_x_continuous(NULL, breaks = 0:1, labels = c("pre", "post"), expand = c(0.15, 0.15)) +
   scale_y_continuous("BAI sum score", limits = c(0, 63)) +
   facet_wrap(~ icbt)
