@@ -1,0 +1,945 @@
+---
+title: "Berg et al (2020)"
+subtitle: "Pretest-posttest 2 X 2 factorial design"
+author: "A Solomon Kurz"
+date: "`r format(Sys.Date())`"
+output: github_document
+---
+
+```{r, echo = F}
+knitr::opts_chunk$set(fig.retina = 2.5)
+options(width = 110)
+```
+
+Load our primary packages.
+
+```{r, message = F, warning = F}
+# library(tidyverse)
+
+library(ggplot2)
+library(tibble)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(readr)
+library(forcats)
+library(purrr)
+
+library(brms)
+library(tidybayes)
+library(patchwork)
+```
+
+## How does one make for a better online therapy?
+
+Berg and colleagues (2020; https://doi.org/10.3389/fpsyt.2020.00503) reported the results from a randomized controlled trial for internet-based cognitive behavioural therapy (ICBT) for anxiety and comorbid depression in adolescents in Sweden. We don't have access to their original data, but I have simulated data that resemble those from Berg et al and saved them in a file called `berg2020.rda`. Here we load the `berg2020` data.
+
+```{r}
+# load the data
+load(file = "data/berg2020.rda")
+
+# what is this?
+glimpse(berg2020)
+```
+
+Participants were randomized into four groups and data were collected at three time points. The four groups were:
+
+* Standard internet-based cognitive behavioural therapy (ICBT),
+* ICBT with learning support,
+* ICBT with chat sessions, and
+* ICBT with both learning support and chat sessions.
+
+In the data, those four conditions are marked by the `group` and `icbt` factors, as well as the `chat` and `support` dummies.
+
+```{r}
+berg2020 %>% 
+  distinct(group, icbt, support, chat)
+```
+
+Berg and colleagues defined their primary outcomes as
+
+* the Beck Anxiety Inventory (BAI) and
+* the Beck Depression Inventory-II (BDI-II).
+
+In the study, the authors focused on the sum scores for both. The BAI and BDI-II are both composed of 21 Likert-type items, each ranging from 0 to 3. Thus each sum score ranges from 0 to 63, where the largest value 63 indicates very high levels of anxiety/depression
+
+In the original study, the authors analyzed data from three time points, which were:
+
+* pre-treatment;
+* post-treatment, which was 8 weeks later, directly on completion of the 8-week intervention; and
+* at a 6-month follow-up period.
+
+For our purposes, we have simplified the data to focus on the pre- and post-treatment assessment periods. In the `berg2020` data, the outcome data are in the following columns:
+
+* `bai0` (BAI at pre-treatment),
+* `bai1` (BAI at post-treatment),
+* `bdi0` (BDI-II at pre-treatment), and
+* `bdi1` (BDI-II at post-treatment).
+
+For simplicity, most of our analyses will focus on the BAI. However, we will spend some time analyzing the BDI-II, too.
+
+## EDA
+
+### Sample statistics.
+
+Here are the sample statistics for the BAI at pre- and post-treatment, by the four treatment groups.
+
+```{r, warning = F, message = F}
+berg2020 %>% 
+  pivot_longer(starts_with("bai"), values_to = "bai") %>% 
+  mutate(assessment = ifelse(name == "bai0", "pre", "post")) %>%
+  mutate(assessment = factor(assessment, levels = c("pre", "post"))) %>% 
+  group_by(assessment, icbt) %>% 
+  summarise(m = mean(bai, na.rm = T) %>% round(digits = 1),
+            s = sd(bai, na.rm = T) %>% round(digits = 1),
+            n = sum(!is.na(bai)))
+```
+
+If you compare these values with those presented in Table 2 of the original article (p. 9), you'll see they're pretty similar. You can see by the `n` column that there are some missing data for the post-treatment assessment.
+
+```{r, eval = F, echo = F}
+# same for BDI-II
+berg2020 %>% 
+  pivot_longer(starts_with("bdi"), values_to = "bdi") %>% 
+  mutate(assessment = ifelse(name == "bdi0", "pre", "post")) %>%
+  mutate(assessment = factor(assessment, levels = c("pre", "post"))) %>% 
+  group_by(assessment, icbt) %>% 
+  summarise(m = mean(bdi, na.rm = T) %>% round(digits = 1),
+            s = sd(bdi, na.rm = T) %>% round(digits = 1),
+            n = sum(!is.na(bdi)))
+```
+
+### Look at the data.
+
+Here's a quick plot of the BAI scores at both time points.
+
+```{r, fig.width = 6.75, fig.height = 3, warning = F}
+
+# adjust the global plot settings
+theme_set(
+  theme_gray() +
+    theme(panel.grid = element_blank(),
+          plot.title.position = "plot",
+          strip.background = element_blank(),
+          strip.text = element_text(color = "black"))
+)
+
+berg2020 %>% 
+  pivot_longer(starts_with("bai"), values_to = "bai") %>% 
+  mutate(assessment = ifelse(name == "bai0", "pre", "post")) %>%
+  mutate(assessment = factor(assessment, levels = c("pre", "post"))) %>% 
+  
+  ggplot(aes(x = bai)) +
+  geom_bar() +
+  coord_cartesian(xlim = c(0, 63)) +
+  facet_grid(assessment ~ icbt)
+```
+
+As will happen with anxiety sum scores, the data are somewhat right skewed, which will play an important role in the statistical analysis.
+
+### Center baseline.
+
+It will help some of our models if we center the baseline versions of the BAI and BDI-II. The versions of these variables with the `c` suffix have been centered at their grand means. The versions of the variables with the `z` suffix are standardized.
+
+```{r}
+berg2020 <- berg2020 %>% 
+  mutate(bai0c = bai0 - mean(bai0),
+         bdi0c = bdi0 - mean(bdi0),
+         bai0z = (bai0 - mean(bai0)) / sd(bai0),
+         bdi0z = (bdi0 - mean(bdi0)) / sd(bdi0))
+
+# what?
+head(berg2020)
+```
+
+## How to model sum-score data
+
+Researchers typically analyze sum-score data with the conventional Gaussian likelihood. For simplicity, we'll start with that strategy, too. However, sum-score data are often characterized by integer values with well-defined lower and upper limits, which are 0 and 63 in the case of our BAI and BDI-II data. Though they sometimes look approximately Gaussian when their means are toward the middle of the range, sum-score data from measures of anxiety and depression often show marked skew. Sometimes researchers handle the skew by data transformations (e.g., the square-root transformation) and other times they ignore the issue altogether. I think we can do better.
+
+One alternative would be using skew-normal or skew-Student likelihood (see the preprint by Martin and Williams; https://doi.org/10.31234/osf.io/26m49). This approach, however, will not fully solve the problem with the lower and/or upper boundaries. A more sophisticated approach would be to model the item-level data with a multilevel-ordinal IRT-type model, such as discussed by Bürkner (2019; https://doi.org/10.48550/arXiv.1905.09501). This approach is excellent for respecting the ordinal nature of the items and for expressing the data-generating process, but it comes at the cost of a complex, highly-parameterized model which may be difficult to fit. Another option would be to model the sum-score values as ordinal variables with 64 levels. However, my experience is ordinal models are difficult to fit when you have more than 10 or so levels.
+
+In this script, we'll practice modeling the sum-score values with the beta-binomial likelihood. The beta-binomial will not faithfully reproduce the item-level data-generating process, but it will accommodate the lower and upper bounds, handle the skew, and only predict integer values. You might think of the beta-binomial as a better alternative to the conventional Gaussian likelihood, but a pragmatic and simpler alternative to the rigorous item-level multilevel-ordinal IRT approach.
+
+### Gaussian.
+
+We will explore both single- and multilevel approaches with the conventional Gaussian likelihood. The `berg2020` data are already formatted for the single-level approach. Here we make a long-formatted version of the data for the multilevel approach.
+
+```{r}
+berg2020_long <- berg2020 %>% 
+  pivot_longer(bai0:bdi1) %>% 
+  separate(name, into = c("y", "time"), sep = "(?<=[A-Za-z])(?=[0-9])") %>% 
+  mutate(time = as.double(time)) %>% 
+  pivot_wider(names_from = y, values_from = value) %>% 
+  # we don't need the centered versions of the BAI/BDI-II for the long data
+  select(-ends_with("c"), -ends_with("z") )
+
+# what?
+head(berg2020_long)
+```
+
+#### Single-level models.
+
+The conventional[^1] way to analyze post-treatment sum-score data from a $2 \times 2$ factorial study would be with a single-level model like
+
+$$
+\begin{align*}
+\text{bai1}_i & \sim \operatorname{Normal}(\mu_i, \sigma_i) \\
+\mu_i & = \beta_0 + \beta_1 \text{bai0c}_i + \beta_2 \text{support}_i + \beta_3 \text{chat}_i + \beta_4 \text{support}_i \times \text{chat}_i \\
+\log (\sigma_i) & = \eta_0 + \eta_1 \text{bai0c}_i + \eta_2 \text{support}_i + \eta_3 \text{chat}_i + \eta_4 \text{support}_i \times \text{chat}_i \\
+\beta_0 & \sim \operatorname{Normal}(20.6, 9) \\
+\beta_1 & \sim \operatorname{Normal}(0.5, 9) \\
+\beta_2, \dots, \beta_4 & \sim \operatorname{Normal}(0, 9) \\
+\eta_0 & \sim \operatorname{Normal}(\log(9), 0.5) \\
+\eta_1, \dots, \eta_4 & \sim \operatorname{Normal}(0, 0.5),
+\end{align*}
+$$
+
+where $\beta_1$ controls for the mean-centered BAI values at baseline, and will improve the precision of the other $\beta$ parameters. Given our dummy variables `support` and `chat`, $\beta_0$ is the mean for the reference category, the standard ICBT. Thus, $\beta_2$ is the difference in BAI for those in the learning-support condition, relative to those in standard ICBT, and $\beta_3$ is the difference in BAI for those in the standard ICBT with chat condition, relative to those in standard ICBT. The coefficient $\beta_4$ captures the interaction between the two dummies, and in conjunction with the other parameters, gives the mean for those with the full learning support with chat condition. Because of the baseline covariate parameter $\beta_1$, all other $\beta$ coefficients are conditional on the baseline values of BAI.
+
+Note we have taken a full distributional modeling approach by assigning a model to $\log(\sigma_i)$. The $\eta$ coefficients mirror the $\beta$ coefficients for the $\mu_i$ model.
+
+The prior values are based on the results in Topooco et al (2018; https://doi.org/10.1192/bjo.2018.18), which is a study published a few years prior by largely the same research team. Topooco and colleagues reported on ICBT for depression and comorbid anxiety complaints in adolescents in Sweden. The BDI-II was their primary outcome measure and the BAI was one of their secondary outcomes. The authors reported on the sample means and standard deviations for the pre- and post-treatment assessment periods in Table 3 (p. 204). For those in the ICBT condition $n = 33$, the mean BAI at baseline was 27.0 with a standard deviation of 12.1, and it changed to a mean of 20.6, with a standard deviation of 9.0, at the completion of treatment.
+
+Given the similarity of the study population, the treatment, and the research groups in Topooco et al (2018) and Berg et al (2020), it seemed reasonable to center the prior for $\beta_0$ on 20.6, the value from Topooco et al's Table 3. Assigning the scale hyper parameter to 9, the standard deviation at post-treatment, is roughly analogous to assigning a $\mathcal N(0, 1)$ prior to a model with standardized data.
+
+The prior for $\beta_1$, the baseline covariate, indicated we expect a moderate relation between the pre- and post-assessment BAI values. For that parameter, an estimate of 1 would indicate perfect correlation,  and a value of 0 would indicate a null correlation. Though Topooco et al (2018) does not provide the pre-post correlation for the BAI, you can infer one from Ström et al (2013; https://doi.org/10.7717/peerj.178), who randomly assigned 48 Swedish adults (mean age 49 years old; 83% women) into control or an active internet-delivered therapist-guided physical activity treatment for mild to moderate depression. One of their primary outcomes was the BDI-II and the BAI was a secondary outcome. The treatment condition lasted 9 weeks. Fortunately, Ström and colleagues made their data freely available at https://datadryad.org/stash/dataset/doi:10.5061/dryad.c6q65. Based on an analysis of their full data set, the pre-post correlation for the BAI was about .7 and the pre-post correlation for the BDI-II was about .6. Thus, a $\mathcal N(0.5, 9)$ prior for $\beta_1$ is light-handed reflection of our expectation of a moderately-sized positive correlation.
+
+The common $\mathcal N(0, 9)$ prior for $\beta_2$ through $\beta_4$ is designed to weakly regularize against large differences among the treatment conditions. Given how all four conditions are variations on ICBT, this seems sensible.
+
+The $\mathcal N(\log(9), 0.5)$ prior for $\eta_0$ is designed to center the post-treatment standard deviation for those in standard ICBT at the same standard deviation value Topooco and colleagues (2018) reported in their Table 3. Given how that and all $\eta$ parameters are on the log scale, scaling the priors by 0.5 reflects our expectation that the posteriors will not be off by more than an order of magnitude. All remaining $\eta$ priors are designed to be weakly regularizing with $\mathcal N(0, 0.5)$.
+
+```{r, eval = F, echo = F}
+exp(log(9) + c(-1, 0, 1))
+```
+
+Here's how to fit the model with `brm()`. Note our use of the `| mi()` syntax, which allows for one-step Bayesian imputation for the missing post-treatment BAI values.
+
+```{r fit1}
+fit1 <- brm(
+  data = berg2020,
+  family = gaussian,
+  bf(bai1 | mi() ~ 0 + Intercept + bai0c + support + chat + support:chat,
+     sigma       ~ 0 + Intercept + bai0c + support + chat + support:chat),
+  prior = c(prior(normal(20.6, 9), class = b, coef = Intercept),
+            prior(normal(0.5, 9), class = b, coef = bai0c),
+            prior(normal(0, 9), class = b),
+            # the model for log(sigma)
+            prior(normal(log(9), 0.5), class = b, coef = Intercept, dpar = sigma),
+            prior(normal(0, 0.5), class = b, dpar = sigma)),
+  cores = 4,
+  seed = 1,
+  file = "fits/fit1.berg2020"
+)
+```
+
+Check the summary.
+
+```{r}
+summary(fit1)
+```
+
+Since Berg et al described the BAI and BDI-II as both primary outcome variables, we can generalize out `fit1` approach to simultaneously analyze both outcomes in a single bivariate normal model. As with the BAI parameters in `fit1`, our parameters for the BDI-II portion of the model also come from the summary statistics in Topooco et al's Table 3.
+
+```{r fit2}
+# save the model objects
+bai_model <- bf(
+  bai1 | mi() ~ 0 + Intercept + bai0c + support + chat + support:chat,
+  sigma       ~ 0 + Intercept + bai0c + support + chat + support:chat)
+
+bdi_model <- bf(
+  bdi1 | mi() ~ 0 + Intercept + bdi0c + support + chat + support:chat,
+  sigma       ~ 0 + Intercept + bdi0c + support + chat + support:chat)
+
+# fit the model
+fit2 <- brm(
+  data = berg2020,
+  family = gaussian,
+  # add in the model objects
+  bai_model + bdi_model + set_rescor(TRUE),
+  prior = c(# bai
+            prior(normal(20.6, 9), class = b, coef = Intercept, resp = bai1),
+            prior(normal(0.5, 9), class = b, coef = bai0c, resp = bai1),
+            prior(normal(0, 9), class = b, resp = bai1),
+            prior(normal(log(9), 0.5), class = b, coef = Intercept, dpar = sigma, resp = bai1),
+            prior(normal(0, 0.5), class = b, dpar = sigma, resp = bai1),
+            # bdi
+            prior(normal(19.9, 7.2), class = b, coef = Intercept, resp = bdi1),
+            prior(normal(0.5, 7.2), class = b, coef = bdi0c, resp = bdi1),
+            prior(normal(0, 7.2), class = b, resp = bdi1),
+            prior(normal(log(7.2), 0.5), class = b, coef = Intercept, dpar = sigma, resp = bdi1),
+            prior(normal(0, 0.5), class = b, dpar = sigma, resp = bdi1),
+            # residual correlation
+            prior(lkj(2), class = rescor)),
+  cores = 4,
+  seed = 1,
+  file = "fits/fit2.berg2020"
+)
+```
+
+Check the summary.
+
+```{r}
+summary(fit2)
+```
+
+If you compare the BAI-related coefficients in the univariate `fit1` to those in the bivariate `fit2`, you'll notice the posterior standard deviations are a little bit smaller in `fit2`. I believe this is the advantage of the correlations among the various $\beta$ parameters and how they influence the one-step imputation. To get a better sense, spend some time reviewing and possibly visualizing the output from `vcov(fit2, correlation = TRUE)`.
+
+```{r, eval = F, echo = F}
+fixef(fit1) %>% round(digits = 2)
+
+vcov(fit2, correlation = TRUE) %>% 
+  data.frame() %>% 
+  rownames_to_column("row") %>% 
+  pivot_longer(-row, names_to = "col", values_to = "r") %>% 
+  mutate(row = fct_rev(row),
+         label = round(r, digits = 2) %>% as.character()) %>% 
+  
+  ggplot(aes(x = col, y = row)) +
+  geom_tile(aes(fill = r)) +
+  geom_text(aes(label = label, color = r > .1 | r < -.1),
+            size = 2) +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", limits = c(-1, 1)) +
+  scale_color_manual(values = c("transparent", "black"), breaks = NULL) +
+  scale_x_discrete(position = "top") +
+  labs(x = NULL,
+       y = NULL) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 0),
+        axis.text.y = element_text(hjust = 0))
+```
+
+Anyway, you can use the posterior draws from either `fit1` or `fit2` to compute the expected post-treatment means for the four versions of IBCT in the BAI. Here's a plot of the results from the bivariate `fit2`.
+
+```{r, fig.width = 5, fig.height = 2.25}
+# define the new data
+nd <- berg2020 %>% 
+  distinct(group, icbt, support, chat) %>% 
+  mutate(bai0c = 0)
+
+# reformat and pull the group names for the plot
+labs <- nd %>% 
+  mutate(icbt = str_replace_all(icbt, " ", "~")) %>% 
+  pull(icbt)
+
+# extract and wrangle the fitted draws
+fitted(fit2,
+       newdata = nd,
+       resp = "bai1",
+       summary = F) %>% 
+  data.frame() %>% 
+  set_names(str_c("mu[", labs, "]")) %>% 
+  pivot_longer(everything()) %>% 
+  mutate(name = factor(name, levels = str_c("mu[", labs, "]"))) %>% 
+  
+  # plot!
+  ggplot(aes(x = value, y = name)) +
+  geom_vline(xintercept = mean(berg2020$bai0), color = "white") +
+  stat_halfeye(.width = .95, size = 1.5) + 
+  scale_x_continuous("BAI sum score (post treatment)", limits = c(0, 63)) +
+  scale_y_discrete(NULL, labels = ggplot2:::parse_safe) +
+  theme(axis.text.y = element_text(hjust = 0))
+```
+
+For reference, the white vertical line is the BAI grand mean at baseline. You can also use the posterior draws to compute the contrasts for the three experimental versions of the treatment with standard ICBT.
+
+```{r}
+as_draws_df(fit1) %>% 
+  transmute(`support - standard`        = b_support,
+            `chat - standard`           = b_chat,
+            `support + chat - standard` = b_support + b_chat + `b_support:chat`) %>% 
+  pivot_longer(everything()) %>% 
+  group_by(name) %>% 
+  mean_qi(value)
+```
+
+These unstandardized mean differences from standard ICBT would be considered the average treatment effects, the causal estimates. Here are the same, converted to teh standardized mean difference metric (i.e., Cohen's $d$'s).
+
+```{r, warning = F}
+# compute the baseline pooled standard deviation for the BAI
+pooled_sd_bai0 <- berg2020 %>% 
+  summarise(s = sd(bai0)) %>% 
+  pull()
+
+# Cohen's d, relative to standard ICBT
+as_draws_df(fit1) %>% 
+  transmute(`support - standard`        = b_support,
+            `chat - standard`           = b_chat,
+            `support + chat - standard` = b_support + b_chat + `b_support:chat`) %>% 
+  pivot_longer(everything()) %>% 
+  group_by(name) %>% 
+  mean_qi(value) %>% 
+  select(name:.upper) %>% 
+  mutate_if(is.double, .funs = ~ . / pooled_sd_bai0)
+```
+
+#### The multilevel approach.
+
+Focusing on the BAI, we can fit a multilevel version of the single-level `fit1` model. Using the long-formatted version of the data, we can model the outcome `bai` as varying across $i$ adolescents and $j$ points in time by
+
+$$
+\begin{align*}
+\text{bai}_{ij} & \sim \mathcal N(\mu_{ij}, \sigma_{ij}) \\
+\mu_{ij} & = \beta_0 + \beta_1 \text{time}_{ij} + (\beta_2 \text{support}_{ij} + \beta_3 \text{chat}_{ij} + \beta_4 \text{support}_{ij} \times \text{chat}_{ij}) \text{time}_{ij} + u_{0i} \\
+\log(\sigma_{ij}) & = \eta_0 + \eta_1 \text{time}_{ij} + (\eta_2 \text{support}_{ij} + \eta_3 \text{chat}_{ij} + \eta_4 \text{support}_{ij} \times \text{chat}_{ij}) \text{time}_{ij} + v_{0i} \\
+\begin{bmatrix} u_{0i} \\ v_{0i} \end{bmatrix} & \sim \mathcal{MVN}(\mathbf 0, \mathbf{SRS}) \\
+\mathbf S & = \begin{bmatrix} \sigma_u \\ 1 & \sigma_v \end{bmatrix} \\
+\mathbf R & = \begin{bmatrix} 1 \\ 0 & 1 \end{bmatrix},
+\end{align*}
+$$
+
+with priors
+
+$$
+\begin{align*}
+\beta_0 & \sim \operatorname{Normal}(27, 12.1) \\
+\beta_1 & \sim \operatorname{Normal}(-6.4, 9) \\
+\beta_2, \dots, \beta_4 & \sim \operatorname{Normal}(0, 9) \\
+\eta_0 & \sim \operatorname{Normal}(\log(12.1), 0.5) \\
+\eta_1, \dots, \eta_4 & \sim \operatorname{Normal}(0, 0.5) \\
+\sigma_u & \sim \operatorname{Exponential}(1 / 12.1) \\
+\sigma_v & \sim \operatorname{Exponential}(1),
+\end{align*}
+$$
+
+where now $\beta_0$ is the grand mean for the BAI at baseline and $\beta_1$ is the expected pre-post change in BAI for the reference group, standard ICBT. The remaining $\beta$ coefficients $(\beta_2, \dots, \beta_4)$ define the differences in pre-post change in the BAI for the other treatment conditions, relative to standard ICBT. The $\eta$ parameters compose a mirror-image version of the model for $\log(\sigma_{ij})$. Both $\mu_{ij}$ and $\log(\sigma_{ij})$ models have a single deviation term $(u_{0i}$ and $v_{0i})$, which capture the adolescent-level differences at baseline. Those deviation terms are modeled as multivariate normal with a mean vector of two zeros, a square matrix for the standard deviations $\mathbf S$, and a diagonal correlation matrix $\mathbf R$. In principle, you adjust the model to include a non-zero correlation within $\mathbf R$. Here we omit that correlation for simplicity.
+
+As with the single-level models, we continue to base the priors on the sample statistics from Table 3 in Topooco et al (2018). The prior for $\beta_0$, $\mathcal N(27, 12.1)$, is now based on the sample mean and standard deviation for ICBT at baseline. The prior for $\beta_1$, $\mathcal N(-6.4, 9)$, now reflects out expected decrease in BAI, based on Topooco et al. In a similar way, we have updated the prior for $\eta_0$ to reflect the expectation of a standard deviation of 12.1, at baseline. The scales of the priors for $\sigma_u$ and $\sigma_v$ are designed to be weakly-regularizing on the scales of the models.
+
+Here's how to fit the multilevel version of the `fit1` model with `brm()`.
+
+```{r fit3}
+fit3 <- brm(
+  data = berg2020_long,
+  family = gaussian,
+  bf(bai   ~ 0 + Intercept + time + (support + chat + support:chat) : time + (1 | id),
+     sigma ~ 0 + Intercept + time + (support + chat + support:chat) : time + (1 | id)),
+  prior = c(prior(normal(27.0, 12.1), class = b, coef = Intercept),
+            prior(normal(-6.4, 9), class = b, coef = time),
+            prior(normal(0, 9), class = b),
+            prior(exponential(1 / 12.1), class = sd),
+            # the model for log(sigma)
+            prior(normal(log(12.1), 0.5), class = b, coef = Intercept, dpar = sigma),
+            prior(normal(0, 0.5), class = b, dpar = sigma),
+            prior(exponential(1), class = sd, dpar = sigma)),
+  cores = 4,
+  seed = 1,
+  control = list(adapt_delta = .999),
+  file = "fits/fit3.berg2020"
+)
+```
+
+Check the model summary.
+
+```{r}
+summary(fit3)
+```
+
+The nice thing about the multilevel approach is it provides a natural way to plot the pre/post changes in BAI from the model along with the data in a line plot. To set up the plot, first we'll extract and wrangle the posterior draws.
+
+```{r}
+nd <- berg2020_long %>% 
+  distinct(group, icbt, support, chat, time) %>% 
+  mutate(row = 1:8)
+
+labs <- c("Standard ICBT", "Learning support", "Standard ICBT with chat", "Learning support with chat", "Learning support - Standard ICBT", "Standard ICBT with chat - Standard ICBT", "Learning support with chat - Standard ICBT")
+
+f3 <- fitted(fit3,
+             newdata = nd,
+             re_formula = NA,
+             summary = F) %>% 
+  data.frame() %>% 
+  set_names(1:8) %>% 
+  mutate(iter = 1:n()) %>% 
+  pivot_longer(-iter, names_to = "row") %>% 
+  mutate(row = as.double(row)) %>% 
+  left_join(nd, by = "row") 
+
+# what is this?
+head(f3)
+```
+
+Here's the model-based line plot.
+
+```{r, fig.width = 4, fig.height = 4, warning = F, message = F}
+f3 %>% 
+  ggplot(aes(x = time, y = value)) +
+  geom_hline(yintercept = mean(berg2020$bai0), color = "white") +
+  stat_lineribbon(.width = .95, fill = "grey60") +
+  geom_line(data = berg2020_long,
+            aes(y = bai, group = id),
+            size = 1/6, alpha = 1/4) +
+  scale_x_continuous(NULL, breaks = 0:1, labels = c("pre", "post"), expand = c(0.15, 0.15)) +
+  scale_y_continuous("BAI sum score", limits = c(0, 63)) +
+  facet_wrap(~ icbt)
+```
+
+The bold black lines superimposed on the gray ribbons show the population means and their 95% intervals, for each group over time. The thin semitransparent lines are the participant-level data. For reference, the white horizontal lines in the background mark off the grand mean for the BAI at baseline.
+
+This plot simultaneously shows two kinds of effect sizes. For each group, there is a pre/post change in BAI, which is what you can think of as the within-group effect sizes. There are also the differences among the groups at the post-treatment assessment, what you can call the between-group effect sizes. We can further wrangle our posterior samples to more directly quantify those two kinds of effect sizes.
+
+```{r, fig.width = 9, fig.height = 3.75}
+# wrangle
+f3 %>% 
+  select(-row, -group, -chat, -support) %>% 
+  pivot_wider(names_from = time, values_from = value) %>% 
+  mutate(unstandardized = `1` - `0`,
+         standardized   = (`1` - `0`) / pooled_sd_bai0) %>% 
+  select(iter, icbt, unstandardized, standardized) %>% 
+  pivot_longer(unstandardized:standardized, names_to = "difference") %>% 
+  pivot_wider(names_from = icbt, values_from = value) %>% 
+  mutate(difference = factor(difference, levels = c("unstandardized", "standardized"))) %>% 
+  mutate(`Learning support - Standard ICBT`           = `Learning support` - `Standard ICBT`,
+         `Standard ICBT with chat - Standard ICBT`    = `Standard ICBT with chat` - `Standard ICBT`,
+         `Learning support with chat - Standard ICBT` = `Learning support with chat` - `Standard ICBT`) %>% 
+  pivot_longer(cols = c(-iter, -difference), values_to = "d") %>% 
+  mutate(name = factor(name, levels = labs),
+         type = ifelse(name %in% labs[1:4], "pre/post difference", "difference in\ndifferences")) %>% 
+  
+  # plot!
+  ggplot(aes(x = d, y = name)) +
+  geom_vline(xintercept = 0, color = "white") +
+  stat_halfeye(.width = .95, size = 1.5, normalize = "panels") + 
+  labs(title = "Effect sizes for the multilevel model",
+       subtitle = "The facet rows divide the within-group and between-group effect sizes.\nThe facet columns quantify both kinds of effect sizes in the unstandadrdized (sum score) and standardized (Cohen's d) metrics.",
+       x = "BAI effect sizes",
+       y = NULL) +
+  theme(axis.text.y = element_text(hjust = 0)) +
+  facet_grid(type ~ difference, space = "free_y", scales = "free")
+```
+
+The effect size plot helps show the differences are greater within groups than between them.
+
+As with the single-level models, you can generalize this approach to fit a bivariate multilevel model for both the BAI and BDI-II.
+
+#### Shortcommings.
+
+If all you care about are model-based conditional means, the Gaussian approaches we used for `fit1` through `fit3` do a descent job describing the data. However, these models presume the data can be legitimately described using the normal distribution. Given the BAI and BDI-II sum scores can only take on integer values between 0 and 63, this isn't a great assumption. For example, take a look at the posterior-predictive distributions from `fit3`.
+
+```{r, fig.width = 4.25, fig.height = 3}
+set.seed(1)
+p1 <- pp_check(fit3, type = "hist", ndraws = 8, binwidth = 1) +
+  geom_vline(xintercept = c(-0.5, 63.5), linetype = 2, size = 1/4) +
+  scale_x_continuous(breaks = 0:3 * 21) +
+  coord_cartesian(xlim = c(-10, 73)) +
+  ggtitle("Multilevel Gaussian (fit3)") +
+  theme(title = element_text(size = 9))
+
+p1
+```
+
+The simulated data cross both lower and upper boundaries for the BAI. Further, all simulated data sets are markedly more bell-shaped than the original data. When possible, it's generally a good idea to analyze experimental data with models that produce data resembling the original data. In next section, we see how well the beta-binomial model rises to the task.
+
+### Beta-binomial.
+
+As with the conventional Gaussian likelihood, we will explore both single- and multilevel versions of the beta-binomial  likelihood.
+
+#### Beta-binomial: Single level.
+
+The beta-binomial version of our univariate single-level model for the BAI would be
+
+$$
+\begin{align*}
+\text{bai1}_i & \sim \operatorname{BetaBinomial}(n = 63, \mu_i, \phi_i)\\
+\operatorname{logit}(\mu_i) & = \beta_0 + \beta_1 \text{bai0z}_i + \beta_2 \text{support}_i + \beta_3 \text{chat}_i + \beta_4 \text{support}_i \times \text{chat}_i \\
+\log (\phi_i) & = \eta_0 + \eta_1 \text{bai0z}_i + \eta_2 \text{support}_i + \eta_3 \text{chat}_i + \eta_4 \text{support}_i \times \text{chat}_i \\
+\beta_0 & \sim \operatorname{Normal}(-0.7218573, 1) \\
+\beta_1 & \sim \operatorname{Normal}(0.5, 1) \\
+\beta_2, \dots, \beta_4 & \sim \operatorname{Normal}(0, 1) \\
+\eta_0 & \sim \operatorname{Normal}(\log(12.80353), 1) \\
+\eta_1, \dots, \eta_4 & \sim \operatorname{Normal}(0, 0.5),
+\end{align*}
+$$
+
+where the models for $\operatorname{logit}(\mu_i)$ and $\log (\phi_i)$ replace the models for $\mu_i$ and $\log (\sigma_i)$ from the Gaussian version of the model. Note how in the top line of the equation, we set $n = 63$, which defines the upper bound. As with the binomial likelihood, the lower bound is already set at 0. Also like with the binomial likelihood, we use the logit link for $\mu_i$ to ensure the conditional mean is constrained between 0 and 63. Much like the Gaussian $\sigma$, we use the log link for the dispersion parameter $\phi$ when giving it a linear model. 
+
+Note how we have replaced the mean-centered `bai0c` with the standardized `bai0z` in the models for both $\operatorname{logit}(\mu_i)$ and $\log (\phi_i)$. This will help with scaling, particularly with the $\operatorname{logit}(\mu_i)$ model. For the logistic distribution, about 98.7% of probability mass ranges between -5 and 5. For the standard normal distribution, about 99.7% of the probability mass ranges between -3 and 3. 
+
+```{r}
+# logistic
+plogis(5) - plogis(-5)
+# standard normal
+pnorm(3) - pnorm(-3)
+```
+
+Here are what the two look like between -6 and 6.
+
+```{r, fig.width = 5.5, fig.height = 3}
+tibble(theta = seq(from = -7, to = 7, length.out = 300)) %>% 
+  mutate(logistic = dlogis(theta),
+         `standard normal` = dnorm(theta)) %>% 
+  pivot_longer(-theta, names_to = "distribution") %>% 
+  
+  ggplot(aes(x = theta, y = value, color = distribution)) +
+  geom_line(size = 1) +
+  scale_color_viridis_d(option = "B", end = .6) +
+  labs(x = expression(theta),
+       y = "density") +
+  coord_cartesian(xlim = c(-5.6, 5.6))
+```
+
+Thus putting the baseline BAI covariate on a standardized metric will make for an easier interpretation than if we were to use the simple mean-centered version. The $\beta_1$ coefficient won't quite be in a correlation metric; but it won't be far off.
+
+As to priors, the mean hyperparameter for $\beta_0$, -0.7218573, may seem oddly specific. Recall from Table 3 in Topooco et al (2018), we learned 20.6 was a good expectation for the BAI following standard ICBT. Here's what happens when you divide that value by the upper limit, 63, and apply the logit link.
+
+```{r}
+qlogis(20.6 / 63)
+```
+
+Given how we have scaled the baseline covariate `baiz` similarly to the logit scale, the $\mathcal N(0.5, 1)$ prior will serve a similar function to the $\mathcal N(0.5, 9)$ prior from `fit1`. The remaining $\beta$ parameters were all assigned $\mathcal N(0, 1)$, which is weakly-regularizing on the log-odds scale.
+
+To understand the priors for the $\log (\phi_i)$ model, we'll want to first discuss how $\phi$ influences the beta-binomial function. First off, the population mean for the beta-binomial distribution of some variable $y$ is defined as 
+
+$$\mathbb E(y) = n\mu.$$
+
+The population variance follows a the more complicated formula
+
+$$
+\operatorname{Var}(y) = n\mu(1 - \mu) \frac{\phi + n}{\phi + 1}.
+$$
+
+Our task, however, is to come up with reasonable prior for $\mu$ and $\phi$ based on sample statistics from prior research, such as Table 3 in Topooco et al (2018). By the moment of methods, you can use a sample mean $M$ and known value for $n$ to estimate the population $\mu$ with the equation
+
+$$
+\mu = M / n,
+$$
+
+which is what we did with our `20.6 / 63` computation, above. You can also use the sample mean and standard deviation $S$ to estimate the population $\phi$. The best method for this is under some dispute, but an okay place to start is with
+
+$$
+\phi = \frac{(n - 1) M (n - M)}{n S^2 - M (n - M)}.
+$$
+
+Here's that in code with the sample statistics from Topooco et al (2018). 
+
+```{r}
+m <- 20.6
+s <- 9
+n <- 63
+
+# mu
+m / n
+# phi
+((n - 1) * m * (n - m)) / (n * s^2 - m * (n - m))
+```
+
+Since the model for $\phi$ uses the log link, we should center the prior at $\log(12.80353)$. By setting the scale hyperparameter to 1, we are allowing for a moderately large range of values above or below, on the log scale. Specifically, we are placing about 95% of the prior mass of $\phi$ between 1.7 and 94.6.
+
+```{r, eval = F, echo = F}
+pnorm(2) - pnorm(-2)
+```
+
+```{r}
+exp(log(12.80353) + c(-2, 0, 2))
+```
+
+To help bring that into perspective, here are what the beta binomial distribution looks like with $n = 63$, $\mu = .33$, and $\phi = \{1.7, 12.8, 94.6\}$.
+  
+```{r, fig.width = 6.75, fig.height = 3}
+tibble(n   = 63, 
+       mu  = m / n,
+       phi = exp(log(12.80353) + c(-2, 0, 2))) %>% 
+  expand(nesting(n, mu, phi),
+         bai1 = 0:63) %>% 
+  mutate(alpha = mu * phi,
+         beta  = (1 - mu) * phi) %>% 
+  mutate(density = VGAM::dbetabinom.ab(x = bai1, size = n, shape1 = alpha, shape2 = beta)) %>% 
+  mutate(phi = str_c("phi==", round(phi, digits = 1))) %>% 
+  
+  ggplot(aes(x = bai1, y = density)) +
+  geom_col() +
+  ggtitle(expression("Beta-binomial(63, 0.33, "*phi*")")) +
+  facet_wrap(~ phi, labeller = label_parsed)
+```
+
+If you work through the math, this returns the three standard deviation values of
+
+```{r}
+tibble(n   = 63,
+       mu  = m / n,
+       phi = exp(log(12.80353) + c(-2, 0, 2))) %>% 
+  mutate(sd = sqrt(n * mu * (1 - mu) * (phi + n) / (phi + 1)))
+```
+
+Thus in this case, higher values of $\phi$ make for more concentrated distributions (i.e., lower variances). Adjust your priors accordingly. The $\mathcal N(0, 0.5)$ prior for the remaining $\eta$ parameters all reflect the notion that we do not expect large differences in $\phi$ across the different experimental conditions. Here's how to fit the model with `brm()`.
+
+```{r fit4}
+fit4 <- brm(
+  data = berg2020,
+  family = beta_binomial(),
+  bf(bai1 | trials(63) ~ 0 + Intercept + bai0z + support + chat + support:chat,
+     phi               ~ 0 + Intercept + bai0z + support + chat + support:chat),
+  prior = c(prior(normal(-0.7218573, 1), class = b, coef = Intercept),
+            prior(normal(0.5, 1), class = b, coef = bai0z),
+            prior(normal(0, 1), class = b),
+            # the model for log(phi)
+            prior(normal(log(12.80353), 1), class = b, coef = Intercept, dpar = phi),
+            prior(normal(0, 0.5), class = b, dpar = phi)),
+  chains = 4, cores = 4, seed = 1,
+  file = "fits/fit4.berg2020"
+)
+```
+
+Check the model summary.
+
+```{r}
+summary(fit4)
+```
+
+Notice how in the fifth line of the summary, we read: `Number of observations: 106`. One of the strengths of the single-level Gaussian approach is it allowed for missing data via the one-step Bayesian imputation approach. Unfortunately, we do not have that option for beta-binomial models fit with **brms**. Thus, we fit the model with case-wise deletion. The multilevel model approach will provide a better alternative. But before we move on, here's how to work with the posterior draws to compute the model-based group means and the contrasts of the three experimental conditions with the standard ICBT condition.
+
+```{r, warning = F}
+mean_levels <- c("mean[standard]", "mean[support]", "mean[chat]", "mean[support + chat]", 
+                 "mean[support] - mean[standard]", "mean[chat] - mean[standard]", "mean[support + chat] - mean[standard]")
+
+as_draws_df(fit4) %>% 
+  mutate(n   = 63,
+         mu1 = inv_logit_scaled(b_Intercept),
+         mu2 = inv_logit_scaled(b_Intercept + b_support),
+         mu3 = inv_logit_scaled(b_Intercept + b_chat),
+         mu4 = inv_logit_scaled(b_Intercept + b_support + b_chat + `b_support:chat`)) %>% 
+  transmute(`mean[standard]`       = mu1 * n,
+            `mean[support]`        = mu2 * n,
+            `mean[chat]`           = mu3 * n,
+            `mean[support + chat]` = mu4 * n) %>% 
+  mutate(`mean[support] - mean[standard]`        = `mean[support]` - `mean[standard]`,
+         `mean[chat] - mean[standard]`           = `mean[chat]` - `mean[standard]`,
+         `mean[support + chat] - mean[standard]` = `mean[support + chat]` - `mean[standard]`) %>% 
+  pivot_longer(everything()) %>% 
+  mutate(estimand = factor(name, levels = mean_levels)) %>% 
+  group_by(estimand) %>% 
+  mean_qi(value)
+```
+
+As with the single-level Gaussian model, you can divide these contrasts by the pooled standard deviation at baseline to convert them to a Cohen's $d$ metric.
+
+#### Beta-binomial: Multilevel.
+
+The univariate multilevel version of the beta-binomial model for the BAI would be
+
+$$
+\begin{align*}
+\text{bai}_{ij} & \sim \operatorname{BetaBinomial}(n = 63, \mu_{ij}, \phi_{ij}) \\
+\operatorname{logit}(\mu_{ij}) & = \beta_0 + \beta_1 \text{time}_{ij} + (\beta_2 \text{support}_{ij} + \beta_3 \text{chat}_{ij} + \beta_4 \text{support}_{ij} \times \text{chat}_{ij}) \text{time}_{ij} + u_{0i} \\
+\log(\phi_{ij}) & = \eta_0 + \eta_1 \text{time}_{ij} + (\eta_2 \text{support}_{ij} + \eta_3 \text{chat}_{ij} + \eta_4 \text{support}_{ij} \times \text{chat}_{ij}) \text{time}_{ij} + v_{0i} \\
+\begin{bmatrix} u_{0i} \\ v_{0i} \end{bmatrix} & \sim \mathcal{MVN}(\mathbf 0, \mathbf{SRS}) \\
+\mathbf S & = \begin{bmatrix} \sigma_u \\ 1 & \sigma_v \end{bmatrix} \\
+\mathbf R & = \begin{bmatrix} 1 \\ 0 & 1 \end{bmatrix},
+\end{align*}
+$$
+
+with priors
+
+$$
+\begin{align*}
+\beta_0 & \sim \operatorname{Normal}(-0.2876821, 1) \\
+\beta_1 & \sim \operatorname{Normal}(-0.4341752, 1) \\
+\beta_2, \dots, \beta_4 & \sim \operatorname{Normal}(0, 1) \\
+\eta_0 & \sim \operatorname{Normal}(\log(7.303107), 1) \\
+\eta_1, \dots, \eta_4 & \sim \operatorname{Normal}(0, 0.5) \\
+\sigma_u\ \&\ \sigma_v & \sim \operatorname{Exponential}(1),
+\end{align*}
+$$
+
+where we are once again modeling `bai`, which varies across $i$ adolescents and $j$ occasions. Since $\beta_0$ is now the expected grand mean at baseline, we have entered the prior on the logit-transformed $27/ 63$.
+
+```{r}
+qlogis(27.0 / 63)
+```
+
+The $\beta_1$ parameter is now the expected change in the BAI sum score over time, in the log-odds metric, we deterimed how to centere the prior like so:
+
+```{r}
+qlogis(20.6 / 63) - qlogis(27.0 / 63)
+```
+
+The remaining $\beta$ coefficients are all centered on zero, to make them weakly regularizing. All $\beta$ parameters are scaled at one, which makes them of moderate strength on the log-odds scale. As to the model for $\log(\phi_{ij})$, we'll want to first use the method of moments to the baseline BAI sample statistics from Table 3 in Topooco et al (2018). 
+
+```{r}
+m <- 27.0
+s <- 12.1
+n <- 63
+
+# mu
+m / n
+# phi
+((n - 1) * m * (n - m)) / (n * s^2 - m * (n - m))
+```
+
+As $\eta_0$ is the expected value for $\log(\phi)$ at baseline, we have centered its prior on $\log(7.303107)$, with a generous unit scale. The remaining $\eta$ parameters all have a weakly-regularizing $\mathcal N(0, 0.5)$ prior. As to the $\sigma_u$ and $\sigma_v$ parameters, the $\operatorname{Exponential}(1)$ prior is a good weakly-regularizing default for both log-odds and log scales.
+
+```{r, eval = F, echo = F}
+tibble(m = 20.6,
+       s = c(4.5, 9, 18),
+       n = 63) %>% 
+  # method of moments
+  mutate(mu = m / n,
+         phi = ((n - 1) * m * (n - m)) / (n * s^2 - m * (n - m))) 
+
+tibble(m = 20.6,
+       s = 12.1 * c(0.5, 1, 2),
+       n = 63) %>% 
+  # method of moments
+  mutate(mu = m / n,
+         phi = ((n - 1) * m * (n - m)) / (n * s^2 - m * (n - m))) 
+
+exp(log(12.803526) + c(-2, 0, 2))
+
+exp(log(7.303107) + c(-2, 0, 2))
+```
+
+Here's how to fit the model with `brm()`.
+
+```{r fit5}
+fit5 <- brm(
+  data = berg2020_long,
+  family = beta_binomial(),
+  bf(bai | trials(63) ~ 0 + Intercept + time + (support + chat + support:chat) : time + (1 | id),
+     phi              ~ 0 + Intercept + time + (support + chat + support:chat) : time + (1 | id)),
+  prior = c(prior(normal(-0.2876821, 1), class = b, coef = Intercept),
+            prior(normal(-0.4341752, 1), class = b, coef = time),
+            prior(normal(0, 1), class = b),
+            prior(exponential(1), class = sd),
+            # the model for log(phi)
+            prior(normal(log(7.303107), 1), class = b, coef = Intercept, dpar = phi),
+            prior(normal(0, 0.5), class = b, dpar = phi),
+            prior(exponential(1), class = sd, dpar = phi)),
+  chains = 4, cores = 4, seed = 1,
+  file = "fits/fit5.berg2020"
+)
+```
+
+Check the summary.
+
+```{r}
+summary(fit5)
+```
+
+Now noticed that, just like with our multilevel Gaussian model `fit3`, the fifth line of the summary output informs us: `Number of observations: 226`. That is, the multilevel beta-binomial allows us to handle the missing values at the post-treatment time point with full-information estimation. We were still able to make good use of all of the baseline data.
+
+Even though we've used a very different likelihood from the `fit3` model, we can still use the same approach to pull the fitted draws to make a nice model-based line plot.
+
+```{r, fig.width = 4, fig.height = 4, warning = F, message = F}
+# wrangle
+f5 <- fitted(fit5,
+             newdata = nd,
+             re_formula = NA,
+             summary = F) %>% 
+  data.frame() %>% 
+  set_names(1:8) %>% 
+  mutate(iter = 1:n()) %>% 
+  pivot_longer(-iter, names_to = "row") %>% 
+  mutate(row = as.double(row)) %>% 
+  left_join(nd, by = "row") 
+
+# plot!
+f5 %>% 
+  ggplot(aes(x = time, y = value)) +
+  geom_hline(yintercept = mean(berg2020$bai0), color = "white") +
+  stat_lineribbon(.width = .95, fill = "grey60") +
+  geom_line(data = berg2020_long,
+            aes(y = bai, group = id),
+            size = 1/6, alpha = 1/4) +
+  scale_x_continuous(NULL, breaks = 0:1, labels = c("pre", "post"), expand = c(0.15, 0.15)) +
+  scale_y_continuous("BAI sum score", limits = c(0, 63)) +
+  facet_wrap(~ icbt)
+```
+
+You can also graphically depict the within- and between-group effect sizes with the beta-binomial draws, much like we did with the Gaussian draws. Here we'll make a modified version of the earlier plot by simultaneously showing the effect sizes for both likelihoods.
+
+```{r, fig.width = 9, fig.height = 3.75}
+# combine the two likelihoods
+bind_rows(f3, f5) %>% 
+  # wrangle
+  mutate(likelihood = rep(c("Gaussian", "Beta-binomial"), each = n() / 2)) %>% 
+  select(-row, -group, -chat, -support) %>% 
+  pivot_wider(names_from = time, values_from = value) %>% 
+  mutate(unstandardized = `1` - `0`,
+         standardized   = (`1` - `0`) / pooled_sd_bai0) %>% 
+  select(iter, icbt, unstandardized, standardized, likelihood) %>% 
+  pivot_longer(unstandardized:standardized, names_to = "difference") %>% 
+  pivot_wider(names_from = icbt, values_from = value) %>% 
+  mutate(difference = factor(difference, levels = c("unstandardized", "standardized"))) %>% 
+  mutate(`Learning support - Standard ICBT`           = `Learning support` - `Standard ICBT`,
+         `Standard ICBT with chat - Standard ICBT`    = `Standard ICBT with chat` - `Standard ICBT`,
+         `Learning support with chat - Standard ICBT` = `Learning support with chat` - `Standard ICBT`) %>% 
+  pivot_longer(cols = c(-iter, -difference, -likelihood), values_to = "d") %>% 
+  mutate(name = factor(name, levels = labs),
+         type = ifelse(name %in% labs[1:4], "pre/post difference", "difference in\ndifferences")) %>% 
+  
+  # plot!
+  ggplot(aes(x = d, y = name)) +
+  geom_vline(xintercept = 0, color = "white") +
+  stat_pointinterval(aes(color = likelihood, group = likelihood),
+               .width = .95, size = 1.5, position = position_dodge(width = -0.5)) + 
+  scale_color_viridis_d(option = "A", begin = .2, end = .6, direction = -1) +
+  labs(title = "Effect sizes for the Gaussian and beta-binomoal multilevel models",
+       subtitle = "The facet rows divide the within-group and between-group effect sizes.\nThe facet columns quantify both kinds of effect sizes in the unstandadrdized (sum score) and standardized (Cohen's d) metrics.",
+       x = "BAI effect sizes",
+       y = NULL) +
+  theme(axis.text.y = element_text(hjust = 0)) +
+  facet_grid(type ~ difference, space = "free_y", scales = "free")
+```
+
+```{r, eval = F, echo = F}
+# wrangle
+f5 %>% 
+  select(-row, -group, -chat, -support) %>% 
+  pivot_wider(names_from = time, values_from = value) %>% 
+  mutate(unstandardized = `1` - `0`,
+         standardized   = (`1` - `0`) / pooled_sd_bai0) %>% 
+  select(iter, icbt, unstandardized, standardized) %>% 
+  pivot_longer(unstandardized:standardized, names_to = "difference") %>% 
+  pivot_wider(names_from = icbt, values_from = value) %>% 
+  mutate(difference = factor(difference, levels = c("unstandardized", "standardized"))) %>% 
+  mutate(`Learning support - Standard ICBT`           = `Learning support` - `Standard ICBT`,
+         `Standard ICBT with chat - Standard ICBT`    = `Standard ICBT with chat` - `Standard ICBT`,
+         `Learning support with chat - Standard ICBT` = `Learning support with chat` - `Standard ICBT`) %>% 
+  pivot_longer(cols = c(-iter, -difference), values_to = "d") %>% 
+  mutate(name = factor(name, levels = labs),
+         type = ifelse(name %in% labs[1:4], "pre/post difference", "difference in\ndifferences")) %>% 
+  
+  # plot!
+  ggplot(aes(x = d, y = name)) +
+  geom_vline(xintercept = 0, color = "white") +
+  stat_halfeye(.width = .95, size = 1.5, normalize = "panels") + 
+  labs(title = "Effect sizes for the multilevel model",
+       subtitle = "The facet rows divide the within-group and between-group effect sizes.\nThe facet columns quantify both kinds of effect sizes in the unstandadrdized (sum score) and standardized (Cohen's d) metrics.",
+       x = "BAI effect sizes",
+       y = NULL) +
+  theme(axis.text.y = element_text(hjust = 0)) +
+  facet_grid(type ~ difference, space = "free_y", scales = "free")
+```
+
+### Strength.
+
+It might be instructive to compare the posterior predictive check from the Gaussian `fit3` to a similar posterior predictive check from the beta-binomial `fit5`.
+
+```{r, fig.width = 7.67, fig.height = 3.33}
+set.seed(1)
+p2 <- pp_check(fit5, type = "hist", ndraws = 8, binwidth = 1) +
+  geom_vline(xintercept = c(-0.5, 63.5), linetype = 2, size = 1/4) +
+  scale_x_continuous(breaks = 0:3 * 21) +
+  coord_cartesian(xlim = c(-10, 73)) +
+  ggtitle("Multilevel beta-binomial (fit5)") +
+  theme(title = element_text(size = 9))
+
+p1 + p2 +
+  plot_annotation(title = "Posterior predictive checks") + 
+  plot_layout(guides = "collect")
+```
+
+The simulated data from the beta-binomial model respect both lower and upper boundaries for the BAI. Further, all the simulated beta-binomial data were skewed in a way that generally resembled the original data. Though it's not easy to tell from the plots, the beta-binomial also only returned integer values, similar to the BAI sum-score values. When possible, it's generally a good idea to analyze experimental data with models that produce data resembling the original data.
+
+### Next steps.
+
+Though not shown here, it would also be possible to simultaneously analyze both BAI and BDI-II sum scores with a bivariate beta-binomial model. This could be done with either the single-level or multilevel approach. The big difference to note, here, is that the bivariate beta-binomial model does not have a natural analogue to the residual correlation parameter $(\rho)$ you would expect from a bivariate Gaussian model.
+
+## Session info
+
+```{r}
+sessionInfo()
+```
+
+## Endnotes
+
+[^1]: Okay, it isn't *conventional* to model $\log(\sigma_i)$ along with $\mu_i$. But if you ignore our distributional modeling sensibilities, the guts of the model are conventional. We have the baseline values as a covariate and have depicted the $2 \times 2$ factorial design with two dummy variables. That's conventional.
+
