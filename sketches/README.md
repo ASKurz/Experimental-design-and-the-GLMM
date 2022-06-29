@@ -8,6 +8,7 @@ These files contain content sketches. They aren’t necessarily full chapters or
 | - | - | 
 | Allen & Evans (2001) | Single-case changing criterion design |
 | Berg et al (2020) | Pretest-posttest 2 X 2 factorial design |
+| Clarke et al (2021) | Posttest-only 2 X 2 factorial design | 
 | Coker et al (2009) | Multivariate single-case ABAB design | 
 | Kessler et al (2022) | Within-person 2 X 2 X 2 factorial design |
 | Mancuso & Miltenberger (2016) | Multiple baseline AB design |
