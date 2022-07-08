@@ -546,6 +546,10 @@ The $\mathcal N(0, 0.5)$ prior for $\eta_1, \dots, \eta_4$ is meant to be weakly
 
 Here's how to fit the distributional model to our Solomon 4-group data.
 
+```{r, eval = F, echo = F}
+# fit3 is currently 106.6 MB, just a bit over the GitHub file size limit
+```
+
 ```{r fit3}
 fit3 <- brm(
   data = vivid_long,

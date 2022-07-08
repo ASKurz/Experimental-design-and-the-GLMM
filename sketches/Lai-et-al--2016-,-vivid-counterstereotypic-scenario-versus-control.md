@@ -1015,7 +1015,7 @@ fitted(
   facet_grid(pretest ~ tx, labeller = label_both)
 ```
 
-<img src="Lai-et-al--2016-,-vivid-counterstereotypic-scenario-versus-control_files/figure-gfm/unnamed-chunk-24-1.png" width="576" />
+<img src="Lai-et-al--2016-,-vivid-counterstereotypic-scenario-versus-control_files/figure-gfm/unnamed-chunk-25-1.png" width="576" />
 
 If you wanted to, you could use information criteria to formally compare
 the `fit2` and `fit3` models.
@@ -1116,7 +1116,7 @@ rbind(fixef(fit2)["time:tx:pretest", -2],
   xlim(-0.3, 0.3)
 ```
 
-<img src="Lai-et-al--2016-,-vivid-counterstereotypic-scenario-versus-control_files/figure-gfm/unnamed-chunk-27-1.png" width="456" />
+<img src="Lai-et-al--2016-,-vivid-counterstereotypic-scenario-versus-control_files/figure-gfm/unnamed-chunk-28-1.png" width="456" />
 
 Although the posterior means and a good proportion of the posterior
 densities for both models fell inside the ROPE, a lot of the posterior
