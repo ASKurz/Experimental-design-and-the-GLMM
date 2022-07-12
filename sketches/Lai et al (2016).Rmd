@@ -1,0 +1,729 @@
+---
+title: "Lai et al (2016)"
+subtitle: "Solomon 4-group design"
+author: "A Solomon Kurz"
+date: "`r format(Sys.Date())`"
+output: github_document
+---
+
+```{r, echo = F}
+knitr::opts_chunk$set(fig.retina = 2.5)
+options(width = 110)
+```
+
+Load our primary packages.
+
+```{r, message = F, warning = F}
+library(tidyverse)
+library(brms)
+library(tidybayes)
+library(patchwork)
+```
+
+Before we begin, this content sketch is an extension of an earlier and simpler content sketch, which you can find [here](https://github.com/ASKurz/Experimental-design-and-the-GLMM/blob/main/sketches/Lai-et-al--2016-%2C-vivid-counterstereotypic-scenario-versus-control.md). If you're new to the Solomon-4 group design, you should really start at that first sketch.
+
+## Brief online interventions and the effects of a pretest
+
+Implicit bias has been a hot topic in social-psychology research in recent decades. Implicit bias is most frequently studied with the Implicit Association Test (IAT), one of the most popular versions of which is designed to assess relative preference for Black faces versus White faces. In their Study 4, Lai et al (2014; https://doi.org/10.1037/a0036260) used a Solomon "four"-group design to compare 13 experimental intervention conditions on reducing pro-White bias in non-Black participants, and to examine to what extent pretesting may influence the effect sizes for those interventions. The authors have a large study repository on the OSF at https://osf.io/lw9e8/ and you can download their files at https://osf.io/lw9e8/files/. Here we load the data from their Study 4.
+
+```{r}
+lai2016 <- haven::read_sav(file = "data/LaietalStudy4.sav") %>% 
+  # filter based on the authors' exclusion criteria
+  filter(SUBEXCL == 0) %>% 
+  filter(doneIAT == 1)
+
+# what?
+glimpse(lai2016)
+```
+
+We call this a Solomon "four"-group design with *four* in quotations because Study 4 had a $13 \times 2$ factorial design with 13 experimental conditions, each of which did or did not have a pre-test. Here we reduce and reformat the data set a bit.
+
+```{r}
+lai2016 <- lai2016 %>% 
+  select(session_id, IAT_pre, IAT, cond, cond_prepost) %>% 
+  mutate(cond_prepost = as_factor(cond_prepost)) %>% 
+  mutate(pretest = ifelse(cond_prepost == "Yes", 1, 0),
+         tx      = ifelse(cond == "Control", 0, 1)) %>% 
+  rename(id = session_id)
+
+# what?
+glimpse(lai2016)
+```
+
+The `IAT_pre` and `IAT` columns contain each participant's $D$ score, based on whether it was taken at the pre- or post-intervention period. The `cond` column contains the text description of the 13 experimental conditions. The `tx` column contains the same information, transformed into a dummy variable. The `cond_prepost` column is a factor variable indicating whether each participant had a pretest assessment (`Yes`) or not (`No`) and the `pretest` column contains the same information, transformed into a dummy variable.
+
+We're also going to want a long-formatted version of the data with respect to time. We'll call it `lai2016_long`.
+
+```{r}
+lai2016_long <- lai2016 %>% 
+  pivot_longer(contains("IAT"), values_to = "d") %>% 
+  mutate(time = ifelse(str_detect(name, "_pre"), 0, 1))
+
+# what?
+glimpse(lai2016_long)
+```
+
+With the `lai2016_long` version of the data, the `d` column now contains all the $D$-score information and the timing of the assessment is captured in the new `time` column, for which the pretesting assessment is coded `0` and the posttesting assessment is coded `1`.
+
+## EDA
+
+### Sample statistics.
+
+Here are the sample statistics for the IAT $D$ scores at pre- and post-treatment, by the $13 \times 2 = 26$ experimental groups.
+
+```{r, warning = F, message = F}
+lai2016_long %>% 
+  group_by(cond, time, pretest) %>% 
+  summarise(mean = mean(d, na.rm = T),
+            sd   = sd(d, na.rm = T),
+            n    = n()) %>% 
+  mutate_if(is.double, round, digits = 2)
+```
+
+Note the consequences for the structural missing data when `time == 0` and `pretest == 0`.
+
+### Look at the data.
+
+To get a better sense of the sample sizes, by `cond_prepost` and `cond`, we might display the numbers in a tile plot.
+
+```{r, fig.width = 5.5, fig.height = 3.25}
+# adjust the global plot settings
+theme_set(
+  theme_gray(base_size = 13) +
+    theme(panel.grid = element_blank(),
+          plot.title.position = "plot",
+          strip.background = element_rect(fill = "grey96"),
+          strip.text = element_text(color = "black"))
+)
+
+# wrangle
+lai2016 %>% 
+  count(cond, cond_prepost) %>% 
+  
+  # plot
+  ggplot(aes(x = cond_prepost, y = cond, fill = n, label = n)) +
+  geom_tile() +
+  geom_text(size = 3) +
+  scale_x_discrete("Is there a pretest?", expand = c(0, 0)) +
+  scale_y_discrete(NULL, expand = c(0, 0)) +
+  scale_fill_viridis_c(option = "A", limits = c(0, NA), breaks = NULL) +
+  theme(axis.text.y = element_text(hjust = 0))
+```
+
+We can make a similar plot to get a high-level sense of the average posttest IAT $D$ score, by `cond_prepost` and `cond`
+
+```{r, fig.width = 7.25, fig.height = 3.25, message = F}
+lai2016 %>% 
+  group_by(cond, cond_prepost) %>% 
+  summarise(d = mean(IAT, na.rm = T)) %>% 
+  mutate(label = round(d, digits = 2)) %>% 
+  
+  ggplot(aes(x = cond_prepost, y = cond, fill = d, label = label)) +
+  geom_tile() +
+  geom_text(aes(color = d > 0.2),
+            size = 3) +
+  scale_fill_viridis_c(expression(widehat(posttest~italic(D)~score)), option = "A", limits = c(0, NA)) +
+  scale_color_manual(values = c("white", "black"), breaks = NULL) +
+  scale_x_discrete("Is there a pretest?", expand = c(0, 0)) +
+  scale_y_discrete(NULL, expand = c(0, 0)) +
+  theme(axis.text.y = element_text(hjust = 0))
+```
+
+We might want to get a broad sense of the distribution of the posttest $D$ scores with a faceted density plot.
+
+```{r, fig.width = 7.5, fig.height = 3.25, warning = F}
+lai2016 %>% 
+  mutate(pretest = cond_prepost) %>% 
+
+  ggplot(aes(x = IAT, y = cond)) +
+  stat_slab(aes(fill = stat(x < 0))) +
+  scale_fill_viridis_d("bias", begin = .1, end = .6, labels = c("pro White", "pro Black")) +
+  labs(x = expression(posttest~italic(D)~score),
+       y = NULL) +
+  facet_wrap(~ pretest, labeller = label_both) +
+  theme(axis.text.y = element_text(hjust = 0))
+```
+
+## Models
+
+Given the IAT $D$ scores are continuous with no clear lower or upper limits, the Gaussian likelihood is a natural default choice. In this script, we'll entertain four models:
+
+* a two-level multilevel model,
+* the corresponding two-level MELSM,
+* a three-level multilevel model, and
+* the corresponding three-level MELSM.
+
+### Two-level model of the posttest assessments.
+
+Given the IAT $D$ scores are continuous with no clear lower or upper limits, the Gaussian likelihood is a natural default choice. If we say the posttest $D$-score values vary across $i$ participants and $j$ experimental conditions, we can assess the effects of pretesting and the experimental conditions with the model
+
+$$
+\begin{align*}
+\text{IAT}_{ij} & \sim \operatorname{Normal}(\mu_{ij}, \sigma) \\
+\mu_{ij} & = \beta_{0j} + \beta_{1j} \text{pretest}_{ij} + \left [u_{0j} + u_{1j} \text{pretest}_{ij} \right] \\
+\begin{bmatrix} u_{0j} \\ u_{1j} \end{bmatrix} & \sim \operatorname{Normal}(\mathbf 0, \mathbf{SRS}) \\
+\mathbf S & = \begin{bmatrix} 
+  \sigma_0 \\ 0 & \sigma_1
+  \end{bmatrix} \\
+\mathbf R & = \begin{bmatrix} 
+  1 \\ \rho & 1 
+  \end{bmatrix} \\
+\beta_0 & \sim \operatorname{Normal}(0.37, 0.215) \\
+\beta_1 & \sim \operatorname{Normal}(0, 0.215) \\
+\sigma, \dots, \sigma_1  & \sim \operatorname{Exponential}(1 / 0.43) \\
+\rho & \sim \operatorname{LKJ}(2),
+\end{align*}
+$$
+
+where $\beta_{0j}$ is the grand mean across the $j$ conditions without a pretest and $\beta_{1j}$ is the grand mean for the change in $D$ scores when there is a pretest. The $u_{0j}$ and $u_{1j}$ terms capture the condition-specific deviations from the grand means, and those deviations are modeled as bivariate normal.
+
+As to the priors, the IAT literature is distinct in psychology in that is it vast with a good number of large-sample studies, the data for several of which are openly available online[^1]. In this script, the priors come primarily from the second row (*Race attitude*) of Table 2 in Nosek et al (2007, p. 11), who summarized the data from more than 2.5 million participants who completed the IAT's on a variety of topics, from mid 2000 to mid 2006. The summaries for the Black-White IAT are from $N = 732{,}881$ participants. Their mean $D$ score was 0.37, with a standard deviation of 0.43.
+
+The $\mathcal N(0.37, 0.215)$ prior for $\beta_{0j}$ is centered on the population mean from Nosek et al. The scale is half of the standard deviation reported in Nosek et al, and is meant to indicate we are pretty certain the data from Lai et al will be similar to those summarized by Nosek at al. The $\mathcal N(0, 0.215)$ prior for $\beta_{1j}$ puts about 95% of the prior mass of effect sizes greater than a Cohen's $d$ of -1 and less than a Cohen's $d$ of 1 for the average difference when there is a pretest. The $\operatorname{Exponential}(1 / 0.43)$ prior indicates we expect our standard deviation parameters will be near the population standard deviation. Finally, the $\operatorname{LKJ}(2)$ prior for the sole level-2 correlation $\rho$ will weakly regularize the correlation off of the boundaries.
+
+We can extend this to a full MELSM with the equation
+
+$$
+\begin{align*}
+\text{IAT}_{ij} & \sim \operatorname{Normal}(\mu_{ij}, \sigma_{ij}) \\
+\mu_{ij}          & = \beta_0 + \beta_1 \text{pretest}_{ij} + \left [u_{0j} + u_{1j} \text{pretest}_{ij} \right] \\
+\log(\sigma_{ij}) & = \eta_0 + \eta_1 \text{pretest}_{ij} + \left [u_{2j} + u_{3j} \text{pretest}_{ij} \right] \\
+\begin{bmatrix} u_{0j} \\ u_{1j} \\ u_{2j} \\ u_{3j} \end{bmatrix} & \sim \operatorname{Normal}(\mathbf 0, \mathbf{SRS}) \\
+\mathbf S & = \begin{bmatrix} 
+  \sigma_0 \\ 
+  0 & \sigma_1 \\
+  0 & 0 & \sigma_2 \\
+  0 & 0 & 0 & \sigma_3
+  \end{bmatrix} \\
+\mathbf R & = \begin{bmatrix} 
+  1 \\ 
+  \rho_{10} & 1 \\ 
+  \rho_{20} & \rho_{21} & 1 \\ 
+  \rho_{30} & \rho_{31} & \rho_{32} & 1 
+  \end{bmatrix}
+  \end{align*}
+$$
+
+with priors
+
+$$
+\begin{align*}
+\beta_0 & \sim \operatorname{Normal}(0.37, 0.215) \\
+\beta_1 & \sim \operatorname{Normal}(0, 0.215) \\
+\eta_0 & \sim \operatorname{Normal}(\log(0.43), \log(2) / 2) \\
+\eta_1 & \sim \operatorname{Normal}(0, 0.5) \\
+\sigma, \sigma_0, \sigma_1  & \sim \operatorname{Exponential}(1 / 0.43) \\
+\sigma_2, \sigma_3  & \sim \operatorname{Exponential}(1) \\
+\rho & \sim \operatorname{LKJ}(1)
+\end{align*}
+$$
+
+where the within-person residual standard deviation $\sigma_{ij}$ now varies across $i$ parsons and $j$ experimental conditions. The model for $\log(\sigma_{ij})$ mirrors the model for $\mu_{ij}$, from before.
+
+By centering our prior for $\eta_0$ on $\log(0.43)$, we are indicating we expect the residual standard deviation at pretest to fall near the population standard deviation reported by Nosek et al. The scale hyperparameter $\log(2) / 2$ indicates that after exponentiation, we'd like about 95% of the prior mass to range between half of the population value $(0.43 / 2 = 0.215)$ and twice the population value $(0.43 \times 2 = 0.86)$. If that's not clear why, here's a quick simulation.
+
+```{r, fig.width = 5.5, fig.height = 3}
+set.seed(1)
+
+tibble(prior = rnorm(n = 1e5, mean = log(0.43), sd = log(2) / 2)) %>% 
+  mutate(sigma = exp(prior)) %>% 
+  mutate(range = sigma > 0.215 & sigma < 0.86) %>% 
+  mutate(range = factor(range, levels = c("TRUE", "FALSE"))) %>% 
+  
+  ggplot(aes(x = sigma, fill = range)) +
+  geom_histogram(binwidth = 0.015, boundary = 0.215) +
+  scale_fill_viridis_d("inner 95% range\n(approximate)", option = "A", begin = .1, end = .6) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  labs(title = "Prior predictive distribution",
+       x = expression(exp(eta[0])))
+```
+
+The $\mathcal N(0, 0.5)$ prior for $\eta_1$ is meant to be weakly regularizing and restrain the experimental effects on the residual standard deviation to within an order of magnitude (i.e., an change of 1 on the log scale). The $\operatorname{Exponential}(1 / 0.5)$ prior for $\sigma_2$ and $\sigma_3$ is meant to be similarly regularizing for the condition-level differences in residual standard deviations.
+
+Here's how to fit the two models with `brm()`.
+
+```{r fit1}
+# 2-level MLM
+fit1 <- brm(
+  data = lai2016,
+  family = gaussian,
+  IAT ~ 0 + Intercept + pretest + (1 + pretest | cond),
+  prior = c(prior(normal(0.37, 0.215), class = b, coef = Intercept),
+            prior(normal(0, 0.215), class = b),
+            prior(exponential(1 / 0.43), class = sigma),
+            prior(exponential(1 / 0.43), class = sd),
+            prior(lkj(2), class = cor)),
+  cores = 4, 
+  seed = 1,
+  file = "fits/fit1.lai2016"
+)
+
+# 2-level MELSM
+fit2 <- brm(
+  data = lai2016,
+  family = gaussian,
+  bf(IAT   ~ 0 + Intercept + pretest + (1 + pretest |j| cond),
+     sigma ~ 0 + Intercept + pretest + (1 + pretest |j| cond)),
+  prior = c(# mu model
+            prior(normal(0.37, 0.215), class = b, coef = Intercept),
+            prior(normal(0, 0.215), class = b),
+            prior(exponential(1 / 0.43), class = sd),
+            # log(sigma) model
+            prior(normal(log(0.43), log(2) / 2), class = b, coef = Intercept, dpar = sigma),
+            prior(normal(0, 0.5), class = b, dpar = sigma),
+            prior(exponential(1 / 0.5), class = sd, dpar = sigma),
+            
+            prior(lkj(1), class = cor)),
+  cores = 4, 
+  seed = 1,
+  file = "fits/fit2.lai2016"
+)
+```
+
+Check the summaries.
+
+```{r}
+summary(fit1)
+summary(fit2)
+```
+
+You might compare the two versions fo the model with information criteria.
+
+```{r}
+fit1 <- add_criterion(fit1, criterion = c("loo", "waic"))
+fit2 <- add_criterion(fit2, criterion = c("loo", "waic"))
+
+loo_compare(fit1, fit2, criterion = "loo") %>% print(simplify = F)
+loo_compare(fit1, fit2, criterion = "waic") %>% print(simplify = F)
+```
+
+By both the LOO and the WAIC, the full distributional version of the model provides a decisively better description of the data. To help clarity why, we might display the various $\sigma_{ij}$ posteriors in a coefficient plot. To my mind, this will be easiest with help from `fitted()`.
+
+
+```{r, fig.width = 8.5, fig.height = 4}
+# compute the population means for sigma
+nd <- lai2016 %>% 
+  distinct(pretest)
+
+population_sigma <- fitted(
+  fit2, 
+  newdata = nd,
+  dpar = "sigma",
+  re_formula = NA) %>% 
+  data.frame() %>% 
+  bind_cols(nd) %>% 
+  mutate(pretest = factor(pretest, levels = 1:0, labels = c("pretest and posttest", "posttest only")))
+
+# compute the group-specific levels for sigma
+nd <- lai2016 %>% 
+  distinct(cond, pretest)
+
+fitted(fit2, 
+       newdata = nd,
+       dpar = "sigma") %>% 
+  data.frame() %>% 
+  bind_cols(nd) %>% 
+  mutate(pretest = factor(pretest, levels = 1:0, labels = c("pretest and posttest", "posttest only"))) %>% 
+  
+  # plot!
+  ggplot(aes(x = Estimate, xmin = Q2.5, xmax = Q97.5)) +
+  geom_rect(data = population_sigma,
+            aes(ymin = -Inf, ymax = Inf, fill = pretest),
+            alpha = 1/6) +
+  geom_vline(data = population_sigma,
+             aes(xintercept = Estimate, color = pretest),
+             alpha = 2/6, show.legend = F) +
+  geom_pointinterval(aes(y = reorder(cond, Estimate), color = pretest),
+                     point_size = 1.5, position = position_dodge(width = .33)) +
+  scale_fill_viridis_d(NULL, option = "C", end = .4) +
+  scale_color_viridis_d(NULL, option = "C", end = .4) +
+  labs(title = "MELSM residual standard deviations vary by experimental condition and pretest status",
+       subtitle = "The semitransparent vertical lines and ribbons depict the population means and their 95% intervals.",
+       x = expression(sigma[italic(ij)]),
+       y = NULL) +
+  xlim(0.3, 0.8) +
+  theme(axis.text.y = element_text(hjust = 0),
+        legend.position = "top")
+```
+
+At the population level, the posttest-only condition produces larger variability, on average, among the $D$ scores. That pattern replicated across all of the experimental treatment groups (y-axis). Though most of the experimental groups had very similar standard deviations within their pretest status, there was some variability at the extremes, particularly for the `Faking the IAT` group. If desired, one could make a similar plot for the levels of $\mu_{ij}$.
+
+```{r, eval = F, echo = F}
+nd <- lai2016 %>% 
+  distinct(pretest)
+
+population_mu <- fitted(
+  fit2, 
+  newdata = nd,
+  re_formula = NA) %>% 
+  data.frame() %>% 
+  bind_cols(nd) %>% 
+  mutate(pretest = factor(pretest, levels = 1:0, labels = c("pretest and posttest", "posttest only")))
+
+nd <- lai2016 %>% 
+  distinct(cond, pretest)
+
+fitted(fit2, 
+       newdata = nd) %>% 
+  data.frame() %>% 
+  bind_cols(nd) %>% 
+  mutate(pretest = factor(pretest, levels = 1:0, labels = c("pretest and posttest", "posttest only"))) %>% 
+  
+  ggplot(aes(x = Estimate, xmin = Q2.5, xmax = Q97.5)) +
+  geom_rect(data = population_mu,
+            aes(ymin = -Inf, ymax = Inf, fill = pretest),
+            alpha = 1/6) +
+  geom_vline(data = population_mu,
+             aes(xintercept = Estimate, color = pretest),
+             alpha = 2/6, show.legend = F) +
+  geom_pointinterval(aes(y = reorder(cond, Estimate), color = pretest),
+                     point_size = 1.5, position = position_dodge(width = .33)) +
+  scale_fill_viridis_d(NULL, option = "C", end = .4) +
+  scale_color_viridis_d(NULL, option = "C", end = .4) +
+  labs(title = "MELSM means vary more across experimental conditions than by pretest status",
+       subtitle = "The semitransparent vertical lines and ribbons depict the population means and their 95% intervals.",
+       x = expression(mu[italic(ij)]),
+       y = NULL) +
+  xlim(0, 0.6) +
+  theme(axis.text.y = element_text(hjust = 0),
+        legend.position = "top")
+```
+
+```{r, eval = F, echo = F}
+# this approach doesn't work for log(sigma)
+# it makes the contrasts on the log scale
+fit2 %>%
+  spread_draws(r_cond__sigma[cond, pretest]) %>%
+  compare_levels(r_cond__sigma, by = cond) %>%
+  ungroup() %>%
+  filter(str_detect(cond, "Control")) %>% 
+  
+  mutate(cond = str_replace_all(cond, "\\.", " ")) %>% 
+  mutate(condition = reorder(cond, r_cond__sigma)) %>%
+  
+  ggplot(aes(y = condition, x = r_cond__sigma)) +
+  geom_vline(xintercept = 0, color = "white") +
+  stat_pointinterval(point_interval = mean_qi, .width = .95, size = 1/4) +
+  labs(x = "difference in differences",
+       y = NULL) +
+  theme(panel.grid.major.y = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.y = element_text(hjust = 0))
+```
+
+In a typical Solomon 4-group design, the primary contrast of interest is the difference in differences for the two levels of treatment the two levels of pretest status. For Lai et al's modified Solomon 26-group design, I'd argue this would translate to 12 differences in differences where the control group is contrasted with each of the active experimental conditions. We might use a coefficient plot to display those contrasts from the distributional model.
+
+```{r, fig.width = 8.5, fig.height = 3.75}
+# compute, wrangle, and save
+d_in_d_fit2 <- lai2016 %>% 
+  distinct(cond, pretest) %>% 
+  add_epred_draws(fit2, 
+                  dpar = c("mu", "sigma")) %>% 
+  ungroup() %>% 
+  select(cond:pretest, .draw, mu, sigma) %>% 
+  pivot_longer(mu:sigma, names_to = "parameter") %>% 
+  pivot_wider(values_from = value, names_from = pretest) %>% 
+  mutate(d = `1` - `0`) %>% 
+  compare_levels(d, by = cond, draw_indices = c("parameter", ".draw")) %>% 
+  filter(str_detect(cond, "Control")) %>%
+  mutate(parameter = str_c(parameter, "[italic(ij)]"))
+
+# plot
+d_in_d_fit2 %>% 
+  ggplot(aes(y = reorder(cond, d), x = d)) +
+  geom_vline(xintercept = 0, color = "white") +
+  stat_pointinterval(point_interval = mean_qi, .width = .95, size = 1/4) +
+  scale_x_continuous(expand = c(0.08, 0.08)) +
+  labs(title = expression("Pretesting's minimal influence on the causal effect on IAT "*italic(D)~scores),
+       x = "difference in differences",
+       y = NULL) +
+  theme(panel.grid.major.y = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.y = element_text(hjust = 0)) +
+  facet_wrap(~ parameter, labeller = label_parsed, scales = "free_x")
+```
+
+Note how the distributional model allows for differences in differences for both $\mu$ and $\sigma$. As it turns out, the contrasts all hover around zero for both parameters. Thus, there's little evidence the pretest matters much for the causal effect.
+
+Though I've given a focused plot of the differences in differences, researchers could look at all the contrasts among experimental groups, if desired.
+
+```{r, eval = F, echo = F}
+lai2016 %>% 
+  distinct(cond, pretest) %>%
+  # add_fitted_draws(fit2, dpar = c("mu", "sigma")) %>%  # depreciated
+  add_epred_draws(fit2, dpar = c("mu", "sigma")) %>% 
+  ungroup() %>% 
+  select(cond:pretest, .draw, mu, sigma) %>% 
+  pivot_longer(mu:sigma, names_to = "parameter") %>% 
+  pivot_wider(values_from = value, names_from = pretest) %>% 
+  mutate(d = `1` - `0`) %>% 
+  compare_levels(d, by = cond, draw_indices = c("parameter", ".draw")) %>% 
+  mutate(parameter = str_c(parameter, "[italic(ij)]")) %>% 
+  
+  ggplot(aes(y = reorder(cond, d), x = d)) +
+  geom_vline(xintercept = 0, color = "white") +
+  stat_pointinterval(point_interval = mean_qi, .width = .95, size = 1/5) +
+  scale_x_continuous(expand = c(0.08, 0.08)) +
+  # scale_y_discrete("all contrasts (rank ordered)", breaks = NULL) +
+  labs(x = "difference in differences",
+       y = NULL) +
+  theme(panel.grid.major.y = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.y = element_text(hjust = 0)) +
+  facet_wrap(~ parameter, labeller = label_parsed, scales = "free_x")
+```
+
+### Three-level model of the posttest assessments.
+
+Those first two approaches to analyzing Lai et al's Solomon 26-group data fine in that they will return unbiased estimates of the causal effects of pretesting. However, they're wasteful how they fail to capitalize on the power boost that comes from incorporating the information from the pretest assessments. To avoid dropping the data from the participants in the posttest-only conditions, we can fit a three-level model of the form
+
+$$
+\begin{align*}
+\text{d}_{ijt} & \sim \operatorname{Normal}(\mu_{ijt}, \sigma) \\
+\mu_{ijt} & = \beta_{0ij} + \beta_{1j} \text{time}_{ijt} + \beta_{2j} \text{pretest}_{ijt}\text{time}_{ijt} + \left[u_{0j} + u_{1j} \text{time}_{ijt} + u_{2j} \text{pretest}_{ijt}\text{time}_{ijt} \right] + \left[v_{0ij} \right] \\
+\begin{bmatrix} u_{0j} \\ u_{1j} \\ u_{2j} \end{bmatrix} & \sim \operatorname{Normal}(\mathbf 0, \mathbf{SRS}) \\
+\mathbf S & = \begin{bmatrix} 
+  \sigma_{u0} \\ 
+  0 & \sigma_{u1} \\
+  0 & 0 & \sigma_{u2} 
+  \end{bmatrix} \\
+\mathbf R & = \begin{bmatrix} 
+  1 \\ 
+  \rho_{10} & 1 \\ 
+  \rho_{20} & \rho_{21} & 1 
+  \end{bmatrix} \\
+v_{0ij} & \sim \operatorname{Normal}(0, \sigma_{v0}) \\
+\beta_0                 & \sim \operatorname{Normal}(0.37, 0.215) \\
+\beta_1, \beta_2 & \sim \operatorname{Normal}(0, 0.215) \\
+\sigma, \dots, \sigma_{v0} & \sim \operatorname{Exponential}(1 / 0.43) \\
+\mathbf R & \sim \operatorname{LKJ}(1),
+\end{align*}
+$$
+
+```{r, eval = F, echo = F}
+# also
+$$
+\begin{align*}
+\text{d}_{ijt} & \sim \operatorname{Normal}(\mu_{ijt}, \sigma) \\
+\mu_{ijt} & = \beta_{0ij} + \beta_{1j} \text{time}_{ijt} + \beta_{2j} \text{pretest}_{ijt}\text{time}_{ijt} + \left[u_{0j} + u_{1j} \text{time}_{ijt} + u_{2j} \text{pretest}_{ijt}\text{time}_{ijt} \right] + \left[v_{0ij} \right] \\
+\begin{bmatrix} u_{0j} \\ u_{1j} \\ u_{2j} \\ v_{0ij} \end{bmatrix} & \sim \operatorname{Normal}(\mathbf 0, \mathbf{SRS}) \\
+\mathbf S & = \begin{bmatrix} 
+  \sigma_{u0} \\ 
+  0 & \sigma_{u1} \\
+  0 & 0 & \sigma_{u2} \\
+  0 & 0 & 0 & \sigma_{v0}
+  \end{bmatrix} \\
+\mathbf R & = \begin{bmatrix} 
+  1 \\ 
+  \rho_{u1u0} & 1 \\ 
+  \rho_{u2u0} & \rho_{u2u1} & 1 \\ 
+  0 & 0 & 0 & 1 
+  \end{bmatrix} \\
+\beta_0                 & \sim \operatorname{Normal}(0.37, 0.215) \\
+\beta_1\ \&\ \beta_2 & \sim \operatorname{Normal}(0, 0.215) \\
+\sigma, \dots, \sigma_{v0} & \sim \operatorname{Exponential}(1 / 0.43) \\
+\mathbf R & \sim \operatorname{LKJ}(1),
+\end{align*}
+$$
+```
+
+where now our criterion variable `d` varies across $i$ participants, $j$ conditions, and $t$ time points. $\beta_{0ij}$ is now the grand mean for the pretest assessments, which varies across $i$ participants and $j$ conditions. $\beta_{1j}$ captures the grand-mean deviation of the posttests from the pretests, for those who did not have a pretest, the magnitude of which may vary across the $j$ conditions. The $\beta_{2j}$ parameter is the grand-mean deviation of the posttests from the pretests, for those who did have a pretest, relative to those who did not, which may also vary across the $j$ conditions. The $u_{0j}$, $u_{1j}$, and $u_{2j}$ terms capture the condition-specific deviations from the grand means, and those deviations are modeled as multivariate normal. The $v_{0ij}$ term captures the person-level variation in pretest intercepts, and accounts for temporal dependencies inherent in longitudinal data. As to the priors, the sensibilities mirror those from the 2-level `fit1`, above.
+
+We can extend this framework to a full 3-level MELSM, of the form
+
+$$
+\begin{align*}
+\text{d}_{ijt} & \sim \operatorname{Normal}(\mu_{ijt}, \sigma_{ijt}) \\
+\mu_{ijt} & = \beta_{0ij} + \beta_{1j} \text{time}_{ijt} + \beta_{2j} \text{pretest}_{ijt}\text{time}_{ijt} + \left[u_{0j} + u_{1j} \text{time}_{ijt} + u_{2j} \text{pretest}_{ijt}\text{time}_{ijt} \right] + \left[v_{0ij} \right] \\
+\log(\sigma_{ijt}) & = \eta_{0ij} + \eta_{1j} \text{time}_{ijt} + \eta_{2j} \text{pretest}_{ijt}\text{time}_{ijt} + \left[u_{3j} + u_{4j} \text{time}_{ijt} + u_{5j} \text{pretest}_{ijt}\text{time}_{ijt} \right] + \left[v_{1ij} \right],
+\end{align*}
+$$
+
+with level-3 structure
+
+$$
+\begin{align*}
+\begin{bmatrix} u_{0j} \\ u_{1j} \\ u_{2j} \\ u_{3j} \\ u_{4j} \\ u_{5j} \end{bmatrix} & \sim 
+  \operatorname{Normal} \left (
+    \begin{bmatrix} 0 \\ 0 \\ 0 \\ 0 \\ 0 \\ 0 \end{bmatrix}, 
+    \begin{bmatrix} 
+      \sigma_{u0}^2 \\ 
+      \sigma_{u1}\sigma_{u0}\rho_{u1u0} & \sigma_{u1}^2 \\ 
+      \sigma_{u2}\sigma_{u0}\rho_{u2u0} & \sigma_{u2}\sigma_{u1}\rho_{u2u1} & \sigma_{u2}^2 \\ 
+      \sigma_{u4}\sigma_{u0}\rho_{u3u0} & \sigma_{u3}\sigma_{u1}\rho_{u3u1} & \sigma_{u3}\sigma_{u2}\rho_{u3u2} & \sigma_{u3}^2 \\ 
+      \sigma_{u5}\sigma_{u0}\rho_{u4u0} & \sigma_{u4}\sigma_{u1}\rho_{u4u1} & \sigma_{u4}\sigma_{u2}\rho_{u4u2} & \sigma_{u4}\sigma_{u3}\rho_{u4u3} & \sigma_{u4}^2 \\ 
+      \sigma_{u6}\sigma_{u0}\rho_{u5u0} & \sigma_{u5}\sigma_{u1}\rho_{u5u1} & \sigma_{u5}\sigma_{u2}\rho_{u5u2} & \sigma_{u5}\sigma_{u3}\rho_{u5u3} & \sigma_{u5}\sigma_{u4}\rho_{u5u4} & \sigma_{u5}^2
+    \end{bmatrix} \right),
+\end{align*}
+$$
+
+and level-2 structure
+
+$$
+\begin{align*}
+\begin{bmatrix} v_{0ij} \\ v_{1ij} \end{bmatrix} & \sim 
+  \operatorname{Normal} \left (
+    \begin{bmatrix} 0 \\ 0 \end{bmatrix}, 
+    \begin{bmatrix} 
+      \sigma_{v0}^2 \\ 
+      \sigma_{v1}\sigma_{v0}\rho_{v1v0} & \sigma_{v1}^2 
+    \end{bmatrix} \right),
+\end{align*}
+$$
+
+and with priors
+
+$$
+\begin{align*}
+\beta_0                 & \sim \operatorname{Normal}(0.37, 0.215) \\
+\beta_1, \beta_2 & \sim \operatorname{Normal}(0, 0.215) \\
+\eta_0 & \sim \operatorname{Normal}(\log(0.43), \log(2) / 2) \\
+\eta_1, \eta_2 & \sim \operatorname{Normal}(0, 0.5) \\
+\sigma_{u0}, \dots, \sigma_{u2}, \sigma_{v0} & \sim \operatorname{Exponential}(1 / 0.43) \\
+\sigma_{u3}, \dots, \sigma_{u5}, \sigma_{v1} & \sim \operatorname{Exponential}(1 / 0.5) \\
+\mathbf R & \sim \operatorname{LKJ}(1),
+\end{align*}
+$$
+
+where, to save space, we've combined the standard deviation and correlation matrices into vairance/covariance matrices. As with the 2-level MELSM `fit2`, the linear model for $\log(\sigma_{ijt})$ is a mirror image for the $\mu_{ijt}$ model. 
+
+```{r, eval = F, echo = F}
+# alternately
+$$
+\begin{align*}
+\text{d}_{ijt} & \sim \operatorname{Normal}(\mu_{ijt}, \sigma_{ijt}) \\
+\mu_{ijt} & = \beta_{0ij} + \beta_{1j} \text{time}_{ijt} + \beta_{2j} \text{pretest}_{ijt}\text{time}_{ijt} + \left[u_{0j} + u_{1j} \text{time}_{ijt} + u_{2j} \text{pretest}_{ijt}\text{time}_{ijt} \right] + \left[v_{0ij} \right] \\
+\log(\sigma_{ijt}) & = \eta_{0ij} + \eta_{1j} \text{time}_{ijt} + \eta_{2j} \text{pretest}_{ijt}\text{time}_{ijt} + \left[u_{3j} + u_{4j} \text{time}_{ijt} + u_{5j} \text{pretest}_{ijt}\text{time}_{ijt} \right] + \left[v_{1ij} \right] \\
+\begin{bmatrix} u_{0j} \\ u_{1j} \\ u_{2j} \\ u_{3j} \\ u_{4j} \\ u_{5j} \\ v_{0ij} \\ v_{1ij} \end{bmatrix} & \sim 
+  \operatorname{Normal} \left (
+    \begin{bmatrix} 0 \\ 0 \\ 0 \\ 0 \\ 0 \\ 0 \\ 0 \\ 0 \end{bmatrix}, 
+    \begin{bmatrix} 
+      \sigma_{u0}^2 \\ 
+      \sigma_{u1}\sigma_{u0}\rho_{u1u0} & \sigma_{u1}^2 \\ 
+      \sigma_{u2}\sigma_{u0}\rho_{u2u0} & \sigma_{u2}\sigma_{u1}\rho_{u2u1} & \sigma_{u2}^2 \\ 
+      \sigma_{u4}\sigma_{u0}\rho_{u3u0} & \sigma_{u3}\sigma_{u1}\rho_{u3u1} & \sigma_{u3}\sigma_{u2}\rho_{u3u2} & \sigma_{u3}^2 \\ 
+      \sigma_{u5}\sigma_{u0}\rho_{u4u0} & \sigma_{u4}\sigma_{u1}\rho_{u4u1} & \sigma_{u4}\sigma_{u2}\rho_{u4u2} & \sigma_{u4}\sigma_{u3}\rho_{u4u3} & \sigma_{u4}^2 \\ 
+      \sigma_{u6}\sigma_{u0}\rho_{u5u0} & \sigma_{u5}\sigma_{u1}\rho_{u5u1} & \sigma_{u5}\sigma_{u2}\rho_{u5u2} & \sigma_{u5}\sigma_{u3}\rho_{u5u3} & \sigma_{u5}\sigma_{u4}\rho_{u5u4} & \sigma_{u5}^2 \\ 
+      0 & 0 & 0 & 0 & 0 & 0 & \sigma_{v0}^2 \\ 
+      0 & 0 & 0 & 0 & 0 & 0 & \sigma_{v1}\sigma_{v0}\rho_{v1v0} & \sigma_{v1}^2 
+    \end{bmatrix} \right) \\
+\beta_0                 & \sim \operatorname{Normal}(0.37, 0.215) \\
+\beta_1\ \&\ \beta_2 & \sim \operatorname{Normal}(0, 0.215) \\
+\eta_0 & \sim \operatorname{Normal}(\log(0.43), \log(2) / 2) \\
+\eta_1\ \&\ \eta_2 & \sim \operatorname{Normal}(0, 0.5) \\
+\sigma_{u0}, \sigma_{u1}, \sigma_{u2}, \sigma_{v0} & \sim \operatorname{Exponential}(1 / 0.43) \\
+\sigma_{u3}, \sigma_{u4}, \sigma_{u5}, \sigma_{v1} & \sim \operatorname{Exponential}(1 / 0.5) \\
+\mathbf R & \sim \operatorname{LKJ}(1),
+\end{align*}
+$$
+```
+
+Here's how to fit the two 3-level models with `brm()`.
+
+```{r fit3}
+fit3 <- brm(
+  data = lai2016_long,
+  family = gaussian,
+  d ~ 0 + Intercept + time + pretest:time + (1 + time + pretest:time | cond) + (1 | cond:id),
+  prior = c(prior(normal(0.37, 0.215), class = b, coef = Intercept),
+            prior(normal(0, 0.215), class = b),
+            prior(exponential(1 / 0.43), class = sd),
+            prior(exponential(1 / 0.43), class = sigma),
+            prior(lkj(1), class = cor)),
+  cores = 4, 
+  seed = 1,
+  file = "fits/fit3.lai2016"
+)
+
+fit4 <- brm(
+  data = lai2016_long,
+  family = gaussian,
+  bf(d     ~ 0 + Intercept + time + pretest:time + (1 + time + pretest:time |j| cond) + (1 |i| cond:id),
+     sigma ~ 0 + Intercept + time + pretest:time + (1 + time + pretest:time |j| cond) + (1 |i| cond:id)),
+  prior = c(# mu model
+            prior(normal(0.37, 0.215), class = b, coef = Intercept),
+            prior(normal(0, 0.215), class = b),
+            prior(exponential(1 / 0.43), class = sd),
+            # log(sigma) model
+            prior(normal(log(0.43), log(2) / 2), class = b, coef = Intercept, dpar = sigma),
+            prior(normal(0, 0.5), class = b, dpar = sigma),
+            prior(exponential(1 / 0.5), class = sd, dpar = sigma),
+            
+            prior(lkj(1), class = cor)),
+  cores = 4, 
+  seed = 1,
+  file = "fits/fit4.lai2016"
+)
+```
+
+Check the summaries.
+
+```{r}
+summary(fit3)
+summary(fit4)
+```
+
+As with the 2-level models, you might compare the two versions of the 3-level model with information criteria.
+
+```{r}
+fit3 <- add_criterion(fit3, criterion = c("loo", "waic"))
+fit4 <- add_criterion(fit4, criterion = c("loo", "waic"))
+
+loo_compare(fit3, fit4, criterion = "loo") %>% print(simplify = F)
+loo_compare(fit3, fit4, criterion = "waic") %>% print(simplify = F)
+```
+
+By both the LOO and the WAIC, the full distributional version of the 3-level model provides a decisively better description of the data. Based on the results from the 2-level models, this should be no surprise.
+
+To wrap up, we'll make another coefficient plot for the differences in differences. This time, we'll simultaneously display the contrasts from both 2-level and 3-level versions of the distributional model.
+
+```{r, fig.width = 9.5, fig.height = 3.75}
+# compute, wrangle, and save
+d_in_d_fit4 <- lai2016_long %>% 
+  distinct(cond, pretest) %>% 
+  mutate(time = 1) %>% 
+  add_epred_draws(fit4, 
+                  dpar = c("mu", "sigma"),
+                  re_formula = ~ (1 + time + pretest:time | cond)) %>% 
+  ungroup() %>% 
+  select(cond:pretest, .draw, mu, sigma) %>% 
+  pivot_longer(mu:sigma, names_to = "parameter") %>% 
+  pivot_wider(values_from = value, names_from = pretest) %>% 
+  mutate(d = `1` - `0`) %>% 
+  compare_levels(d, by = cond, draw_indices = c("parameter", ".draw")) %>% 
+  filter(str_detect(cond, "Control")) %>%
+  mutate(parameter = str_c(parameter, "[italic(ij)]"))
+
+# combine
+bind_rows(d_in_d_fit2, d_in_d_fit4) %>% 
+  mutate(fit = rep(c("2-level", "3-level"), each = n() / 2)) %>% 
+  
+  # plot!
+  ggplot(aes(y = reorder(cond, d), x = d)) +
+  geom_vline(xintercept = 0, color = "white") +
+  stat_pointinterval(aes(color = fit, group = fit),
+                     point_interval = mean_qi, .width = .95, size = 1/3,
+                     position = position_dodge(width = -0.45)) +
+  scale_color_viridis_d("MELSM", option = "B", begin = .25, end = .55, direction = -1) +
+  scale_x_continuous(expand = c(0.08, 0.08)) +
+  labs(title = expression("Pretesting's minimal influence on the causal effect on IAT "*italic(D)~scores),
+       x = "difference in differences",
+       y = NULL) +
+  theme(panel.grid.major.y = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.y = element_text(hjust = 0)) +
+  facet_wrap(~ parameter, labeller = label_parsed, scales = "free_x")
+```
+
+To my eye, two patterns emerge. First, the overall pattern among the coefficients are about the same between the 2- and 3-level models. Second, the coefficients are generally narrower in the 3-level model. This is whey we prefer models that include the pretesting values.
+
+## Session information
+
+```{r}
+sessionInfo()
+```
+
+## Endnote
+
+[^1]: For a generous cache of IAT data sets, see the Project Implicit Demo Website Datasets page on the OSF at https://osf.io/y9hiq/. You can find Race IAT data sets from 2002 through 2021 at https://osf.io/52qxl/.
+
