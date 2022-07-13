@@ -495,7 +495,7 @@ tibble(prior = rnorm(n = 1e5, mean = log(0.43), sd = log(2) / 2)) %>%
   geom_histogram(binwidth = 0.015, boundary = 0.215) +
   scale_fill_viridis_d("inner 95% range\n(approximate)", option = "A", begin = .1, end = .6) +
   scale_y_continuous(NULL, breaks = NULL) +
-  labs(title = "Prior predictive distribution",
+  labs(title = expression(italic(N)(log(0.43)*', '*log(2)/2)*', exponentiated'),
        x = expression(exp(eta[0])))
 ```
 
