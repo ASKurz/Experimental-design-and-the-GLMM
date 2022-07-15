@@ -1,7 +1,7 @@
 Wagenmakers et al (2016), Albohn only
 ================
 A Solomon Kurz
-2022-06-22
+2022-07-15
 
 Using a registered replication report approach, Wagenmakers and
 colleagues (2016; <https://doi.org/10.1177/1745691616674458>) replicated
@@ -24,17 +24,7 @@ Load the data and the primary **R** packages.
 
 ``` r
 # packages
-# library(tidyverse)
-
-library(ggplot2)
-library(tibble)
-library(dplyr)
-library(tidyr)
-library(stringr)
-library(purrr)
-library(readr)
-library(forcats)
-
+library(tidyverse)
 library(brms)
 library(tidybayes)
 library(patchwork)
@@ -267,10 +257,10 @@ u_i & \\sim \\mathcal N(0, \\sigma_u) \\\\
 \\begin{bmatrix} v\_{0k} \\\\ v\_{1k} \\end{bmatrix} & \\sim \\mathcal N \\left ( 
   \\mathbf 0, \\mathbf{SRS}
   \\right) \\\\
-\\mathbf S & = \\begin{bmatrix} \\sigma\_{0k} \\\\ 1 & \\sigma\_{1k} \\end{bmatrix} \\\\
+\\mathbf S & = \\begin{bmatrix} \\sigma\_{0v} \\\\ 0 & \\sigma\_{1v} \\end{bmatrix} \\\\
 \\mathbf R & = \\begin{bmatrix} 1 \\\\ \\rho & 1 \\end{bmatrix},
 \\end{align\*}
-](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0A%5Ctext%7Brating%7D_%7Bijk%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmu_%7Bijk%7D%2C%20%5Csigma_%5Cepsilon%29%20%5C%5C%0A%5Cmu_%7Bijk%7D%20%26%20%3D%20%5Cbeta_0%20%2B%20%5Cbeta_1%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%2B%20u_i%20%2B%20v_%7B0k%7D%20%2B%20v_%7B1k%7D%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%5C%5C%0Au_i%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Csigma_u%29%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20v_%7B0k%7D%20%5C%5C%20v_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%20N%20%5Cleft%20%28%20%0A%20%20%5Cmathbf%200%2C%20%5Cmathbf%7BSRS%7D%0A%20%20%5Cright%29%20%5C%5C%0A%5Cmathbf%20S%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_%7B0k%7D%20%5C%5C%201%20%26%20%5Csigma_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%20R%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%20%5Crho%20%26%201%20%5Cend%7Bbmatrix%7D%2C%0A%5Cend%7Balign%2A%7D%0A "
+](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0A%5Ctext%7Brating%7D_%7Bijk%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmu_%7Bijk%7D%2C%20%5Csigma_%5Cepsilon%29%20%5C%5C%0A%5Cmu_%7Bijk%7D%20%26%20%3D%20%5Cbeta_0%20%2B%20%5Cbeta_1%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%2B%20u_i%20%2B%20v_%7B0k%7D%20%2B%20v_%7B1k%7D%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%5C%5C%0Au_i%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Csigma_u%29%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20v_%7B0k%7D%20%5C%5C%20v_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%20N%20%5Cleft%20%28%20%0A%20%20%5Cmathbf%200%2C%20%5Cmathbf%7BSRS%7D%0A%20%20%5Cright%29%20%5C%5C%0A%5Cmathbf%20S%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_%7B0v%7D%20%5C%5C%200%20%26%20%5Csigma_%7B1v%7D%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%20R%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%20%5Crho%20%26%201%20%5Cend%7Bbmatrix%7D%2C%0A%5Cend%7Balign%2A%7D%0A "
 \begin{align*}
 \text{rating}_{ijk} & \sim \mathcal N(\mu_{ijk}, \sigma_\epsilon) \\
 \mu_{ijk} & = \beta_0 + \beta_1 \text{condition}_{ik} + u_i + v_{0k} + v_{1k} \text{condition}_{ik} \\
@@ -278,7 +268,7 @@ u_i & \sim \mathcal N(0, \sigma_u) \\
 \begin{bmatrix} v_{0k} \\ v_{1k} \end{bmatrix} & \sim \mathcal N \left ( 
   \mathbf 0, \mathbf{SRS}
   \right) \\
-\mathbf S & = \begin{bmatrix} \sigma_{0k} \\ 1 & \sigma_{1k} \end{bmatrix} \\
+\mathbf S & = \begin{bmatrix} \sigma_{0v} \\ 0 & \sigma_{1v} \end{bmatrix} \\
 \mathbf R & = \begin{bmatrix} 1 \\ \rho & 1 \end{bmatrix},
 \end{align*}
 ")
@@ -316,9 +306,9 @@ capturing cartoon-level differences. These two groups are modeled as
 orthogonal in that
 ![\\sigma_u](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Csigma_u "\sigma_u")
 does not covary with
-![\\sigma\_{0k}](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Csigma_%7B0k%7D "\sigma_{0k}")
+![\\sigma\_{0v}](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Csigma_%7B0v%7D "\sigma_{0v}")
 or
-![\\sigma\_{1k}](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Csigma_%7B1k%7D "\sigma_{1k}").
+![\\sigma\_{1v}](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Csigma_%7B1v%7D "\sigma_{1v}").
 Thus, you could describe this model as *cross-classified*.
 
 The next challenge is determining how to set the priors. On page 3,
@@ -449,24 +439,24 @@ matrix. That would make the full model
 \\mu\_{ijk} & = \\beta_0 + \\beta_1 \\text{condition}\_{ik} + u_i + v\_{0k} + v\_{1k} \\text{condition}\_{ik} \\\\
 u_i & \\sim \\mathcal N(0, \\sigma_u) \\\\
 \\begin{bmatrix} v\_{0k} \\\\ v\_{1k} \\end{bmatrix} & \\sim \\mathcal N(\\mathbf 0, \\mathbf{SRS}) \\\\
-\\mathbf S & = \\begin{bmatrix} \\sigma\_{0k} \\\\ 1 & \\sigma\_{1k} \\end{bmatrix} \\\\
+\\mathbf S & = \\begin{bmatrix} \\sigma\_{0v} \\\\ 0 & \\sigma\_{1v} \\end{bmatrix} \\\\
 \\mathbf R & = \\begin{bmatrix} 1 \\\\ \\rho & 1 \\end{bmatrix} \\\\
 \\beta_0 & \\sim \\mathcal N(4.4, 1) \\\\ 
 \\beta_1 & \\sim \\mathcal N(0, 1) \\\\ 
-\\sigma\_\\epsilon, \\dots, \\sigma\_{1k} & \\sim \\operatorname{Exponential}(1 / 2.3) \\\\
+\\sigma\_\\epsilon, \\dots, \\sigma\_{1v} & \\sim \\operatorname{Exponential}(1 / 2.3) \\\\
 \\mathbf R & \\sim \\operatorname{LKJ}(2).
 \\end{align\*}
-](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0A%5Ctext%7Brating%7D_%7Bijk%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmu_%7Bijk%7D%2C%20%5Csigma_%5Cepsilon%29%20%5C%5C%0A%5Cmu_%7Bijk%7D%20%26%20%3D%20%5Cbeta_0%20%2B%20%5Cbeta_1%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%2B%20u_i%20%2B%20v_%7B0k%7D%20%2B%20v_%7B1k%7D%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%5C%5C%0Au_i%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Csigma_u%29%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20v_%7B0k%7D%20%5C%5C%20v_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmathbf%200%2C%20%5Cmathbf%7BSRS%7D%29%20%5C%5C%0A%5Cmathbf%20S%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_%7B0k%7D%20%5C%5C%201%20%26%20%5Csigma_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%20R%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%20%5Crho%20%26%201%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cbeta_0%20%26%20%5Csim%20%5Cmathcal%20N%284.4%2C%201%29%20%5C%5C%20%0A%5Cbeta_1%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%201%29%20%5C%5C%20%0A%5Csigma_%5Cepsilon%2C%20%5Cdots%2C%20%5Csigma_%7B1k%7D%20%26%20%5Csim%20%5Coperatorname%7BExponential%7D%281%20%2F%202.3%29%20%5C%5C%0A%5Cmathbf%20R%20%26%20%5Csim%20%5Coperatorname%7BLKJ%7D%282%29.%0A%5Cend%7Balign%2A%7D%0A "
+](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0A%5Ctext%7Brating%7D_%7Bijk%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmu_%7Bijk%7D%2C%20%5Csigma_%5Cepsilon%29%20%5C%5C%0A%5Cmu_%7Bijk%7D%20%26%20%3D%20%5Cbeta_0%20%2B%20%5Cbeta_1%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%2B%20u_i%20%2B%20v_%7B0k%7D%20%2B%20v_%7B1k%7D%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%5C%5C%0Au_i%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Csigma_u%29%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20v_%7B0k%7D%20%5C%5C%20v_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmathbf%200%2C%20%5Cmathbf%7BSRS%7D%29%20%5C%5C%0A%5Cmathbf%20S%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_%7B0v%7D%20%5C%5C%200%20%26%20%5Csigma_%7B1v%7D%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%20R%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%20%5Crho%20%26%201%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cbeta_0%20%26%20%5Csim%20%5Cmathcal%20N%284.4%2C%201%29%20%5C%5C%20%0A%5Cbeta_1%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%201%29%20%5C%5C%20%0A%5Csigma_%5Cepsilon%2C%20%5Cdots%2C%20%5Csigma_%7B1v%7D%20%26%20%5Csim%20%5Coperatorname%7BExponential%7D%281%20%2F%202.3%29%20%5C%5C%0A%5Cmathbf%20R%20%26%20%5Csim%20%5Coperatorname%7BLKJ%7D%282%29.%0A%5Cend%7Balign%2A%7D%0A "
 \begin{align*}
 \text{rating}_{ijk} & \sim \mathcal N(\mu_{ijk}, \sigma_\epsilon) \\
 \mu_{ijk} & = \beta_0 + \beta_1 \text{condition}_{ik} + u_i + v_{0k} + v_{1k} \text{condition}_{ik} \\
 u_i & \sim \mathcal N(0, \sigma_u) \\
 \begin{bmatrix} v_{0k} \\ v_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{SRS}) \\
-\mathbf S & = \begin{bmatrix} \sigma_{0k} \\ 1 & \sigma_{1k} \end{bmatrix} \\
+\mathbf S & = \begin{bmatrix} \sigma_{0v} \\ 0 & \sigma_{1v} \end{bmatrix} \\
 \mathbf R & = \begin{bmatrix} 1 \\ \rho & 1 \end{bmatrix} \\
 \beta_0 & \sim \mathcal N(4.4, 1) \\ 
 \beta_1 & \sim \mathcal N(0, 1) \\ 
-\sigma_\epsilon, \dots, \sigma_{1k} & \sim \operatorname{Exponential}(1 / 2.3) \\
+\sigma_\epsilon, \dots, \sigma_{1v} & \sim \operatorname{Exponential}(1 / 2.3) \\
 \mathbf R & \sim \operatorname{LKJ}(2).
 \end{align*}
 ")
@@ -508,25 +498,25 @@ This would look like
 \\log(\\sigma\_{ijk}) & = \\eta_0 + \\eta_1 \\text{condition}\_{ik} + w_i + x\_{0k} + x\_{1k} \\text{condition}\_{ik} \\\\
 u_i & \\sim \\mathcal N(0, \\sigma_u) \\\\
 \\begin{bmatrix} v\_{0k} \\\\ v\_{1k} \\end{bmatrix} & \\sim \\mathcal N(\\mathbf 0, \\mathbf{S_vR_vS_v}) \\\\
-\\mathbf{S_v} & = \\begin{bmatrix} \\sigma\_{0k} \\\\ 1 & \\sigma\_{1k} \\end{bmatrix} \\\\
+\\mathbf{S_v} & = \\begin{bmatrix} \\sigma\_{0v} \\\\ 0 & \\sigma\_{1v} \\end{bmatrix} \\\\
 \\mathbf{R_v} & = \\begin{bmatrix} 1 \\\\ \\rho_v & 1 \\end{bmatrix} \\\\
 w_i & \\sim \\mathcal N(0, \\sigma_w) \\\\
 \\begin{bmatrix} x\_{0k} \\\\ x\_{1k} \\end{bmatrix} & \\sim \\mathcal N(\\mathbf 0, \\mathbf{S_xR_xS_x}) \\\\
-\\mathbf{S_x} & = \\begin{bmatrix} \\sigma\_{2k} \\\\ 1 & \\sigma\_{3k} \\end{bmatrix} \\\\
+\\mathbf{S_x} & = \\begin{bmatrix} \\sigma\_{0x} \\\\ 0 & \\sigma\_{1x} \\end{bmatrix} \\\\
 \\mathbf{R_x} & = \\begin{bmatrix} 1 \\\\ \\rho_x & 1 \\end{bmatrix} \\\\
 \\end{align\*}
-](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0A%5Ctext%7Brating%7D_%7Bijk%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmu_%7Bijk%7D%2C%20%5Csigma_%7Bijk%7D%29%20%5C%5C%0A%5Cmu_%7Bijk%7D%20%26%20%3D%20%5Cbeta_0%20%2B%20%5Cbeta_1%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%2B%20u_i%20%2B%20v_%7B0k%7D%20%2B%20v_%7B1k%7D%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%5C%5C%0A%5Clog%28%5Csigma_%7Bijk%7D%29%20%26%20%3D%20%5Ceta_0%20%2B%20%5Ceta_1%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%2B%20w_i%20%2B%20x_%7B0k%7D%20%2B%20x_%7B1k%7D%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%5C%5C%0Au_i%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Csigma_u%29%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20v_%7B0k%7D%20%5C%5C%20v_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmathbf%200%2C%20%5Cmathbf%7BS_vR_vS_v%7D%29%20%5C%5C%0A%5Cmathbf%7BS_v%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_%7B0k%7D%20%5C%5C%201%20%26%20%5Csigma_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%7BR_v%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%20%5Crho_v%20%26%201%20%5Cend%7Bbmatrix%7D%20%5C%5C%0Aw_i%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Csigma_w%29%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20x_%7B0k%7D%20%5C%5C%20x_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmathbf%200%2C%20%5Cmathbf%7BS_xR_xS_x%7D%29%20%5C%5C%0A%5Cmathbf%7BS_x%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_%7B2k%7D%20%5C%5C%201%20%26%20%5Csigma_%7B3k%7D%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%7BR_x%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%20%5Crho_x%20%26%201%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cend%7Balign%2A%7D%0A "
+](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0A%5Ctext%7Brating%7D_%7Bijk%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmu_%7Bijk%7D%2C%20%5Csigma_%7Bijk%7D%29%20%5C%5C%0A%5Cmu_%7Bijk%7D%20%26%20%3D%20%5Cbeta_0%20%2B%20%5Cbeta_1%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%2B%20u_i%20%2B%20v_%7B0k%7D%20%2B%20v_%7B1k%7D%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%5C%5C%0A%5Clog%28%5Csigma_%7Bijk%7D%29%20%26%20%3D%20%5Ceta_0%20%2B%20%5Ceta_1%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%2B%20w_i%20%2B%20x_%7B0k%7D%20%2B%20x_%7B1k%7D%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%5C%5C%0Au_i%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Csigma_u%29%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20v_%7B0k%7D%20%5C%5C%20v_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmathbf%200%2C%20%5Cmathbf%7BS_vR_vS_v%7D%29%20%5C%5C%0A%5Cmathbf%7BS_v%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_%7B0v%7D%20%5C%5C%200%20%26%20%5Csigma_%7B1v%7D%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%7BR_v%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%20%5Crho_v%20%26%201%20%5Cend%7Bbmatrix%7D%20%5C%5C%0Aw_i%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Csigma_w%29%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20x_%7B0k%7D%20%5C%5C%20x_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmathbf%200%2C%20%5Cmathbf%7BS_xR_xS_x%7D%29%20%5C%5C%0A%5Cmathbf%7BS_x%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_%7B0x%7D%20%5C%5C%200%20%26%20%5Csigma_%7B1x%7D%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%7BR_x%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%20%5Crho_x%20%26%201%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cend%7Balign%2A%7D%0A "
 \begin{align*}
 \text{rating}_{ijk} & \sim \mathcal N(\mu_{ijk}, \sigma_{ijk}) \\
 \mu_{ijk} & = \beta_0 + \beta_1 \text{condition}_{ik} + u_i + v_{0k} + v_{1k} \text{condition}_{ik} \\
 \log(\sigma_{ijk}) & = \eta_0 + \eta_1 \text{condition}_{ik} + w_i + x_{0k} + x_{1k} \text{condition}_{ik} \\
 u_i & \sim \mathcal N(0, \sigma_u) \\
 \begin{bmatrix} v_{0k} \\ v_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{S_vR_vS_v}) \\
-\mathbf{S_v} & = \begin{bmatrix} \sigma_{0k} \\ 1 & \sigma_{1k} \end{bmatrix} \\
+\mathbf{S_v} & = \begin{bmatrix} \sigma_{0v} \\ 0 & \sigma_{1v} \end{bmatrix} \\
 \mathbf{R_v} & = \begin{bmatrix} 1 \\ \rho_v & 1 \end{bmatrix} \\
 w_i & \sim \mathcal N(0, \sigma_w) \\
 \begin{bmatrix} x_{0k} \\ x_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{S_xR_xS_x}) \\
-\mathbf{S_x} & = \begin{bmatrix} \sigma_{2k} \\ 1 & \sigma_{3k} \end{bmatrix} \\
+\mathbf{S_x} & = \begin{bmatrix} \sigma_{0x} \\ 0 & \sigma_{1x} \end{bmatrix} \\
 \mathbf{R_x} & = \begin{bmatrix} 1 \\ \rho_x & 1 \end{bmatrix} \\
 \end{align*}
 ")
@@ -539,16 +529,16 @@ with priors
 \\beta_1 & \\sim \\mathcal N(0, 1) \\\\ 
 \\eta_0 & \\sim \\mathcal N(\\log(2.3), 1/3) \\\\ 
 \\eta_1 & \\sim \\mathcal N(0, 0.5) \\\\ 
-\\sigma\_\\epsilon, \\dots, \\sigma\_{3k} & \\sim \\operatorname{Exponential}(1 / 2.3) \\\\
+\\sigma\_\\epsilon, \\dots, \\sigma\_{1x} & \\sim \\operatorname{Exponential}(1 / 2.3) \\\\
 \\mathbf R & \\sim \\operatorname{LKJ}(2),
 \\end{align\*}
-](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0A%5Cbeta_0%20%26%20%5Csim%20%5Cmathcal%20N%284.4%2C%201%29%20%5C%5C%20%0A%5Cbeta_1%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%201%29%20%5C%5C%20%0A%5Ceta_0%20%26%20%5Csim%20%5Cmathcal%20N%28%5Clog%282.3%29%2C%201%2F3%29%20%5C%5C%20%0A%5Ceta_1%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%200.5%29%20%5C%5C%20%0A%5Csigma_%5Cepsilon%2C%20%5Cdots%2C%20%5Csigma_%7B3k%7D%20%26%20%5Csim%20%5Coperatorname%7BExponential%7D%281%20%2F%202.3%29%20%5C%5C%0A%5Cmathbf%20R%20%26%20%5Csim%20%5Coperatorname%7BLKJ%7D%282%29%2C%0A%5Cend%7Balign%2A%7D%0A "
+](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0A%5Cbeta_0%20%26%20%5Csim%20%5Cmathcal%20N%284.4%2C%201%29%20%5C%5C%20%0A%5Cbeta_1%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%201%29%20%5C%5C%20%0A%5Ceta_0%20%26%20%5Csim%20%5Cmathcal%20N%28%5Clog%282.3%29%2C%201%2F3%29%20%5C%5C%20%0A%5Ceta_1%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%200.5%29%20%5C%5C%20%0A%5Csigma_%5Cepsilon%2C%20%5Cdots%2C%20%5Csigma_%7B1x%7D%20%26%20%5Csim%20%5Coperatorname%7BExponential%7D%281%20%2F%202.3%29%20%5C%5C%0A%5Cmathbf%20R%20%26%20%5Csim%20%5Coperatorname%7BLKJ%7D%282%29%2C%0A%5Cend%7Balign%2A%7D%0A "
 \begin{align*}
 \beta_0 & \sim \mathcal N(4.4, 1) \\ 
 \beta_1 & \sim \mathcal N(0, 1) \\ 
 \eta_0 & \sim \mathcal N(\log(2.3), 1/3) \\ 
 \eta_1 & \sim \mathcal N(0, 0.5) \\ 
-\sigma_\epsilon, \dots, \sigma_{3k} & \sim \operatorname{Exponential}(1 / 2.3) \\
+\sigma_\epsilon, \dots, \sigma_{1x} & \sim \operatorname{Exponential}(1 / 2.3) \\
 \mathbf R & \sim \operatorname{LKJ}(2),
 \end{align*}
 ")
@@ -789,8 +779,8 @@ parameters.
 
 ``` r
 sigma_names <- c(
-  "sigma[0][italic(k)]", "sigma[1][italic(k)]", "sigma[italic(u)]", 
-  "sigma[2][italic(k)]", "sigma[3][italic(k)]", "sigma[italic(w)]"
+  "sigma[0][italic(v)]", "sigma[1][italic(v)]", "sigma[italic(u)]", 
+  "sigma[0][italic(x)]", "sigma[1][italic(x)]", "sigma[italic(w)]"
   )
 
 rbind(
@@ -817,9 +807,9 @@ rbind(
 
 The three new parameters for the
 MELSM–![\\sigma_w](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Csigma_w "\sigma_w"),
-![\\sigma\_{2k}](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Csigma_%7B2k%7D "\sigma_{2k}"),
+![\\sigma\_{0x}](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Csigma_%7B0x%7D "\sigma_{0x}"),
 and
-![\\sigma\_{3k}](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Csigma_%7B3k%7D "\sigma_{3k}")–are
+![\\sigma\_{1x}](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Csigma_%7B1x%7D "\sigma_{1x}")–are
 all rather small. This suggests that in the population, persons are not
 expected to vary greatly in how variable their ratings are for the
 cartoons. In a similar way, this suggests that in the population of
@@ -1163,16 +1153,16 @@ p(\\text{ratingf} = l \| \\{ \\tau_l \\}, \\mu\_{ijk}, \\alpha = 1) & = \\Phi(\\
 \\mu\_{ijk} & = 0 + \\beta_1 \\text{condition}\_{ik} + u_i + v\_{0k} + v\_{1k} \\text{condition}\_{ik} \\\\ 
 u_i & \\sim \\mathcal N(0, \\sigma_u) \\\\
 \\begin{bmatrix} v\_{0k} \\\\ v\_{1k} \\end{bmatrix} & \\sim \\mathcal N(\\mathbf 0, \\mathbf{SRS}) \\\\
-\\mathbf S & = \\begin{bmatrix} \\sigma\_{0k} \\\\ 1 & \\sigma\_{1k} \\end{bmatrix} \\\\
+\\mathbf S & = \\begin{bmatrix} \\sigma\_{0v} \\\\ 0 & \\sigma\_{1v} \\end{bmatrix} \\\\
 \\mathbf R & = \\begin{bmatrix} 1 \\\\ \\rho & 1 \\end{bmatrix}, \\\\
 \\end{align\*}
-](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0Ap%28%5Ctext%7Bratingf%7D%20%3D%20l%20%7C%20%5C%7B%20%5Ctau_l%20%5C%7D%2C%20%5Cmu_%7Bijk%7D%2C%20%5Calpha%20%3D%201%29%20%26%20%3D%20%5CPhi%28%5Calpha%5B%5Ctau_l%20-%20%5Cmu_%7Bijk%7D%5D%29%20-%20%5CPhi%28%5Calpha%5B%5Ctau_%7Bl%20-%201%7D%20-%20%5Cmu_%7Bijk%7D%5D%29%20%5C%5C%0A%5Cmu_%7Bijk%7D%20%26%20%3D%200%20%2B%20%5Cbeta_1%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%2B%20u_i%20%2B%20v_%7B0k%7D%20%2B%20v_%7B1k%7D%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%5C%5C%20%0Au_i%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Csigma_u%29%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20v_%7B0k%7D%20%5C%5C%20v_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmathbf%200%2C%20%5Cmathbf%7BSRS%7D%29%20%5C%5C%0A%5Cmathbf%20S%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_%7B0k%7D%20%5C%5C%201%20%26%20%5Csigma_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%20R%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%20%5Crho%20%26%201%20%5Cend%7Bbmatrix%7D%2C%20%5C%5C%0A%5Cend%7Balign%2A%7D%0A "
+](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0Ap%28%5Ctext%7Bratingf%7D%20%3D%20l%20%7C%20%5C%7B%20%5Ctau_l%20%5C%7D%2C%20%5Cmu_%7Bijk%7D%2C%20%5Calpha%20%3D%201%29%20%26%20%3D%20%5CPhi%28%5Calpha%5B%5Ctau_l%20-%20%5Cmu_%7Bijk%7D%5D%29%20-%20%5CPhi%28%5Calpha%5B%5Ctau_%7Bl%20-%201%7D%20-%20%5Cmu_%7Bijk%7D%5D%29%20%5C%5C%0A%5Cmu_%7Bijk%7D%20%26%20%3D%200%20%2B%20%5Cbeta_1%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%2B%20u_i%20%2B%20v_%7B0k%7D%20%2B%20v_%7B1k%7D%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%5C%5C%20%0Au_i%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Csigma_u%29%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20v_%7B0k%7D%20%5C%5C%20v_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmathbf%200%2C%20%5Cmathbf%7BSRS%7D%29%20%5C%5C%0A%5Cmathbf%20S%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_%7B0v%7D%20%5C%5C%200%20%26%20%5Csigma_%7B1v%7D%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%20R%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%20%5Crho%20%26%201%20%5Cend%7Bbmatrix%7D%2C%20%5C%5C%0A%5Cend%7Balign%2A%7D%0A "
 \begin{align*}
 p(\text{ratingf} = l | \{ \tau_l \}, \mu_{ijk}, \alpha = 1) & = \Phi(\alpha[\tau_l - \mu_{ijk}]) - \Phi(\alpha[\tau_{l - 1} - \mu_{ijk}]) \\
 \mu_{ijk} & = 0 + \beta_1 \text{condition}_{ik} + u_i + v_{0k} + v_{1k} \text{condition}_{ik} \\ 
 u_i & \sim \mathcal N(0, \sigma_u) \\
 \begin{bmatrix} v_{0k} \\ v_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{SRS}) \\
-\mathbf S & = \begin{bmatrix} \sigma_{0k} \\ 1 & \sigma_{1k} \end{bmatrix} \\
+\mathbf S & = \begin{bmatrix} \sigma_{0v} \\ 0 & \sigma_{1v} \end{bmatrix} \\
 \mathbf R & = \begin{bmatrix} 1 \\ \rho & 1 \end{bmatrix}, \\
 \end{align*}
 ")
@@ -1191,10 +1181,10 @@ with priors
 \\tau\_{8} & \\sim \\mathcal N(1.2265281, 0.5) \\\\
 \\tau\_{9} & \\sim \\mathcal N(1.7506861, 0.5) \\\\
 \\beta_1 & \\sim \\mathcal N(0, 1) \\\\ 
-\\sigma_u, \\dots, \\sigma\_{1k} & \\sim \\operatorname{Exponential}(1) \\\\
+\\sigma_u, \\dots, \\sigma\_{1v} & \\sim \\operatorname{Exponential}(1) \\\\
 \\mathbf R & \\sim \\operatorname{LKJ}(2),
 \\end{align\*}
-](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0A%5Ctau_%7B1%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-1.7506861%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B2%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-1.2265281%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B3%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-0.8064212%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B4%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-0.4124631%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B5%7D%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B6%7D%20%26%20%5Csim%20%5Cmathcal%20N%280.4124631%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B7%7D%20%26%20%5Csim%20%5Cmathcal%20N%280.8064212%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B8%7D%20%26%20%5Csim%20%5Cmathcal%20N%281.2265281%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B9%7D%20%26%20%5Csim%20%5Cmathcal%20N%281.7506861%2C%200.5%29%20%5C%5C%0A%5Cbeta_1%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%201%29%20%5C%5C%20%0A%5Csigma_u%2C%20%5Cdots%2C%20%5Csigma_%7B1k%7D%20%26%20%5Csim%20%5Coperatorname%7BExponential%7D%281%29%20%5C%5C%0A%5Cmathbf%20R%20%26%20%5Csim%20%5Coperatorname%7BLKJ%7D%282%29%2C%0A%5Cend%7Balign%2A%7D%0A "
+](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0A%5Ctau_%7B1%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-1.7506861%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B2%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-1.2265281%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B3%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-0.8064212%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B4%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-0.4124631%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B5%7D%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B6%7D%20%26%20%5Csim%20%5Cmathcal%20N%280.4124631%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B7%7D%20%26%20%5Csim%20%5Cmathcal%20N%280.8064212%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B8%7D%20%26%20%5Csim%20%5Cmathcal%20N%281.2265281%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B9%7D%20%26%20%5Csim%20%5Cmathcal%20N%281.7506861%2C%200.5%29%20%5C%5C%0A%5Cbeta_1%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%201%29%20%5C%5C%20%0A%5Csigma_u%2C%20%5Cdots%2C%20%5Csigma_%7B1v%7D%20%26%20%5Csim%20%5Coperatorname%7BExponential%7D%281%29%20%5C%5C%0A%5Cmathbf%20R%20%26%20%5Csim%20%5Coperatorname%7BLKJ%7D%282%29%2C%0A%5Cend%7Balign%2A%7D%0A "
 \begin{align*}
 \tau_{1} & \sim \mathcal N(-1.7506861, 0.5) \\
 \tau_{2} & \sim \mathcal N(-1.2265281, 0.5) \\
@@ -1206,7 +1196,7 @@ with priors
 \tau_{8} & \sim \mathcal N(1.2265281, 0.5) \\
 \tau_{9} & \sim \mathcal N(1.7506861, 0.5) \\
 \beta_1 & \sim \mathcal N(0, 1) \\ 
-\sigma_u, \dots, \sigma_{1k} & \sim \operatorname{Exponential}(1) \\
+\sigma_u, \dots, \sigma_{1v} & \sim \operatorname{Exponential}(1) \\
 \mathbf R & \sim \operatorname{LKJ}(2),
 \end{align*}
 ")
@@ -1345,25 +1335,25 @@ p(\\text{ratingf} = l \| \\{ \\tau_l \\}, \\mu\_{ijk}, \\alpha\_{ijk}) & = \\Phi
 \\log(\\alpha\_{ijk}) & = 0 + \\eta_1 \\text{condition}\_{ik} + w_i + x\_{0k} + x\_{1k} \\text{condition}\_{ik} \\\\ 
 u_i & \\sim \\mathcal N(0, \\sigma_u) \\\\
 \\begin{bmatrix} v\_{0k} \\\\ v\_{1k} \\end{bmatrix} & \\sim \\mathcal N(\\mathbf 0, \\mathbf{S_vR_vS_v}) \\\\
-\\mathbf{S_v} & = \\begin{bmatrix} \\sigma\_{0k} \\\\ 1 & \\sigma\_{1k} \\end{bmatrix} \\\\
+\\mathbf{S_v} & = \\begin{bmatrix} \\sigma\_{0v} \\\\ 0 & \\sigma\_{1v} \\end{bmatrix} \\\\
 \\mathbf{R_v} & = \\begin{bmatrix} 1 \\\\ \\rho_v & 1 \\end{bmatrix} \\\\
 w_i & \\sim \\mathcal N(0, \\sigma_w) \\\\
 \\begin{bmatrix} x\_{0k} \\\\ x\_{1k} \\end{bmatrix} & \\sim \\mathcal N(\\mathbf 0, \\mathbf{S_xR_xS_x}) \\\\
-\\mathbf{S_x} & = \\begin{bmatrix} \\sigma\_{2k} \\\\ 1 & \\sigma\_{3k} \\end{bmatrix} \\\\
+\\mathbf{S_x} & = \\begin{bmatrix} \\sigma\_{0x} \\\\ 0 & \\sigma\_{1x} \\end{bmatrix} \\\\
 \\mathbf{R_x} & = \\begin{bmatrix} 1 \\\\ \\rho_x & 1 \\end{bmatrix}, \\\\
 \\end{align\*}
-](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0Ap%28%5Ctext%7Bratingf%7D%20%3D%20l%20%7C%20%5C%7B%20%5Ctau_l%20%5C%7D%2C%20%5Cmu_%7Bijk%7D%2C%20%5Calpha_%7Bijk%7D%29%20%26%20%3D%20%5CPhi%28%5Calpha_%7Bijk%7D%5B%5Ctau_l%20-%20%5Cmu_%7Bijk%7D%5D%29%20-%20%5CPhi%28%5Calpha_%7Bijk%7D%5B%5Ctau_%7Bl%20-%201%7D%20-%20%5Cmu_%7Bijk%7D%5D%29%20%5C%5C%0A%5Cmu_%7Bijk%7D%20%26%20%3D%200%20%2B%20%5Cbeta_1%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%2B%20u_i%20%2B%20v_%7B0k%7D%20%2B%20v_%7B1k%7D%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%5C%5C%20%0A%5Clog%28%5Calpha_%7Bijk%7D%29%20%26%20%3D%200%20%2B%20%5Ceta_1%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%2B%20w_i%20%2B%20x_%7B0k%7D%20%2B%20x_%7B1k%7D%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%5C%5C%20%0Au_i%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Csigma_u%29%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20v_%7B0k%7D%20%5C%5C%20v_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmathbf%200%2C%20%5Cmathbf%7BS_vR_vS_v%7D%29%20%5C%5C%0A%5Cmathbf%7BS_v%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_%7B0k%7D%20%5C%5C%201%20%26%20%5Csigma_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%7BR_v%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%20%5Crho_v%20%26%201%20%5Cend%7Bbmatrix%7D%20%5C%5C%0Aw_i%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Csigma_w%29%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20x_%7B0k%7D%20%5C%5C%20x_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmathbf%200%2C%20%5Cmathbf%7BS_xR_xS_x%7D%29%20%5C%5C%0A%5Cmathbf%7BS_x%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_%7B2k%7D%20%5C%5C%201%20%26%20%5Csigma_%7B3k%7D%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%7BR_x%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%20%5Crho_x%20%26%201%20%5Cend%7Bbmatrix%7D%2C%20%5C%5C%0A%5Cend%7Balign%2A%7D%0A "
+](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0Ap%28%5Ctext%7Bratingf%7D%20%3D%20l%20%7C%20%5C%7B%20%5Ctau_l%20%5C%7D%2C%20%5Cmu_%7Bijk%7D%2C%20%5Calpha_%7Bijk%7D%29%20%26%20%3D%20%5CPhi%28%5Calpha_%7Bijk%7D%5B%5Ctau_l%20-%20%5Cmu_%7Bijk%7D%5D%29%20-%20%5CPhi%28%5Calpha_%7Bijk%7D%5B%5Ctau_%7Bl%20-%201%7D%20-%20%5Cmu_%7Bijk%7D%5D%29%20%5C%5C%0A%5Cmu_%7Bijk%7D%20%26%20%3D%200%20%2B%20%5Cbeta_1%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%2B%20u_i%20%2B%20v_%7B0k%7D%20%2B%20v_%7B1k%7D%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%5C%5C%20%0A%5Clog%28%5Calpha_%7Bijk%7D%29%20%26%20%3D%200%20%2B%20%5Ceta_1%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%2B%20w_i%20%2B%20x_%7B0k%7D%20%2B%20x_%7B1k%7D%20%5Ctext%7Bcondition%7D_%7Bik%7D%20%5C%5C%20%0Au_i%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Csigma_u%29%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20v_%7B0k%7D%20%5C%5C%20v_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmathbf%200%2C%20%5Cmathbf%7BS_vR_vS_v%7D%29%20%5C%5C%0A%5Cmathbf%7BS_v%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_%7B0v%7D%20%5C%5C%200%20%26%20%5Csigma_%7B1v%7D%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%7BR_v%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%20%5Crho_v%20%26%201%20%5Cend%7Bbmatrix%7D%20%5C%5C%0Aw_i%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Csigma_w%29%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20x_%7B0k%7D%20%5C%5C%20x_%7B1k%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmathbf%200%2C%20%5Cmathbf%7BS_xR_xS_x%7D%29%20%5C%5C%0A%5Cmathbf%7BS_x%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_%7B0x%7D%20%5C%5C%200%20%26%20%5Csigma_%7B1x%7D%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%7BR_x%7D%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%20%5Crho_x%20%26%201%20%5Cend%7Bbmatrix%7D%2C%20%5C%5C%0A%5Cend%7Balign%2A%7D%0A "
 \begin{align*}
 p(\text{ratingf} = l | \{ \tau_l \}, \mu_{ijk}, \alpha_{ijk}) & = \Phi(\alpha_{ijk}[\tau_l - \mu_{ijk}]) - \Phi(\alpha_{ijk}[\tau_{l - 1} - \mu_{ijk}]) \\
 \mu_{ijk} & = 0 + \beta_1 \text{condition}_{ik} + u_i + v_{0k} + v_{1k} \text{condition}_{ik} \\ 
 \log(\alpha_{ijk}) & = 0 + \eta_1 \text{condition}_{ik} + w_i + x_{0k} + x_{1k} \text{condition}_{ik} \\ 
 u_i & \sim \mathcal N(0, \sigma_u) \\
 \begin{bmatrix} v_{0k} \\ v_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{S_vR_vS_v}) \\
-\mathbf{S_v} & = \begin{bmatrix} \sigma_{0k} \\ 1 & \sigma_{1k} \end{bmatrix} \\
+\mathbf{S_v} & = \begin{bmatrix} \sigma_{0v} \\ 0 & \sigma_{1v} \end{bmatrix} \\
 \mathbf{R_v} & = \begin{bmatrix} 1 \\ \rho_v & 1 \end{bmatrix} \\
 w_i & \sim \mathcal N(0, \sigma_w) \\
 \begin{bmatrix} x_{0k} \\ x_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{S_xR_xS_x}) \\
-\mathbf{S_x} & = \begin{bmatrix} \sigma_{2k} \\ 1 & \sigma_{3k} \end{bmatrix} \\
+\mathbf{S_x} & = \begin{bmatrix} \sigma_{0x} \\ 0 & \sigma_{1x} \end{bmatrix} \\
 \mathbf{R_x} & = \begin{bmatrix} 1 \\ \rho_x & 1 \end{bmatrix}, \\
 \end{align*}
 ")
@@ -1383,10 +1373,10 @@ with priors
 \\tau\_{9} & \\sim \\mathcal N(1.7506861, 0.5) \\\\
 \\beta_1 & \\sim \\mathcal N(0, 1) \\\\ 
 \\eta_1 & \\sim \\mathcal N(0, \\log(2) / 2) \\\\ 
-\\sigma_u, \\dots, \\sigma\_{1k} & \\sim \\operatorname{Exponential}(1) \\\\
+\\sigma_u, \\dots, \\sigma\_{1x} & \\sim \\operatorname{Exponential}(1) \\\\
 \\mathbf R & \\sim \\operatorname{LKJ}(2),
 \\end{align\*}
-](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0A%5Ctau_%7B1%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-1.7506861%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B2%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-1.2265281%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B3%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-0.8064212%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B4%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-0.4124631%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B5%7D%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B6%7D%20%26%20%5Csim%20%5Cmathcal%20N%280.4124631%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B7%7D%20%26%20%5Csim%20%5Cmathcal%20N%280.8064212%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B8%7D%20%26%20%5Csim%20%5Cmathcal%20N%281.2265281%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B9%7D%20%26%20%5Csim%20%5Cmathcal%20N%281.7506861%2C%200.5%29%20%5C%5C%0A%5Cbeta_1%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%201%29%20%5C%5C%20%0A%5Ceta_1%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Clog%282%29%20%2F%202%29%20%5C%5C%20%0A%5Csigma_u%2C%20%5Cdots%2C%20%5Csigma_%7B1k%7D%20%26%20%5Csim%20%5Coperatorname%7BExponential%7D%281%29%20%5C%5C%0A%5Cmathbf%20R%20%26%20%5Csim%20%5Coperatorname%7BLKJ%7D%282%29%2C%0A%5Cend%7Balign%2A%7D%0A "
+](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0A%5Ctau_%7B1%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-1.7506861%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B2%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-1.2265281%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B3%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-0.8064212%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B4%7D%20%26%20%5Csim%20%5Cmathcal%20N%28-0.4124631%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B5%7D%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B6%7D%20%26%20%5Csim%20%5Cmathcal%20N%280.4124631%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B7%7D%20%26%20%5Csim%20%5Cmathcal%20N%280.8064212%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B8%7D%20%26%20%5Csim%20%5Cmathcal%20N%281.2265281%2C%200.5%29%20%5C%5C%0A%5Ctau_%7B9%7D%20%26%20%5Csim%20%5Cmathcal%20N%281.7506861%2C%200.5%29%20%5C%5C%0A%5Cbeta_1%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%201%29%20%5C%5C%20%0A%5Ceta_1%20%26%20%5Csim%20%5Cmathcal%20N%280%2C%20%5Clog%282%29%20%2F%202%29%20%5C%5C%20%0A%5Csigma_u%2C%20%5Cdots%2C%20%5Csigma_%7B1x%7D%20%26%20%5Csim%20%5Coperatorname%7BExponential%7D%281%29%20%5C%5C%0A%5Cmathbf%20R%20%26%20%5Csim%20%5Coperatorname%7BLKJ%7D%282%29%2C%0A%5Cend%7Balign%2A%7D%0A "
 \begin{align*}
 \tau_{1} & \sim \mathcal N(-1.7506861, 0.5) \\
 \tau_{2} & \sim \mathcal N(-1.2265281, 0.5) \\
@@ -1399,7 +1389,7 @@ with priors
 \tau_{9} & \sim \mathcal N(1.7506861, 0.5) \\
 \beta_1 & \sim \mathcal N(0, 1) \\ 
 \eta_1 & \sim \mathcal N(0, \log(2) / 2) \\ 
-\sigma_u, \dots, \sigma_{1k} & \sim \operatorname{Exponential}(1) \\
+\sigma_u, \dots, \sigma_{1x} & \sim \operatorname{Exponential}(1) \\
 \mathbf R & \sim \operatorname{LKJ}(2),
 \end{align*}
 ")
@@ -1596,8 +1586,8 @@ parameters for our ordinal models.
 
 ``` r
 sigma_names <- c(
-  "sigma[0][italic(k)]", "sigma[1][italic(k)]", "sigma[italic(u)]", 
-  "sigma[2][italic(k)]", "sigma[3][italic(k)]", "sigma[italic(w)]"
+  "sigma[0][italic(v)]", "sigma[1][italic(v)]", "sigma[italic(u)]", 
+  "sigma[0][italic(x)]", "sigma[1][italic(x)]", "sigma[italic(w)]"
   )
 
 rbind(
@@ -1624,9 +1614,9 @@ rbind(
 
 Comparatively speaking, the parameters unique to the
 MELSM–![\\sigma_w](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Csigma_w "\sigma_w"),
-![\\sigma\_{2k}](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Csigma_%7B2k%7D "\sigma_{2k}"),
+![\\sigma\_{0x}](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Csigma_%7B0x%7D "\sigma_{0x}"),
 and
-![\\sigma\_{3k}](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Csigma_%7B3k%7D "\sigma_{3k}")–are
+![\\sigma\_{1x}](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Csigma_%7B1x%7D "\sigma_{1x}")–are
 larger in the ordinal version of the model (`fit4`) than they were for
 the more-conventional Gaussian version of the model (`fit2`). Yet,
 they’re still on the small side relative to the others.
@@ -2200,7 +2190,7 @@ sessionInfo()
 
     ## R version 4.2.0 (2022-04-22)
     ## Platform: x86_64-apple-darwin17.0 (64-bit)
-    ## Running under: macOS Catalina 10.15.7
+    ## Running under: macOS Big Sur/Monterey 10.16
     ## 
     ## Matrix products: default
     ## BLAS:   /Library/Frameworks/R.framework/Versions/4.2/Resources/lib/libRblas.0.dylib
@@ -2213,30 +2203,34 @@ sessionInfo()
     ## [1] stats     graphics  grDevices utils     datasets  methods   base     
     ## 
     ## other attached packages:
-    ##  [1] patchwork_1.1.1 tidybayes_3.0.2 brms_2.17.3     Rcpp_1.0.8.3    forcats_0.5.1   readr_2.1.2    
-    ##  [7] purrr_0.3.4     stringr_1.4.0   tidyr_1.2.0     dplyr_1.0.9     tibble_3.1.7    ggplot2_3.3.6  
+    ##  [1] patchwork_1.1.1      tidybayes_3.0.2      brms_2.17.3          Rcpp_1.0.8.3         forcats_0.5.1       
+    ##  [6] stringr_1.4.0        dplyr_1.0.9          purrr_0.3.4          readr_2.1.2          tidyr_1.2.0         
+    ## [11] tibble_3.1.7         ggplot2_3.3.6        tidyverse_1.3.1.9000
     ## 
     ## loaded via a namespace (and not attached):
-    ##   [1] TH.data_1.1-1        colorspace_2.0-3     ellipsis_0.3.2       ggridges_0.5.3       estimability_1.3    
-    ##   [6] markdown_1.1         base64enc_0.1-3      rstudioapi_0.13      farver_2.1.0         rstan_2.26.11       
-    ##  [11] svUnit_1.0.6         DT_0.22              lubridate_1.8.0      fansi_1.0.3          mvtnorm_1.1-3       
-    ##  [16] diffobj_0.3.5        bridgesampling_1.1-2 codetools_0.2-18     splines_4.2.0        knitr_1.39          
-    ##  [21] shinythemes_1.2.0    bayesplot_1.9.0      jsonlite_1.8.0       ggdist_3.1.1         shiny_1.7.1         
-    ##  [26] compiler_4.2.0       emmeans_1.7.3        backports_1.4.1      assertthat_0.2.1     Matrix_1.4-1        
-    ##  [31] fastmap_1.1.0        cli_3.3.0            later_1.3.0          htmltools_0.5.2      prettyunits_1.1.1   
-    ##  [36] tools_4.2.0          igraph_1.3.1         coda_0.19-4          gtable_0.3.0         glue_1.6.2          
-    ##  [41] reshape2_1.4.4       posterior_1.2.1      V8_4.1.0             vctrs_0.4.1          nlme_3.1-157        
-    ##  [46] crosstalk_1.2.0      tensorA_0.36.2       xfun_0.31            ps_1.7.0             mime_0.12           
-    ##  [51] miniUI_0.1.1.1       lifecycle_1.0.1      gtools_3.9.2         MASS_7.3-56          zoo_1.8-10          
-    ##  [56] scales_1.2.0         colourpicker_1.1.1   hms_1.1.1            promises_1.2.0.1     Brobdingnag_1.2-7   
-    ##  [61] parallel_4.2.0       sandwich_3.0-1       inline_0.3.19        shinystan_2.6.0      yaml_2.3.5          
-    ##  [66] curl_4.3.2           gridExtra_2.3        loo_2.5.1            StanHeaders_2.26.11  stringi_1.7.6       
-    ##  [71] highr_0.9            dygraphs_1.1.1.6     checkmate_2.1.0      pkgbuild_1.3.1       rlang_1.0.2         
-    ##  [76] pkgconfig_2.0.3      matrixStats_0.62.0   distributional_0.3.0 evaluate_0.15        lattice_0.20-45     
-    ##  [81] labeling_0.4.2       rstantools_2.2.0     htmlwidgets_1.5.4    processx_3.5.3       tidyselect_1.1.2    
-    ##  [86] plyr_1.8.7           magrittr_2.0.3       R6_2.5.1             generics_0.1.2       multcomp_1.4-19     
-    ##  [91] DBI_1.1.2            pillar_1.7.0         withr_2.5.0          xts_0.12.1           survival_3.3-1      
-    ##  [96] abind_1.4-5          crayon_1.5.1         arrayhelpers_1.1-0   utf8_1.2.2           tzdb_0.3.0          
-    ## [101] rmarkdown_2.14       grid_4.2.0           callr_3.7.0          threejs_0.3.3        digest_0.6.29       
-    ## [106] xtable_1.8-4         httpuv_1.6.5         RcppParallel_5.1.5   stats4_4.2.0         munsell_0.5.0       
-    ## [111] viridisLite_0.4.0    shinyjs_2.1.0
+    ##   [1] readxl_1.4.0         backports_1.4.1      plyr_1.8.7           igraph_1.3.1         splines_4.2.0       
+    ##   [6] svUnit_1.0.6         crosstalk_1.2.0      TH.data_1.1-1        rstantools_2.2.0     inline_0.3.19       
+    ##  [11] digest_0.6.29        htmltools_0.5.2      fansi_1.0.3          magrittr_2.0.3       checkmate_2.1.0     
+    ##  [16] googlesheets4_1.0.0  tzdb_0.3.0           modelr_0.1.8         dtplyr_1.2.1         RcppParallel_5.1.5  
+    ##  [21] matrixStats_0.62.0   xts_0.12.1           sandwich_3.0-1       prettyunits_1.1.1    colorspace_2.0-3    
+    ##  [26] rvest_1.0.2          ggdist_3.1.1         haven_2.5.0          xfun_0.31            callr_3.7.0         
+    ##  [31] crayon_1.5.1         jsonlite_1.8.0       survival_3.3-1       zoo_1.8-10           glue_1.6.2          
+    ##  [36] gtable_0.3.0         gargle_1.2.0         emmeans_1.7.3        V8_4.1.0             distributional_0.3.0
+    ##  [41] pkgbuild_1.3.1       rstan_2.26.11        abind_1.4-5          scales_1.2.0         mvtnorm_1.1-3       
+    ##  [46] DBI_1.1.2            miniUI_0.1.1.1       viridisLite_0.4.0    xtable_1.8-4         diffobj_0.3.5       
+    ##  [51] stats4_4.2.0         StanHeaders_2.26.11  DT_0.22              htmlwidgets_1.5.4    httr_1.4.3          
+    ##  [56] threejs_0.3.3        arrayhelpers_1.1-0   posterior_1.2.1      ellipsis_0.3.2       pkgconfig_2.0.3     
+    ##  [61] loo_2.5.1            farver_2.1.0         dbplyr_2.1.1.9000    utf8_1.2.2           labeling_0.4.2      
+    ##  [66] tidyselect_1.1.2     rlang_1.0.2          reshape2_1.4.4       later_1.3.0          munsell_0.5.0       
+    ##  [71] cellranger_1.1.0     tools_4.2.0          cli_3.3.0            generics_0.1.2       broom_0.8.0         
+    ##  [76] ggridges_0.5.3       evaluate_0.15        fastmap_1.1.0        yaml_2.3.5           processx_3.5.3      
+    ##  [81] knitr_1.39           fs_1.5.2             nlme_3.1-157         mime_0.12            xml2_1.3.3          
+    ##  [86] compiler_4.2.0       bayesplot_1.9.0      shinythemes_1.2.0    rstudioapi_0.13      curl_4.3.2          
+    ##  [91] reprex_2.0.1         stringi_1.7.6        highr_0.9            ps_1.7.0             Brobdingnag_1.2-8   
+    ##  [96] lattice_0.20-45      Matrix_1.4-1         markdown_1.1         shinyjs_2.1.0        tensorA_0.36.2      
+    ## [101] vctrs_0.4.1          pillar_1.7.0         lifecycle_1.0.1      bridgesampling_1.1-2 estimability_1.3    
+    ## [106] data.table_1.14.2    httpuv_1.6.5         R6_2.5.1             promises_1.2.0.1     gridExtra_2.3       
+    ## [111] codetools_0.2-18     colourpicker_1.1.1   MASS_7.3-56          gtools_3.9.2         assertthat_0.2.1    
+    ## [116] withr_2.5.0          shinystan_2.6.0      multcomp_1.4-19      parallel_4.2.0       hms_1.1.1           
+    ## [121] grid_4.2.0           coda_0.19-4          rmarkdown_2.14       googledrive_2.0.0    shiny_1.7.1         
+    ## [126] lubridate_1.8.0      base64enc_0.1-3      dygraphs_1.1.1.6

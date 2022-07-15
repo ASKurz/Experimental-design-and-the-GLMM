@@ -23,17 +23,7 @@ Load the data and the primary **R** packages.
 
 ```{r, warning = F, message = F}
 # packages
-# library(tidyverse)
-
-library(ggplot2)
-library(tibble)
-library(dplyr)
-library(tidyr)
-library(stringr)
-library(purrr)
-library(readr)
-library(forcats)
-
+library(tidyverse)
 library(brms)
 library(tidybayes)
 library(patchwork)
@@ -178,14 +168,14 @@ u_i & \sim \mathcal N(0, \sigma_u) \\
 \begin{bmatrix} v_{0k} \\ v_{1k} \end{bmatrix} & \sim \mathcal N \left ( 
   \mathbf 0, \mathbf{SRS}
   \right) \\
-\mathbf S & = \begin{bmatrix} \sigma_{0k} \\ 1 & \sigma_{1k} \end{bmatrix} \\
+\mathbf S & = \begin{bmatrix} \sigma_{0v} \\ 0 & \sigma_{1v} \end{bmatrix} \\
 \mathbf R & = \begin{bmatrix} 1 \\ \rho & 1 \end{bmatrix},
 \end{align*}
 $$
 
 where $\beta_0$ is the grand mean for the pout condition (`condition == 0`) and $\beta_1$ is the deviation in the grand mean for the smile condition (`condition == 1`), relative to the pout condition. The $u_i$ parameter captures person-level deviations around the grand mean, across conditions, which is modeled as normal with a standard deviation $\sigma_u$. The $v_{0k}$ parameter captures cartoon-level deviations around the grand mean in the pout condition and $v_{1k}$ captures cartoon-level deviations around the difference in the grand mean for the smile condition. The two cartoon-level deviation parameters are modeled as bivariate normal with a variance/covariance matrix that has been decomposed into $2 \times 2$ matrix for the standard deviations $(\mathbf S)$ and a $2 \times 2$ matrix for their correlation $(\mathbf R)$.
 
-Note that we have grouped our three deviation parameters into one parameter capturing person-level differences and two parameters capturing cartoon-level differences. These two groups are modeled as orthogonal in that $\sigma_u$ does not covary with $\sigma_{0k}$ or $\sigma_{1k}$. Thus, you could describe this model as *cross-classified*.
+Note that we have grouped our three deviation parameters into one parameter capturing person-level differences and two parameters capturing cartoon-level differences. These two groups are modeled as orthogonal in that $\sigma_u$ does not covary with $\sigma_{0v}$ or $\sigma_{1v}$. Thus, you could describe this model as *cross-classified*.
 
 The next challenge is determining how to set the priors. On page 3, Wagenmakers and colleagues reported their four cartoons were based on pilot data from $N = 120$ students of the University of Amsterdam. If you look through the supplemental materials on the OSF, you will find the means and standard deviations for those cartoons at https://osf.io/6qnhg/. Here we use those to compute the grand mean and pooled standard deviation.
 
@@ -248,11 +238,11 @@ $$
 \mu_{ijk} & = \beta_0 + \beta_1 \text{condition}_{ik} + u_i + v_{0k} + v_{1k} \text{condition}_{ik} \\
 u_i & \sim \mathcal N(0, \sigma_u) \\
 \begin{bmatrix} v_{0k} \\ v_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{SRS}) \\
-\mathbf S & = \begin{bmatrix} \sigma_{0k} \\ 1 & \sigma_{1k} \end{bmatrix} \\
+\mathbf S & = \begin{bmatrix} \sigma_{0v} \\ 0 & \sigma_{1v} \end{bmatrix} \\
 \mathbf R & = \begin{bmatrix} 1 \\ \rho & 1 \end{bmatrix} \\
 \beta_0 & \sim \mathcal N(4.4, 1) \\ 
 \beta_1 & \sim \mathcal N(0, 1) \\ 
-\sigma_\epsilon, \dots, \sigma_{1k} & \sim \operatorname{Exponential}(1 / 2.3) \\
+\sigma_\epsilon, \dots, \sigma_{1v} & \sim \operatorname{Exponential}(1 / 2.3) \\
 \mathbf R & \sim \operatorname{LKJ}(2).
 \end{align*}
 $$
@@ -287,11 +277,11 @@ $$
 \log(\sigma_{ijk}) & = \eta_0 + \eta_1 \text{condition}_{ik} + w_i + x_{0k} + x_{1k} \text{condition}_{ik} \\
 u_i & \sim \mathcal N(0, \sigma_u) \\
 \begin{bmatrix} v_{0k} \\ v_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{S_vR_vS_v}) \\
-\mathbf{S_v} & = \begin{bmatrix} \sigma_{0k} \\ 1 & \sigma_{1k} \end{bmatrix} \\
+\mathbf{S_v} & = \begin{bmatrix} \sigma_{0v} \\ 0 & \sigma_{1v} \end{bmatrix} \\
 \mathbf{R_v} & = \begin{bmatrix} 1 \\ \rho_v & 1 \end{bmatrix} \\
 w_i & \sim \mathcal N(0, \sigma_w) \\
 \begin{bmatrix} x_{0k} \\ x_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{S_xR_xS_x}) \\
-\mathbf{S_x} & = \begin{bmatrix} \sigma_{2k} \\ 1 & \sigma_{3k} \end{bmatrix} \\
+\mathbf{S_x} & = \begin{bmatrix} \sigma_{0x} \\ 0 & \sigma_{1x} \end{bmatrix} \\
 \mathbf{R_x} & = \begin{bmatrix} 1 \\ \rho_x & 1 \end{bmatrix} \\
 \end{align*}
 $$
@@ -304,7 +294,7 @@ $$
 \beta_1 & \sim \mathcal N(0, 1) \\ 
 \eta_0 & \sim \mathcal N(\log(2.3), 1/3) \\ 
 \eta_1 & \sim \mathcal N(0, 0.5) \\ 
-\sigma_\epsilon, \dots, \sigma_{3k} & \sim \operatorname{Exponential}(1 / 2.3) \\
+\sigma_\epsilon, \dots, \sigma_{1x} & \sim \operatorname{Exponential}(1 / 2.3) \\
 \mathbf R & \sim \operatorname{LKJ}(2),
 \end{align*}
 $$
@@ -406,8 +396,8 @@ In this case, the difference between $\sigma_\text{pout}$ and $\sigma_\text{smil
 
 ```{r, fig.width = 5, fig.height = 3}
 sigma_names <- c(
-  "sigma[0][italic(k)]", "sigma[1][italic(k)]", "sigma[italic(u)]", 
-  "sigma[2][italic(k)]", "sigma[3][italic(k)]", "sigma[italic(w)]"
+  "sigma[0][italic(v)]", "sigma[1][italic(v)]", "sigma[italic(u)]", 
+  "sigma[0][italic(x)]", "sigma[1][italic(x)]", "sigma[italic(w)]"
   )
 
 rbind(
@@ -430,7 +420,7 @@ rbind(
   theme(panel.grid = element_blank())
 ```
 
-The three new parameters for the MELSM--$\sigma_w$, $\sigma_{2k}$, and $\sigma_{3k}$--are all rather small. This suggests that in the population, persons are not expected to vary greatly in how variable their ratings are for the cartoons. In a similar way, this suggests that in the population of similar Far Side cartoons, the way people rate them will not vary greatly across cartoons. Note, however, that the participants in this study were relatively homogeneous and the cartoons were specifically chosen for their similarity. If future studies increased the heterogeneity in either or both, we would expect increases in the level-2 $\sigma$ parameters. 
+The three new parameters for the MELSM--$\sigma_w$, $\sigma_{0x}$, and $\sigma_{1x}$--are all rather small. This suggests that in the population, persons are not expected to vary greatly in how variable their ratings are for the cartoons. In a similar way, this suggests that in the population of similar Far Side cartoons, the way people rate them will not vary greatly across cartoons. Note, however, that the participants in this study were relatively homogeneous and the cartoons were specifically chosen for their similarity. If future studies increased the heterogeneity in either or both, we would expect increases in the level-2 $\sigma$ parameters. 
 
 If desired, we could compare the two models by their LOO-CV estimates
 
@@ -642,7 +632,7 @@ p(\text{ratingf} = l | \{ \tau_l \}, \mu_{ijk}, \alpha = 1) & = \Phi(\alpha[\tau
 \mu_{ijk} & = 0 + \beta_1 \text{condition}_{ik} + u_i + v_{0k} + v_{1k} \text{condition}_{ik} \\ 
 u_i & \sim \mathcal N(0, \sigma_u) \\
 \begin{bmatrix} v_{0k} \\ v_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{SRS}) \\
-\mathbf S & = \begin{bmatrix} \sigma_{0k} \\ 1 & \sigma_{1k} \end{bmatrix} \\
+\mathbf S & = \begin{bmatrix} \sigma_{0v} \\ 0 & \sigma_{1v} \end{bmatrix} \\
 \mathbf R & = \begin{bmatrix} 1 \\ \rho & 1 \end{bmatrix}, \\
 \end{align*}
 $$
@@ -661,7 +651,7 @@ $$
 \tau_{8} & \sim \mathcal N(1.2265281, 0.5) \\
 \tau_{9} & \sim \mathcal N(1.7506861, 0.5) \\
 \beta_1 & \sim \mathcal N(0, 1) \\ 
-\sigma_u, \dots, \sigma_{1k} & \sim \operatorname{Exponential}(1) \\
+\sigma_u, \dots, \sigma_{1v} & \sim \operatorname{Exponential}(1) \\
 \mathbf R & \sim \operatorname{LKJ}(2),
 \end{align*}
 $$
@@ -736,11 +726,11 @@ p(\text{ratingf} = l | \{ \tau_l \}, \mu_{ijk}, \alpha_{ijk}) & = \Phi(\alpha_{i
 \log(\alpha_{ijk}) & = 0 + \eta_1 \text{condition}_{ik} + w_i + x_{0k} + x_{1k} \text{condition}_{ik} \\ 
 u_i & \sim \mathcal N(0, \sigma_u) \\
 \begin{bmatrix} v_{0k} \\ v_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{S_vR_vS_v}) \\
-\mathbf{S_v} & = \begin{bmatrix} \sigma_{0k} \\ 1 & \sigma_{1k} \end{bmatrix} \\
+\mathbf{S_v} & = \begin{bmatrix} \sigma_{0v} \\ 0 & \sigma_{1v} \end{bmatrix} \\
 \mathbf{R_v} & = \begin{bmatrix} 1 \\ \rho_v & 1 \end{bmatrix} \\
 w_i & \sim \mathcal N(0, \sigma_w) \\
 \begin{bmatrix} x_{0k} \\ x_{1k} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{S_xR_xS_x}) \\
-\mathbf{S_x} & = \begin{bmatrix} \sigma_{2k} \\ 1 & \sigma_{3k} \end{bmatrix} \\
+\mathbf{S_x} & = \begin{bmatrix} \sigma_{0x} \\ 0 & \sigma_{1x} \end{bmatrix} \\
 \mathbf{R_x} & = \begin{bmatrix} 1 \\ \rho_x & 1 \end{bmatrix}, \\
 \end{align*}
 $$
@@ -760,7 +750,7 @@ $$
 \tau_{9} & \sim \mathcal N(1.7506861, 0.5) \\
 \beta_1 & \sim \mathcal N(0, 1) \\ 
 \eta_1 & \sim \mathcal N(0, \log(2) / 2) \\ 
-\sigma_u, \dots, \sigma_{1k} & \sim \operatorname{Exponential}(1) \\
+\sigma_u, \dots, \sigma_{1x} & \sim \operatorname{Exponential}(1) \\
 \mathbf R & \sim \operatorname{LKJ}(2),
 \end{align*}
 $$
@@ -830,8 +820,8 @@ As with the two Gaussian models, here are the coefficient plots for the level-2 
 
 ```{r, fig.width = 5, fig.height = 3}
 sigma_names <- c(
-  "sigma[0][italic(k)]", "sigma[1][italic(k)]", "sigma[italic(u)]", 
-  "sigma[2][italic(k)]", "sigma[3][italic(k)]", "sigma[italic(w)]"
+  "sigma[0][italic(v)]", "sigma[1][italic(v)]", "sigma[italic(u)]", 
+  "sigma[0][italic(x)]", "sigma[1][italic(x)]", "sigma[italic(w)]"
   )
 
 rbind(
@@ -854,7 +844,7 @@ rbind(
   theme(panel.grid = element_blank())
 ```
 
-Comparatively speaking, the parameters unique to the MELSM--$\sigma_w$, $\sigma_{2k}$, and $\sigma_{3k}$--are larger in the ordinal version of the model (`fit4`) than they were for the more-conventional Gaussian version of the model (`fit2`). Yet, they're still on the small side relative to the others.
+Comparatively speaking, the parameters unique to the MELSM--$\sigma_w$, $\sigma_{0x}$, and $\sigma_{1x}$--are larger in the ordinal version of the model (`fit4`) than they were for the more-conventional Gaussian version of the model (`fit2`). Yet, they're still on the small side relative to the others.
 
 We might compare the two ordinal models by their LOO-CV estimates.
 
