@@ -14,17 +14,7 @@ options(width = 110)
 Load our primary packages.
 
 ```{r, message = F, warning = F}
-# library(tidyverse)
-
-library(ggplot2)
-library(tibble)
-library(dplyr)
-library(tidyr)
-library(stringr)
-library(readr)
-library(forcats)
-library(purrr)
-
+library(tidyverse)
 library(brms)
 library(tidybayes)
 library(patchwork)
@@ -381,7 +371,7 @@ $$
 \mu_{ij} & = \beta_0 + \beta_1 \text{time}_{ij} + (\beta_2 \text{support}_{ij} + \beta_3 \text{chat}_{ij} + \beta_4 \text{support}_{ij} \times \text{chat}_{ij}) \text{time}_{ij} + u_{0i} \\
 \log(\sigma_{ij}) & = \eta_0 + \eta_1 \text{time}_{ij} + (\eta_2 \text{support}_{ij} + \eta_3 \text{chat}_{ij} + \eta_4 \text{support}_{ij} \times \text{chat}_{ij}) \text{time}_{ij} + v_{0i} \\
 \begin{bmatrix} u_{0i} \\ v_{0i} \end{bmatrix} & \sim \mathcal{MVN}(\mathbf 0, \mathbf{SRS}) \\
-\mathbf S & = \begin{bmatrix} \sigma_u \\ 1 & \sigma_v \end{bmatrix} \\
+\mathbf S & = \begin{bmatrix} \sigma_u \\ 0 & \sigma_v \end{bmatrix} \\
 \mathbf R & = \begin{bmatrix} 1 \\ 0 & 1 \end{bmatrix},
 \end{align*}
 $$
@@ -721,7 +711,7 @@ $$
 \operatorname{logit}(\mu_{ij}) & = \beta_0 + \beta_1 \text{time}_{ij} + (\beta_2 \text{support}_{ij} + \beta_3 \text{chat}_{ij} + \beta_4 \text{support}_{ij} \times \text{chat}_{ij}) \text{time}_{ij} + u_{0i} \\
 \log(\phi_{ij}) & = \eta_0 + \eta_1 \text{time}_{ij} + (\eta_2 \text{support}_{ij} + \eta_3 \text{chat}_{ij} + \eta_4 \text{support}_{ij} \times \text{chat}_{ij}) \text{time}_{ij} + v_{0i} \\
 \begin{bmatrix} u_{0i} \\ v_{0i} \end{bmatrix} & \sim \mathcal{MVN}(\mathbf 0, \mathbf{SRS}) \\
-\mathbf S & = \begin{bmatrix} \sigma_u \\ 1 & \sigma_v \end{bmatrix} \\
+\mathbf S & = \begin{bmatrix} \sigma_u \\ 0 & \sigma_v \end{bmatrix} \\
 \mathbf R & = \begin{bmatrix} 1 \\ 0 & 1 \end{bmatrix},
 \end{align*}
 $$

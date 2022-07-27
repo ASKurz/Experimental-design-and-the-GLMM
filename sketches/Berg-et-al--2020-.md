@@ -1,22 +1,12 @@
 Berg et al (2020)
 ================
 A Solomon Kurz
-2022-06-25
+2022-07-27
 
 Load our primary packages.
 
 ``` r
-# library(tidyverse)
-
-library(ggplot2)
-library(tibble)
-library(dplyr)
-library(tidyr)
-library(stringr)
-library(readr)
-library(forcats)
-library(purrr)
-
+library(tidyverse)
 library(brms)
 library(tidybayes)
 library(patchwork)
@@ -659,16 +649,16 @@ points in time by
 \\mu\_{ij} & = \\beta_0 + \\beta_1 \\text{time}\_{ij} + (\\beta_2 \\text{support}\_{ij} + \\beta_3 \\text{chat}\_{ij} + \\beta_4 \\text{support}\_{ij} \\times \\text{chat}\_{ij}) \\text{time}\_{ij} + u\_{0i} \\\\
 \\log(\\sigma\_{ij}) & = \\eta_0 + \\eta_1 \\text{time}\_{ij} + (\\eta_2 \\text{support}\_{ij} + \\eta_3 \\text{chat}\_{ij} + \\eta_4 \\text{support}\_{ij} \\times \\text{chat}\_{ij}) \\text{time}\_{ij} + v\_{0i} \\\\
 \\begin{bmatrix} u\_{0i} \\\\ v\_{0i} \\end{bmatrix} & \\sim \\mathcal{MVN}(\\mathbf 0, \\mathbf{SRS}) \\\\
-\\mathbf S & = \\begin{bmatrix} \\sigma_u \\\\ 1 & \\sigma_v \\end{bmatrix} \\\\
+\\mathbf S & = \\begin{bmatrix} \\sigma_u \\\\ 0 & \\sigma_v \\end{bmatrix} \\\\
 \\mathbf R & = \\begin{bmatrix} 1 \\\\ 0 & 1 \\end{bmatrix},
 \\end{align\*}
-](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0A%5Ctext%7Bbai%7D_%7Bij%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmu_%7Bij%7D%2C%20%5Csigma_%7Bij%7D%29%20%5C%5C%0A%5Cmu_%7Bij%7D%20%26%20%3D%20%5Cbeta_0%20%2B%20%5Cbeta_1%20%5Ctext%7Btime%7D_%7Bij%7D%20%2B%20%28%5Cbeta_2%20%5Ctext%7Bsupport%7D_%7Bij%7D%20%2B%20%5Cbeta_3%20%5Ctext%7Bchat%7D_%7Bij%7D%20%2B%20%5Cbeta_4%20%5Ctext%7Bsupport%7D_%7Bij%7D%20%5Ctimes%20%5Ctext%7Bchat%7D_%7Bij%7D%29%20%5Ctext%7Btime%7D_%7Bij%7D%20%2B%20u_%7B0i%7D%20%5C%5C%0A%5Clog%28%5Csigma_%7Bij%7D%29%20%26%20%3D%20%5Ceta_0%20%2B%20%5Ceta_1%20%5Ctext%7Btime%7D_%7Bij%7D%20%2B%20%28%5Ceta_2%20%5Ctext%7Bsupport%7D_%7Bij%7D%20%2B%20%5Ceta_3%20%5Ctext%7Bchat%7D_%7Bij%7D%20%2B%20%5Ceta_4%20%5Ctext%7Bsupport%7D_%7Bij%7D%20%5Ctimes%20%5Ctext%7Bchat%7D_%7Bij%7D%29%20%5Ctext%7Btime%7D_%7Bij%7D%20%2B%20v_%7B0i%7D%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20u_%7B0i%7D%20%5C%5C%20v_%7B0i%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%7BMVN%7D%28%5Cmathbf%200%2C%20%5Cmathbf%7BSRS%7D%29%20%5C%5C%0A%5Cmathbf%20S%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_u%20%5C%5C%201%20%26%20%5Csigma_v%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%20R%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%200%20%26%201%20%5Cend%7Bbmatrix%7D%2C%0A%5Cend%7Balign%2A%7D%0A "
+](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0A%5Ctext%7Bbai%7D_%7Bij%7D%20%26%20%5Csim%20%5Cmathcal%20N%28%5Cmu_%7Bij%7D%2C%20%5Csigma_%7Bij%7D%29%20%5C%5C%0A%5Cmu_%7Bij%7D%20%26%20%3D%20%5Cbeta_0%20%2B%20%5Cbeta_1%20%5Ctext%7Btime%7D_%7Bij%7D%20%2B%20%28%5Cbeta_2%20%5Ctext%7Bsupport%7D_%7Bij%7D%20%2B%20%5Cbeta_3%20%5Ctext%7Bchat%7D_%7Bij%7D%20%2B%20%5Cbeta_4%20%5Ctext%7Bsupport%7D_%7Bij%7D%20%5Ctimes%20%5Ctext%7Bchat%7D_%7Bij%7D%29%20%5Ctext%7Btime%7D_%7Bij%7D%20%2B%20u_%7B0i%7D%20%5C%5C%0A%5Clog%28%5Csigma_%7Bij%7D%29%20%26%20%3D%20%5Ceta_0%20%2B%20%5Ceta_1%20%5Ctext%7Btime%7D_%7Bij%7D%20%2B%20%28%5Ceta_2%20%5Ctext%7Bsupport%7D_%7Bij%7D%20%2B%20%5Ceta_3%20%5Ctext%7Bchat%7D_%7Bij%7D%20%2B%20%5Ceta_4%20%5Ctext%7Bsupport%7D_%7Bij%7D%20%5Ctimes%20%5Ctext%7Bchat%7D_%7Bij%7D%29%20%5Ctext%7Btime%7D_%7Bij%7D%20%2B%20v_%7B0i%7D%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20u_%7B0i%7D%20%5C%5C%20v_%7B0i%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%7BMVN%7D%28%5Cmathbf%200%2C%20%5Cmathbf%7BSRS%7D%29%20%5C%5C%0A%5Cmathbf%20S%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_u%20%5C%5C%200%20%26%20%5Csigma_v%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%20R%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%200%20%26%201%20%5Cend%7Bbmatrix%7D%2C%0A%5Cend%7Balign%2A%7D%0A "
 \begin{align*}
 \text{bai}_{ij} & \sim \mathcal N(\mu_{ij}, \sigma_{ij}) \\
 \mu_{ij} & = \beta_0 + \beta_1 \text{time}_{ij} + (\beta_2 \text{support}_{ij} + \beta_3 \text{chat}_{ij} + \beta_4 \text{support}_{ij} \times \text{chat}_{ij}) \text{time}_{ij} + u_{0i} \\
 \log(\sigma_{ij}) & = \eta_0 + \eta_1 \text{time}_{ij} + (\eta_2 \text{support}_{ij} + \eta_3 \text{chat}_{ij} + \eta_4 \text{support}_{ij} \times \text{chat}_{ij}) \text{time}_{ij} + v_{0i} \\
 \begin{bmatrix} u_{0i} \\ v_{0i} \end{bmatrix} & \sim \mathcal{MVN}(\mathbf 0, \mathbf{SRS}) \\
-\mathbf S & = \begin{bmatrix} \sigma_u \\ 1 & \sigma_v \end{bmatrix} \\
+\mathbf S & = \begin{bmatrix} \sigma_u \\ 0 & \sigma_v \end{bmatrix} \\
 \mathbf R & = \begin{bmatrix} 1 \\ 0 & 1 \end{bmatrix},
 \end{align*}
 ")
@@ -1330,16 +1320,16 @@ would be
 \\operatorname{logit}(\\mu\_{ij}) & = \\beta_0 + \\beta_1 \\text{time}\_{ij} + (\\beta_2 \\text{support}\_{ij} + \\beta_3 \\text{chat}\_{ij} + \\beta_4 \\text{support}\_{ij} \\times \\text{chat}\_{ij}) \\text{time}\_{ij} + u\_{0i} \\\\
 \\log(\\phi\_{ij}) & = \\eta_0 + \\eta_1 \\text{time}\_{ij} + (\\eta_2 \\text{support}\_{ij} + \\eta_3 \\text{chat}\_{ij} + \\eta_4 \\text{support}\_{ij} \\times \\text{chat}\_{ij}) \\text{time}\_{ij} + v\_{0i} \\\\
 \\begin{bmatrix} u\_{0i} \\\\ v\_{0i} \\end{bmatrix} & \\sim \\mathcal{MVN}(\\mathbf 0, \\mathbf{SRS}) \\\\
-\\mathbf S & = \\begin{bmatrix} \\sigma_u \\\\ 1 & \\sigma_v \\end{bmatrix} \\\\
+\\mathbf S & = \\begin{bmatrix} \\sigma_u \\\\ 0 & \\sigma_v \\end{bmatrix} \\\\
 \\mathbf R & = \\begin{bmatrix} 1 \\\\ 0 & 1 \\end{bmatrix},
 \\end{align\*}
-](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0A%5Ctext%7Bbai%7D_%7Bij%7D%20%26%20%5Csim%20%5Coperatorname%7BBetaBinomial%7D%28n%20%3D%2063%2C%20%5Cmu_%7Bij%7D%2C%20%5Cphi_%7Bij%7D%29%20%5C%5C%0A%5Coperatorname%7Blogit%7D%28%5Cmu_%7Bij%7D%29%20%26%20%3D%20%5Cbeta_0%20%2B%20%5Cbeta_1%20%5Ctext%7Btime%7D_%7Bij%7D%20%2B%20%28%5Cbeta_2%20%5Ctext%7Bsupport%7D_%7Bij%7D%20%2B%20%5Cbeta_3%20%5Ctext%7Bchat%7D_%7Bij%7D%20%2B%20%5Cbeta_4%20%5Ctext%7Bsupport%7D_%7Bij%7D%20%5Ctimes%20%5Ctext%7Bchat%7D_%7Bij%7D%29%20%5Ctext%7Btime%7D_%7Bij%7D%20%2B%20u_%7B0i%7D%20%5C%5C%0A%5Clog%28%5Cphi_%7Bij%7D%29%20%26%20%3D%20%5Ceta_0%20%2B%20%5Ceta_1%20%5Ctext%7Btime%7D_%7Bij%7D%20%2B%20%28%5Ceta_2%20%5Ctext%7Bsupport%7D_%7Bij%7D%20%2B%20%5Ceta_3%20%5Ctext%7Bchat%7D_%7Bij%7D%20%2B%20%5Ceta_4%20%5Ctext%7Bsupport%7D_%7Bij%7D%20%5Ctimes%20%5Ctext%7Bchat%7D_%7Bij%7D%29%20%5Ctext%7Btime%7D_%7Bij%7D%20%2B%20v_%7B0i%7D%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20u_%7B0i%7D%20%5C%5C%20v_%7B0i%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%7BMVN%7D%28%5Cmathbf%200%2C%20%5Cmathbf%7BSRS%7D%29%20%5C%5C%0A%5Cmathbf%20S%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_u%20%5C%5C%201%20%26%20%5Csigma_v%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%20R%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%200%20%26%201%20%5Cend%7Bbmatrix%7D%2C%0A%5Cend%7Balign%2A%7D%0A "
+](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0A%5Ctext%7Bbai%7D_%7Bij%7D%20%26%20%5Csim%20%5Coperatorname%7BBetaBinomial%7D%28n%20%3D%2063%2C%20%5Cmu_%7Bij%7D%2C%20%5Cphi_%7Bij%7D%29%20%5C%5C%0A%5Coperatorname%7Blogit%7D%28%5Cmu_%7Bij%7D%29%20%26%20%3D%20%5Cbeta_0%20%2B%20%5Cbeta_1%20%5Ctext%7Btime%7D_%7Bij%7D%20%2B%20%28%5Cbeta_2%20%5Ctext%7Bsupport%7D_%7Bij%7D%20%2B%20%5Cbeta_3%20%5Ctext%7Bchat%7D_%7Bij%7D%20%2B%20%5Cbeta_4%20%5Ctext%7Bsupport%7D_%7Bij%7D%20%5Ctimes%20%5Ctext%7Bchat%7D_%7Bij%7D%29%20%5Ctext%7Btime%7D_%7Bij%7D%20%2B%20u_%7B0i%7D%20%5C%5C%0A%5Clog%28%5Cphi_%7Bij%7D%29%20%26%20%3D%20%5Ceta_0%20%2B%20%5Ceta_1%20%5Ctext%7Btime%7D_%7Bij%7D%20%2B%20%28%5Ceta_2%20%5Ctext%7Bsupport%7D_%7Bij%7D%20%2B%20%5Ceta_3%20%5Ctext%7Bchat%7D_%7Bij%7D%20%2B%20%5Ceta_4%20%5Ctext%7Bsupport%7D_%7Bij%7D%20%5Ctimes%20%5Ctext%7Bchat%7D_%7Bij%7D%29%20%5Ctext%7Btime%7D_%7Bij%7D%20%2B%20v_%7B0i%7D%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20u_%7B0i%7D%20%5C%5C%20v_%7B0i%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Cmathcal%7BMVN%7D%28%5Cmathbf%200%2C%20%5Cmathbf%7BSRS%7D%29%20%5C%5C%0A%5Cmathbf%20S%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_u%20%5C%5C%200%20%26%20%5Csigma_v%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%20R%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%200%20%26%201%20%5Cend%7Bbmatrix%7D%2C%0A%5Cend%7Balign%2A%7D%0A "
 \begin{align*}
 \text{bai}_{ij} & \sim \operatorname{BetaBinomial}(n = 63, \mu_{ij}, \phi_{ij}) \\
 \operatorname{logit}(\mu_{ij}) & = \beta_0 + \beta_1 \text{time}_{ij} + (\beta_2 \text{support}_{ij} + \beta_3 \text{chat}_{ij} + \beta_4 \text{support}_{ij} \times \text{chat}_{ij}) \text{time}_{ij} + u_{0i} \\
 \log(\phi_{ij}) & = \eta_0 + \eta_1 \text{time}_{ij} + (\eta_2 \text{support}_{ij} + \eta_3 \text{chat}_{ij} + \eta_4 \text{support}_{ij} \times \text{chat}_{ij}) \text{time}_{ij} + v_{0i} \\
 \begin{bmatrix} u_{0i} \\ v_{0i} \end{bmatrix} & \sim \mathcal{MVN}(\mathbf 0, \mathbf{SRS}) \\
-\mathbf S & = \begin{bmatrix} \sigma_u \\ 1 & \sigma_v \end{bmatrix} \\
+\mathbf S & = \begin{bmatrix} \sigma_u \\ 0 & \sigma_v \end{bmatrix} \\
 \mathbf R & = \begin{bmatrix} 1 \\ 0 & 1 \end{bmatrix},
 \end{align*}
 ")
@@ -1628,7 +1618,7 @@ sessionInfo()
 
     ## R version 4.2.0 (2022-04-22)
     ## Platform: x86_64-apple-darwin17.0 (64-bit)
-    ## Running under: macOS Catalina 10.15.7
+    ## Running under: macOS Big Sur/Monterey 10.16
     ## 
     ## Matrix products: default
     ## BLAS:   /Library/Frameworks/R.framework/Versions/4.2/Resources/lib/libRblas.0.dylib
@@ -1641,33 +1631,37 @@ sessionInfo()
     ## [1] stats     graphics  grDevices utils     datasets  methods   base     
     ## 
     ## other attached packages:
-    ##  [1] patchwork_1.1.1 tidybayes_3.0.2 brms_2.17.3     Rcpp_1.0.8.3    purrr_0.3.4     forcats_0.5.1  
-    ##  [7] readr_2.1.2     stringr_1.4.0   tidyr_1.2.0     dplyr_1.0.9     tibble_3.1.7    ggplot2_3.3.6  
+    ##  [1] patchwork_1.1.1      tidybayes_3.0.2      brms_2.17.3          Rcpp_1.0.9           forcats_0.5.1       
+    ##  [6] stringr_1.4.0        dplyr_1.0.9          purrr_0.3.4          readr_2.1.2          tidyr_1.2.0         
+    ## [11] tibble_3.1.7         ggplot2_3.3.6        tidyverse_1.3.1.9000
     ## 
     ## loaded via a namespace (and not attached):
-    ##   [1] VGAM_1.1-6           TH.data_1.1-1        colorspace_2.0-3     ellipsis_0.3.2       ggridges_0.5.3      
-    ##   [6] estimability_1.3     markdown_1.1         base64enc_0.1-3      rstudioapi_0.13      farver_2.1.0        
-    ##  [11] rstan_2.26.11        svUnit_1.0.6         DT_0.22              lubridate_1.8.0      fansi_1.0.3         
-    ##  [16] mvtnorm_1.1-3        diffobj_0.3.5        bridgesampling_1.1-2 codetools_0.2-18     splines_4.2.0       
-    ##  [21] knitr_1.39           shinythemes_1.2.0    bayesplot_1.9.0      jsonlite_1.8.0       ggdist_3.1.1        
-    ##  [26] shiny_1.7.1          compiler_4.2.0       emmeans_1.7.3        backports_1.4.1      assertthat_0.2.1    
-    ##  [31] Matrix_1.4-1         fastmap_1.1.0        cli_3.3.0            later_1.3.0          htmltools_0.5.2     
-    ##  [36] prettyunits_1.1.1    tools_4.2.0          igraph_1.3.1         coda_0.19-4          gtable_0.3.0        
-    ##  [41] glue_1.6.2           reshape2_1.4.4       posterior_1.2.1      V8_4.1.0             vctrs_0.4.1         
-    ##  [46] nlme_3.1-157         crosstalk_1.2.0      tensorA_0.36.2       xfun_0.31            ps_1.7.0            
-    ##  [51] mime_0.12            miniUI_0.1.1.1       lifecycle_1.0.1      gtools_3.9.2         MASS_7.3-56         
-    ##  [56] zoo_1.8-10           scales_1.2.0         colourpicker_1.1.1   hms_1.1.1            promises_1.2.0.1    
-    ##  [61] Brobdingnag_1.2-7    parallel_4.2.0       sandwich_3.0-1       inline_0.3.19        shinystan_2.6.0     
-    ##  [66] yaml_2.3.5           curl_4.3.2           gridExtra_2.3        loo_2.5.1            StanHeaders_2.26.11 
-    ##  [71] stringi_1.7.6        highr_0.9            dygraphs_1.1.1.6     checkmate_2.1.0      pkgbuild_1.3.1      
-    ##  [76] rlang_1.0.2          pkgconfig_2.0.3      matrixStats_0.62.0   distributional_0.3.0 evaluate_0.15       
-    ##  [81] lattice_0.20-45      labeling_0.4.2       rstantools_2.2.0     htmlwidgets_1.5.4    processx_3.5.3      
-    ##  [86] tidyselect_1.1.2     plyr_1.8.7           magrittr_2.0.3       R6_2.5.1             generics_0.1.2      
-    ##  [91] multcomp_1.4-19      DBI_1.1.2            pillar_1.7.0         withr_2.5.0          xts_0.12.1          
-    ##  [96] survival_3.3-1       abind_1.4-5          crayon_1.5.1         arrayhelpers_1.1-0   utf8_1.2.2          
-    ## [101] tzdb_0.3.0           rmarkdown_2.14       grid_4.2.0           callr_3.7.0          threejs_0.3.3       
-    ## [106] digest_0.6.29        xtable_1.8-4         httpuv_1.6.5         RcppParallel_5.1.5   stats4_4.2.0        
-    ## [111] munsell_0.5.0        viridisLite_0.4.0    shinyjs_2.1.0
+    ##   [1] readxl_1.4.0         backports_1.4.1      VGAM_1.1-6           plyr_1.8.7           igraph_1.3.1        
+    ##   [6] splines_4.2.0        svUnit_1.0.6         crosstalk_1.2.0      TH.data_1.1-1        rstantools_2.2.0    
+    ##  [11] inline_0.3.19        digest_0.6.29        htmltools_0.5.2      fansi_1.0.3          magrittr_2.0.3      
+    ##  [16] checkmate_2.1.0      googlesheets4_1.0.0  tzdb_0.3.0           modelr_0.1.8         dtplyr_1.2.1        
+    ##  [21] RcppParallel_5.1.5   matrixStats_0.62.0   xts_0.12.1           sandwich_3.0-1       prettyunits_1.1.1   
+    ##  [26] colorspace_2.0-3     rvest_1.0.2          ggdist_3.1.1         haven_2.5.0          xfun_0.31           
+    ##  [31] callr_3.7.0          crayon_1.5.1         jsonlite_1.8.0       survival_3.3-1       zoo_1.8-10          
+    ##  [36] glue_1.6.2           gtable_0.3.0         gargle_1.2.0         emmeans_1.7.3        V8_4.1.0            
+    ##  [41] distributional_0.3.0 pkgbuild_1.3.1       rstan_2.26.11        abind_1.4-5          scales_1.2.0        
+    ##  [46] mvtnorm_1.1-3        DBI_1.1.2            miniUI_0.1.1.1       viridisLite_0.4.0    xtable_1.8-4        
+    ##  [51] diffobj_0.3.5        stats4_4.2.0         StanHeaders_2.26.11  DT_0.22              htmlwidgets_1.5.4   
+    ##  [56] httr_1.4.3           threejs_0.3.3        arrayhelpers_1.1-0   posterior_1.2.1      ellipsis_0.3.2      
+    ##  [61] pkgconfig_2.0.3      loo_2.5.1            farver_2.1.1         dbplyr_2.1.1.9000    utf8_1.2.2          
+    ##  [66] labeling_0.4.2       tidyselect_1.1.2     rlang_1.0.4          reshape2_1.4.4       later_1.3.0         
+    ##  [71] munsell_0.5.0        cellranger_1.1.0     tools_4.2.0          cli_3.3.0            generics_0.1.2      
+    ##  [76] broom_0.8.0          ggridges_0.5.3       evaluate_0.15        fastmap_1.1.0        yaml_2.3.5          
+    ##  [81] processx_3.5.3       knitr_1.39           fs_1.5.2             nlme_3.1-157         mime_0.12           
+    ##  [86] xml2_1.3.3           compiler_4.2.0       bayesplot_1.9.0      shinythemes_1.2.0    rstudioapi_0.13     
+    ##  [91] curl_4.3.2           reprex_2.0.1         stringi_1.7.6        highr_0.9            ps_1.7.0            
+    ##  [96] Brobdingnag_1.2-8    lattice_0.20-45      Matrix_1.4-1         markdown_1.1         shinyjs_2.1.0       
+    ## [101] tensorA_0.36.2       vctrs_0.4.1          pillar_1.8.0         lifecycle_1.0.1      bridgesampling_1.1-2
+    ## [106] estimability_1.3     data.table_1.14.2    httpuv_1.6.5         R6_2.5.1             promises_1.2.0.1    
+    ## [111] gridExtra_2.3        codetools_0.2-18     colourpicker_1.1.1   MASS_7.3-56          gtools_3.9.2        
+    ## [116] assertthat_0.2.1     withr_2.5.0          shinystan_2.6.0      multcomp_1.4-19      parallel_4.2.0      
+    ## [121] hms_1.1.1            grid_4.2.0           coda_0.19-4          rmarkdown_2.14       googledrive_2.0.0   
+    ## [126] shiny_1.7.2          lubridate_1.8.0      base64enc_0.1-3      dygraphs_1.1.1.6
 
 ## Endnotes
 
