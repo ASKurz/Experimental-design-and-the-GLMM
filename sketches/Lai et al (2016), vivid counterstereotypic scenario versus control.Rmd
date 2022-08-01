@@ -215,7 +215,7 @@ $$
 u_{0i} & \sim \operatorname{Normal}(0, \sigma_0) \\
 \beta_0                 & \sim \operatorname{Normal}(0.37, 0.215) \\
 \beta_1, \dots, \beta_4 & \sim \operatorname{Normal}(0, 0.215) \\
-\sigma\ \&\ \sigma_0 & \sim \operatorname{Exponential}(1 / 0.43),
+\sigma, \sigma_0 & \sim \operatorname{Exponential}(1 / 0.43),
 \end{align*}
 $$
 
@@ -493,7 +493,7 @@ $$
 \mu_{it} & = \beta_{0i} + \beta_1 \text{time}_{it} + (\beta_2 \text{tx}_{it} + \beta_3 \text{pretest}_{it} + \beta_4 \text{tx}_{it} \text{pretest}_{it})\text{time}_{it} + u_{0i} \\
 \log(\sigma_{it}) & = \eta_{0i} + \eta_1 \text{time}_{it} + (\eta_2 \text{tx}_{it} + \eta_3 \text{pretest}_{it} + \eta_4 \text{tx}_{it} \text{pretest}_{it})\text{time}_{it} + v_{0i} \\
 \begin{bmatrix} u_{0i} \\ v_{0i} \end{bmatrix} & \sim \operatorname{Normal}(\mathbf 0, \mathbf{SRS}) \\
-\mathbf S & = \begin{bmatrix} \sigma_u \\ 1 & \sigma_v \end{bmatrix} \\
+\mathbf S & = \begin{bmatrix} \sigma_u \\ 0 & \sigma_v \end{bmatrix} \\
 \mathbf R & = \begin{bmatrix} 1 \\ 0 & 1 \end{bmatrix},
 \end{align*}
 $$

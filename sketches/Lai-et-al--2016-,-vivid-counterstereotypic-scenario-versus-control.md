@@ -1,7 +1,7 @@
 Lai et al (2016), vivid counterstereotypic scenario versus control
 ================
 A Solomon Kurz
-2022-07-12
+2022-08-01
 
 Load our primary packages.
 
@@ -403,16 +403,16 @@ conditions, we can fit a multilevel model of the form
 u\_{0i} & \\sim \\operatorname{Normal}(0, \\sigma_0) \\\\
 \\beta_0                 & \\sim \\operatorname{Normal}(0.37, 0.215) \\\\
 \\beta_1, \\dots, \\beta_4 & \\sim \\operatorname{Normal}(0, 0.215) \\\\
-\\sigma\\ \\&\\ \\sigma_0 & \\sim \\operatorname{Exponential}(1 / 0.43),
+\\sigma, \\sigma_0 & \\sim \\operatorname{Exponential}(1 / 0.43),
 \\end{align\*}
-](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0A%5Ctext%7Bd%7D_%7Bit%7D%20%26%20%5Csim%20%5Coperatorname%7BNormal%7D%28%5Cmu_%7Bit%7D%2C%20%5Csigma%29%20%5C%5C%0A%5Cmu_%7Bit%7D%20%26%20%3D%20%5Cbeta_%7B0i%7D%20%2B%20%5Cbeta_1%20%5Ctext%7Btime%7D_%7Bit%7D%20%2B%20%28%5Cbeta_2%20%5Ctext%7Btx%7D_%7Bit%7D%20%2B%20%5Cbeta_3%20%5Ctext%7Bpretest%7D_%7Bit%7D%20%2B%20%5Cbeta_4%20%5Ctext%7Btx%7D_%7Bit%7D%20%5Ctext%7Bpretest%7D_%7Bit%7D%29%5Ctext%7Btime%7D_%7Bit%7D%20%2B%20u_%7B0i%7D%20%5C%5C%0Au_%7B0i%7D%20%26%20%5Csim%20%5Coperatorname%7BNormal%7D%280%2C%20%5Csigma_0%29%20%5C%5C%0A%5Cbeta_0%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%26%20%5Csim%20%5Coperatorname%7BNormal%7D%280.37%2C%200.215%29%20%5C%5C%0A%5Cbeta_1%2C%20%5Cdots%2C%20%5Cbeta_4%20%26%20%5Csim%20%5Coperatorname%7BNormal%7D%280%2C%200.215%29%20%5C%5C%0A%5Csigma%5C%20%5C%26%5C%20%5Csigma_0%20%26%20%5Csim%20%5Coperatorname%7BExponential%7D%281%20%2F%200.43%29%2C%0A%5Cend%7Balign%2A%7D%0A "
+](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0A%5Ctext%7Bd%7D_%7Bit%7D%20%26%20%5Csim%20%5Coperatorname%7BNormal%7D%28%5Cmu_%7Bit%7D%2C%20%5Csigma%29%20%5C%5C%0A%5Cmu_%7Bit%7D%20%26%20%3D%20%5Cbeta_%7B0i%7D%20%2B%20%5Cbeta_1%20%5Ctext%7Btime%7D_%7Bit%7D%20%2B%20%28%5Cbeta_2%20%5Ctext%7Btx%7D_%7Bit%7D%20%2B%20%5Cbeta_3%20%5Ctext%7Bpretest%7D_%7Bit%7D%20%2B%20%5Cbeta_4%20%5Ctext%7Btx%7D_%7Bit%7D%20%5Ctext%7Bpretest%7D_%7Bit%7D%29%5Ctext%7Btime%7D_%7Bit%7D%20%2B%20u_%7B0i%7D%20%5C%5C%0Au_%7B0i%7D%20%26%20%5Csim%20%5Coperatorname%7BNormal%7D%280%2C%20%5Csigma_0%29%20%5C%5C%0A%5Cbeta_0%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%26%20%5Csim%20%5Coperatorname%7BNormal%7D%280.37%2C%200.215%29%20%5C%5C%0A%5Cbeta_1%2C%20%5Cdots%2C%20%5Cbeta_4%20%26%20%5Csim%20%5Coperatorname%7BNormal%7D%280%2C%200.215%29%20%5C%5C%0A%5Csigma%2C%20%5Csigma_0%20%26%20%5Csim%20%5Coperatorname%7BExponential%7D%281%20%2F%200.43%29%2C%0A%5Cend%7Balign%2A%7D%0A "
 \begin{align*}
 \text{d}_{it} & \sim \operatorname{Normal}(\mu_{it}, \sigma) \\
 \mu_{it} & = \beta_{0i} + \beta_1 \text{time}_{it} + (\beta_2 \text{tx}_{it} + \beta_3 \text{pretest}_{it} + \beta_4 \text{tx}_{it} \text{pretest}_{it})\text{time}_{it} + u_{0i} \\
 u_{0i} & \sim \operatorname{Normal}(0, \sigma_0) \\
 \beta_0                 & \sim \operatorname{Normal}(0.37, 0.215) \\
 \beta_1, \dots, \beta_4 & \sim \operatorname{Normal}(0, 0.215) \\
-\sigma\ \&\ \sigma_0 & \sim \operatorname{Exponential}(1 / 0.43),
+\sigma, \sigma_0 & \sim \operatorname{Exponential}(1 / 0.43),
 \end{align*}
 ")
 
@@ -813,16 +813,16 @@ our approach to see how the conditions in the Lai et al’s Solomon
 \\mu\_{it} & = \\beta\_{0i} + \\beta_1 \\text{time}\_{it} + (\\beta_2 \\text{tx}\_{it} + \\beta_3 \\text{pretest}\_{it} + \\beta_4 \\text{tx}\_{it} \\text{pretest}\_{it})\\text{time}\_{it} + u\_{0i} \\\\
 \\log(\\sigma\_{it}) & = \\eta\_{0i} + \\eta_1 \\text{time}\_{it} + (\\eta_2 \\text{tx}\_{it} + \\eta_3 \\text{pretest}\_{it} + \\eta_4 \\text{tx}\_{it} \\text{pretest}\_{it})\\text{time}\_{it} + v\_{0i} \\\\
 \\begin{bmatrix} u\_{0i} \\\\ v\_{0i} \\end{bmatrix} & \\sim \\operatorname{Normal}(\\mathbf 0, \\mathbf{SRS}) \\\\
-\\mathbf S & = \\begin{bmatrix} \\sigma_u \\\\ 1 & \\sigma_v \\end{bmatrix} \\\\
+\\mathbf S & = \\begin{bmatrix} \\sigma_u \\\\ 0 & \\sigma_v \\end{bmatrix} \\\\
 \\mathbf R & = \\begin{bmatrix} 1 \\\\ 0 & 1 \\end{bmatrix},
 \\end{align\*}
-](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0A%5Ctext%7Bd%7D_%7Bit%7D%20%26%20%5Csim%20%5Coperatorname%7BNormal%7D%28%5Cmu_%7Bit%7D%2C%20%5Csigma_%7Bit%7D%29%20%5C%5C%0A%5Cmu_%7Bit%7D%20%26%20%3D%20%5Cbeta_%7B0i%7D%20%2B%20%5Cbeta_1%20%5Ctext%7Btime%7D_%7Bit%7D%20%2B%20%28%5Cbeta_2%20%5Ctext%7Btx%7D_%7Bit%7D%20%2B%20%5Cbeta_3%20%5Ctext%7Bpretest%7D_%7Bit%7D%20%2B%20%5Cbeta_4%20%5Ctext%7Btx%7D_%7Bit%7D%20%5Ctext%7Bpretest%7D_%7Bit%7D%29%5Ctext%7Btime%7D_%7Bit%7D%20%2B%20u_%7B0i%7D%20%5C%5C%0A%5Clog%28%5Csigma_%7Bit%7D%29%20%26%20%3D%20%5Ceta_%7B0i%7D%20%2B%20%5Ceta_1%20%5Ctext%7Btime%7D_%7Bit%7D%20%2B%20%28%5Ceta_2%20%5Ctext%7Btx%7D_%7Bit%7D%20%2B%20%5Ceta_3%20%5Ctext%7Bpretest%7D_%7Bit%7D%20%2B%20%5Ceta_4%20%5Ctext%7Btx%7D_%7Bit%7D%20%5Ctext%7Bpretest%7D_%7Bit%7D%29%5Ctext%7Btime%7D_%7Bit%7D%20%2B%20v_%7B0i%7D%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20u_%7B0i%7D%20%5C%5C%20v_%7B0i%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Coperatorname%7BNormal%7D%28%5Cmathbf%200%2C%20%5Cmathbf%7BSRS%7D%29%20%5C%5C%0A%5Cmathbf%20S%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_u%20%5C%5C%201%20%26%20%5Csigma_v%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%20R%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%200%20%26%201%20%5Cend%7Bbmatrix%7D%2C%0A%5Cend%7Balign%2A%7D%0A "
+](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%0A%5Cbegin%7Balign%2A%7D%0A%5Ctext%7Bd%7D_%7Bit%7D%20%26%20%5Csim%20%5Coperatorname%7BNormal%7D%28%5Cmu_%7Bit%7D%2C%20%5Csigma_%7Bit%7D%29%20%5C%5C%0A%5Cmu_%7Bit%7D%20%26%20%3D%20%5Cbeta_%7B0i%7D%20%2B%20%5Cbeta_1%20%5Ctext%7Btime%7D_%7Bit%7D%20%2B%20%28%5Cbeta_2%20%5Ctext%7Btx%7D_%7Bit%7D%20%2B%20%5Cbeta_3%20%5Ctext%7Bpretest%7D_%7Bit%7D%20%2B%20%5Cbeta_4%20%5Ctext%7Btx%7D_%7Bit%7D%20%5Ctext%7Bpretest%7D_%7Bit%7D%29%5Ctext%7Btime%7D_%7Bit%7D%20%2B%20u_%7B0i%7D%20%5C%5C%0A%5Clog%28%5Csigma_%7Bit%7D%29%20%26%20%3D%20%5Ceta_%7B0i%7D%20%2B%20%5Ceta_1%20%5Ctext%7Btime%7D_%7Bit%7D%20%2B%20%28%5Ceta_2%20%5Ctext%7Btx%7D_%7Bit%7D%20%2B%20%5Ceta_3%20%5Ctext%7Bpretest%7D_%7Bit%7D%20%2B%20%5Ceta_4%20%5Ctext%7Btx%7D_%7Bit%7D%20%5Ctext%7Bpretest%7D_%7Bit%7D%29%5Ctext%7Btime%7D_%7Bit%7D%20%2B%20v_%7B0i%7D%20%5C%5C%0A%5Cbegin%7Bbmatrix%7D%20u_%7B0i%7D%20%5C%5C%20v_%7B0i%7D%20%5Cend%7Bbmatrix%7D%20%26%20%5Csim%20%5Coperatorname%7BNormal%7D%28%5Cmathbf%200%2C%20%5Cmathbf%7BSRS%7D%29%20%5C%5C%0A%5Cmathbf%20S%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%20%5Csigma_u%20%5C%5C%200%20%26%20%5Csigma_v%20%5Cend%7Bbmatrix%7D%20%5C%5C%0A%5Cmathbf%20R%20%26%20%3D%20%5Cbegin%7Bbmatrix%7D%201%20%5C%5C%200%20%26%201%20%5Cend%7Bbmatrix%7D%2C%0A%5Cend%7Balign%2A%7D%0A "
 \begin{align*}
 \text{d}_{it} & \sim \operatorname{Normal}(\mu_{it}, \sigma_{it}) \\
 \mu_{it} & = \beta_{0i} + \beta_1 \text{time}_{it} + (\beta_2 \text{tx}_{it} + \beta_3 \text{pretest}_{it} + \beta_4 \text{tx}_{it} \text{pretest}_{it})\text{time}_{it} + u_{0i} \\
 \log(\sigma_{it}) & = \eta_{0i} + \eta_1 \text{time}_{it} + (\eta_2 \text{tx}_{it} + \eta_3 \text{pretest}_{it} + \eta_4 \text{tx}_{it} \text{pretest}_{it})\text{time}_{it} + v_{0i} \\
 \begin{bmatrix} u_{0i} \\ v_{0i} \end{bmatrix} & \sim \operatorname{Normal}(\mathbf 0, \mathbf{SRS}) \\
-\mathbf S & = \begin{bmatrix} \sigma_u \\ 1 & \sigma_v \end{bmatrix} \\
+\mathbf S & = \begin{bmatrix} \sigma_u \\ 0 & \sigma_v \end{bmatrix} \\
 \mathbf R & = \begin{bmatrix} 1 \\ 0 & 1 \end{bmatrix},
 \end{align*}
 ")
