@@ -1,0 +1,1180 @@
+---
+title: "Coyne et al (2022)"
+subtitle: "Solomon 4-group design"
+author: "A Solomon Kurz"
+date: "`r format(Sys.Date())`"
+output: github_document
+---
+
+```{r, echo = F}
+knitr::opts_chunk$set(fig.retina = 2.5)
+options(width = 120)
+```
+
+Load our primary packages.
+
+```{r, message = F, warning = F}
+library(tidyverse)
+library(brms)
+library(tidybayes)
+```
+
+## HIV stigma
+
+In an online study aimed at reducing HIV stigma, Coyne et al (2022; https://doi.org/10.1007/s10461-022-03710-9) used a $2 \times 2$ group design to compare the effective of two kinds of messages about viral load, and the extent to which the difference between the messages depended on pretesting. Whereas a typical Solomon four-group design would compare an active experimental condition with a control condition, you might describe Coyne et al as following a modified Solomon four-group design, given that neither of their messaging conditions are inert control conditions. Regardless, we can still use the basic Solomon four-group methodology to get a sense of how much pretesting influences the comparison between to two kinds of messages.
+
+The authors provided their raw data files and scripts on the OSF at https://osf.io/rbq7a/. Here we load the data.
+
+```{r}
+# load
+coyne2022 <- haven::read_sav(file = "data/Awareness understanding and HIV stigma data.sav") %>% 
+  # remove the first row, which has a participant who reported they were below 18 
+  filter(Age >= 18) %>% 
+  # add a participant number
+  mutate(id = 1:n(),
+         # reformat these two variables as factors
+         TestGroup    = as_factor(TestGroup),
+         MessageGroup = as_factor(MessageGroup)) %>% 
+  # move id to the left
+  select(id, everything()) %>% 
+  # make dummies for the groups
+  mutate(pretest    = ifelse(TestGroup == "PretestPosttest", 1, 0),
+         protection = ifelse(MessageGroup == "GainFrame", 1, 0))
+
+# what do we have?
+glimpse(coyne2022)
+```
+
+The `coyne2022` data are in the wide format where the data from each participant is found in a single row. The primary substantive independent variable of interest is `MessageGroup`, which indicates whether each person saw:
+
+* a *gain*-framed message (`GainFrame`, a protection-framed message emphasizing the protective benefits of an undetectable viral load),
+* or a *risk*-framed message (`LossFrame`, risk-framed message emphasizing the reduction in transmission risk afforded by an undetectable viral load).
+
+The primary methodological independent variable of interest is `TestGroup`, which indicates whether each person was
+
+* assessed at posttest only (`Posttestonly`) or
+* at both pretest and posttest (`PretestPosttest`).
+
+The primary dependent variable is `StigmaPosttestTotal`, which is a summary score of six 5-point Likert-type items, `StigmaPosttest1` through `StigmaPosttest6`. When this variable was assessed at the pretest period, it is saved in the data as `StigmaPretestTotal`, which is a summary score of the similarly named items `StigmaPretest1` through `StigmaPretest1`.
+
+For our purposes, we'll want the data in two additional formats. First, we'll want a subsetted version of the data that is long with respect to the six variables `StigmaPosttest1` through `StigmaPosttest6`. We'll call that version `coyne2022_long`.
+
+```{r}
+coyne2022_long <- coyne2022 %>% 
+  select(id, TestGroup, MessageGroup, pretest, protection, StigmaPosttest1:StigmaPosttest6) %>% 
+  pivot_longer(StigmaPosttest1:StigmaPosttest6) %>% 
+  # reformat the item numbers and Likert-type responses
+  mutate(item   = str_extract(name, "\\d") %>% as.factor(),
+         likert = factor(value, ordered = TRUE)) %>% 
+  select(-name, -value)
+
+# what?
+glimpse(coyne2022_long)
+```
+
+We'll also want a second long-formatted version of the data. But this version will be long with respect to the 6 stigma items and with respect to the two measurement occasions. We'll call this version `coyne2022_long_long`.
+
+```{r}
+coyne2022_long_long <- coyne2022 %>% 
+  select(id, TestGroup, MessageGroup, StigmaPretest1:StigmaPretest6, StigmaPosttest1:StigmaPosttest6) %>% 
+  pivot_longer(contains("Stigma")) %>% 
+  # make dummies for the groups
+  mutate(pretest    = ifelse(TestGroup == "PretestPosttest", 1, 0),
+         protection = ifelse(MessageGroup == "GainFrame", 1, 0)) %>% 
+  # reformat the item numbers and Likert-type responses
+  mutate(item   = str_extract(name, "\\d") %>% as.factor(),
+         likert = factor(value, ordered = TRUE)) %>% 
+  # add a time variable
+  mutate(time = ifelse(str_detect(name, "Pretest"), 0, 1)) %>% 
+  select(-name, -value) %>% 
+  filter(!(pretest == 0 & time == 0))
+
+# what?
+glimpse(coyne2022_long_long)
+```
+
+Note how in both long-formatted versions of the data, we've saved the dependent variable `likert` as an ordered factor.
+
+## EDA
+
+### Sample statistics.
+
+Here are the sample statistics for the pre- and post-intervention sum scores of the 6 items, by the $2 \times 2$ groups.
+
+```{r, warning = F, message = F}
+coyne2022 %>% 
+  pivot_longer(contains("testTotal"), values_to = "sum_score") %>% 
+  mutate(test = ifelse(name == "StigmaPretestTotal", "pretest", "posttest")) %>% 
+  mutate(test = factor(test, levels = c("pretest", "posttest"))) %>% 
+  mutate(pretest    = ifelse(TestGroup == "PretestPosttest", 1, 0),
+         protection = ifelse(MessageGroup == "GainFrame", 1, 0)) %>% 
+  group_by(test, pretest, protection, TestGroup, MessageGroup) %>% 
+  summarise(n = n(),
+            m = mean(sum_score, na.rm = T),
+            s = sd(sum_score, na.rm = T),
+            min = min(sum_score, na.rm = T),
+            max = max(sum_score, na.rm = T)) %>% 
+  mutate_if(is.double, round, digits = 2)
+```
+
+If it isn't clear from the output, the sum scores are completely missing, by design, for the conditions in the first two rows. Note the different ways the summary statistic functions handle complete missingness.
+
+To foreshadow, we might also want the sample statistics for the items themselves. Given they're 5-point Likert-type ratings, we'll also provide the mode.
+
+```{r, warning = F, message = F}
+coyne2022_long_long %>% 
+  mutate(likert = as.double(likert)) %>% 
+  group_by(time, item, pretest, protection, TestGroup, MessageGroup) %>% 
+  summarise(n = n(),
+            m = mean(likert, na.rm = T),
+            mode = Mode(likert, na.rm = T),
+            s = sd(likert, na.rm = T),
+            min = min(likert, na.rm = T),
+            max = max(likert, na.rm = T)) %>% 
+  mutate_if(is.double, round, digits = 2)
+```
+
+### Look at the data.
+
+To get a sense of the overall distributions of the sum scores at posttest, we'll make a faceted bar plot.
+
+```{r, fig.width = 8, fig.height = 3.5}
+# adjust the global plot settings
+theme_set(
+  theme_gray(base_size = 13) +
+    theme(panel.grid = element_blank(),
+          plot.title.position = "plot",
+          strip.background = element_blank(),
+          strip.text = element_text(color = "black"))
+)
+
+coyne2022 %>% 
+  mutate(TestGroup = as_factor(TestGroup),
+         MessageGroup = as_factor(MessageGroup)) %>% 
+  
+  ggplot(aes(x = StigmaPosttestTotal)) +
+  geom_bar() +
+  facet_grid(TestGroup ~ MessageGroup)
+```
+
+In each panel, those sum-score distributions are multimodal, asymmetric, display a clear lower limit, and hint at their logical upper limit. To foreshadow the next section, the conventional Gaussian likelihood is a poor choice for modeling these data. If the distributions were smoother, the beta-binomial likelihood might be a good pragmatic option. But given the oddness of their overall shapes, we might be better off modeling the data at the item level. Here are what the six item distributions look like for the posttest assessment, in the four conditions.
+
+```{r, fig.width = 8, fig.height = 5}
+coyne2022_long %>% 
+  mutate(group = str_c(MessageGroup, "\n", TestGroup)) %>% 
+  
+  ggplot(aes(x = likert)) +
+  geom_bar() +
+  labs(x = "Likert-type rating") + 
+  facet_grid(group ~ item, labeller = labeller(item = label_both)) +
+  theme(strip.text.y = element_text(angle = 0, hjust = 0))
+```
+
+In the paper, Coyne and colleagues indicated these items were adapted from a larger item pool, and that there were no previous studies on their basic psychometric characteristics. In addition to the summary statistics and bar plots, above, a psychometrician might want their correlation matrix. Given they are ordinal, polychoric correlation coefficients are a good choice. Here's the polychoric correlation matrix in a shaded tile plot.
+
+```{r, fig.height = 3}
+p <- coyne2022 %>% 
+  select(StigmaPosttest1:StigmaPosttest6) %>% 
+  psych::polychoric()
+
+# str(p)
+
+p$rho %>% 
+  data.frame() %>% 
+  rownames_to_column("row") %>% 
+  pivot_longer(-row, names_to = "col") %>% 
+  mutate(row = str_extract(row, "\\d"),
+         col = str_extract(col, "\\d"),
+         label = MOTE::apa(value, decimals = 2, leading = F)) %>% 
+  mutate(row = fct_rev(row)) %>% 
+  
+  ggplot(aes(x = col, y = row)) +
+  geom_tile(aes(fill = value),
+            color = "grey92", size = 1/50) +
+  geom_text(aes(label = label)) +
+  scale_fill_gradient(expression(rho[polychoric]), low = "white", high = "red3", limits = 0:1) +
+  scale_x_discrete(expand = c(0, 0), position = "top") +
+  scale_y_discrete(expand = c(0, 0)) +
+  labs(title = "HIV stigma items (posttest)",
+       x = NULL,
+       y = NULL) +
+  coord_equal() +
+  theme(axis.ticks = element_blank())
+```
+
+To my eye, the correlation estimates are reasonably high. Also note that as we've estimated these correlations while ignoring the experimental conditions, they're probably a little lower than if they were from an equal-sized group who were all in the same experimental condition.
+
+```{r, eval = F, echo = F}
+p0 <- coyne2022 %>% 
+  select(StigmaPretest1:StigmaPretest6) %>% 
+  drop_na() %>% 
+  psych::polychoric()
+
+# str(p)
+
+p0$rho %>% 
+  data.frame() %>% 
+  rownames_to_column("row") %>% 
+  pivot_longer(-row, names_to = "col") %>% 
+  mutate(row = str_extract(row, "\\d"),
+         col = str_extract(col, "\\d"),
+         label = MOTE::apa(value, decimals = 2, leading = F)) %>% 
+  mutate(row = fct_rev(row)) %>% 
+  
+  ggplot(aes(x = col, y = row)) +
+  geom_tile(aes(fill = value)) +
+  geom_text(aes(label = label)) +
+  scale_fill_gradient(expression(rho[polychoric]), low = "white", high = "red3", limits = 0:1) +
+  scale_x_discrete(expand = c(0, 0), position = "top") +
+  scale_y_discrete(expand = c(0, 0)) +
+  labs(title = "HIV stigma items (pretest)",
+       x = "item",
+       y = "item")
+```
+
+```{r, eval = F, echo = F}
+# Yes, the correlations are slightly larger at pretest (slightly slightly)
+p$rho %>% mean()
+p0$rho %>% mean()
+```
+
+## Models
+
+We'll explore four models for the Coyne et al data. The first two models will be cross-sectional in that the dummy variables from the four experimental conditions will the predictors for the posttest assessment. The second models will be longitudinal in that we'll take the multilevel approach for modeling the pretest and posttest assessments, which will add time to the list of predictor variables. In addition, both the cross-sectional and longitudinal models will contain either just a conventional $\mu$ model, or a model for the discrimination parameter in addition to the $\mu$ model.
+
+### Cross-sectional.
+
+For our first model, we can think of the `likert` values as varying across $i$ persons and $j$ items. We further describe the `likert` values as having $K + 1 = 5$ response options, given they are from questions which used a 1-to-5 Likert-type scale. With the cumulative probit model, you can model the relative probability of each ordinal category as
+
+$$p(\text{likert} = k | \{ \tau_k \}) = \Phi(\tau_k) - \Phi(\tau_{k - 1}),$$
+
+where $\tau_k$ is the $k^\text{th}$ threshold, $\{ \tau_k \}$ is a shorthand for the set of 4 thresholds $\{k_1, \dots, k_4\}$, and $\Phi$ is the cumulative standard normal distribution. As our goal is to examine meaningful differences in the mean and variances of the `likert` values across the $i$ persons, and $j$ items in the data, we will expand the above equation to
+
+$$p(\text{likert} = k | \{ \tau_k \}, \mu, \alpha) = \Phi(\alpha[\tau_k - \mu]) - \Phi(\alpha[\tau_{k - 1} - \mu]),$$
+
+where $\mu$ is the mean of the cumulative normal distribution and $\alpha$ is the *discrimination* parameter, which is the reciprocal of the standard deviation of the cumulative normal distribution, such that $\sigma = 1 / \alpha$. In the empty model, $\mu = 0$ and $\alpha = 1$ for identification purposes and if you substitute those values into the equation, above, you'll see the terms on the right-side of the equation drop out and you end up with the simplified version of the equation from earlier.
+
+With this parameterization, we can analyze our experimental data with the model
+
+$$
+\begin{align*}
+p(\text{likert} = k | \{ \tau_k \}, \mu_{ij}, \alpha = 1) & = \Phi(\alpha[\tau_{jk} - \mu_{ij}]) - \Phi(\alpha[\tau_{jk - 1} - \mu_{ij}]) \\
+\mu_{ij} & = 0 + \beta_1 \text{protection}_{ij} + \beta_2 \text{pretest}_{ij} + \beta_3 \text{protection}_{ij} \text{pretest}_{ij} \\
+& \;\;\; + \left [ u_{0i} \right ] + \left [v_{0j} + v_{1j} \text{protection}_{ij} + v_{2j} \text{pretest}_{ij} + v_{3j} \text{protection}_{ij} \text{pretest}_{ij} \right ] \\ 
+u_{0i} & \sim \mathcal N(0, \sigma_{0u}) \\
+\begin{bmatrix} v_{0j} \\ v_{1j} \\ v_{2j} \\ v_{3j} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{SRS}) \\
+\mathbf S & = \begin{bmatrix} 
+  \sigma_{0v} \\ 
+  0 & \sigma_{1v} \\ 
+  0 & 0 & \sigma_{2v} \\ 
+  0 & 0 & 0 & \sigma_{3v} \end{bmatrix} \\
+\mathbf R & = \begin{bmatrix} 
+  1 \\ 
+  \rho_{10} & 1 \\ 
+  \rho_{20} & \rho_{21} & 1 \\ 
+  \rho_{30} & \rho_{31} & \rho_{32} & 1 \end{bmatrix},
+\end{align*}
+$$
+
+with priors
+
+$$
+\begin{align*}
+\tau_{j1} & \sim \mathcal N(-0.8416212, 1) \\
+\tau_{j2} & \sim \mathcal N(-0.2533471, 1) \\
+\tau_{j3} & \sim \mathcal N( 0.2533471, 1) \\
+\tau_{j4} & \sim \mathcal N( 0.8416212, 1) \\
+\beta_1, \dots, \beta_3 & \sim \mathcal N(0, 1) \\ 
+\sigma_{0u}, \dots, \sigma_{3v} & \sim \operatorname{Exponential}(1) \\
+\mathbf R & \sim \operatorname{LKJ}(1),
+\end{align*}
+$$
+
+where $\beta_0 = 0$, which stands for the grand mean, on the latent probit scale, for the reference group who received the risk-framed message and did not receive a pretest assessment. $\beta_1$ is the deviation in the grand mean for those who received the protection-frame message, but without a pretest, relative to the reference group. $\beta_2$ is the deviation in the grand mean for those who received the risk-frame message and had a pretest, relative to the reference group. The focal parameter is $\beta_3$ is the interaction between the message-frame and pretest dummy variables. You could describe $\beta_3$ as a difference in differences which  answers the question: *To what extent does the difference in the message-frame conditions differ based on whether participants complete a pretest?*.
+
+Although $\beta_0$ is fixed to zero, the $u_{0i}$ and $v_{0j}$ deviation parameters allow it to vary across $i$ persons and $j$ items. Because each person in the study only participated in one of the four conditions, the parameters $\beta_1$ through $\beta_3$ are only allowed to vary across the $j$ items. Note also that the $j$ subscripts are meant to indicate the $\tau$ threshold parameters vary across the six items.
+
+As to priors, $\beta_1$ through $\beta_3$ all have the $\mathcal N(0, 1)$ prior, which should be weakly regularizing on the probit scale. In a similar way, the $\operatorname{Exponential}(1)$ prior will mildly bias all level-2 $\sigma$ parameters toward the unit scale. Within the context of a $4 \times 4$ $\mathbf R$ matrix, setting $\eta = 1$ within the LKJ prior will weakly regularize the level-2 correlations off the boundaries. Given there is no prior work on the psychometric properties of the six Likert-type items, the priors for the $\tau$ thresholds are set to convey a default null assumption that all five response options are equally likely. Using the same basic strategy we used in the [Wagenmakers et al (2016, Albohn only) sketch](https://github.com/ASKurz/Experimental-design-and-the-GLMM/blob/main/sketches/Wagenmakers-et-al--2016--Albohn-only.md#conventional-multilevel-ordinal-model), here's how to convert those null proportions into cumulative proportions, which are then mapped onto the probit scale.
+
+```{r}
+tibble(rating = 1:5) %>% 
+  mutate(proportion = 1/5) %>% 
+  mutate(cumulative_proportion = cumsum(proportion)) %>% 
+  mutate(right_hand_threshold = qnorm(cumulative_proportion))
+```
+
+Here's how to fit the model with `brm()`. Note how by setting `thres(gr = item)` on the left-hand side of the model `formula`, we have allowed the $\tau_k$ thresholds to vary across the $j$ items.
+
+```{r fit1}
+# 10.75303 mins
+fit1 <- brm(
+  data = coyne2022_long,
+  family = cumulative(probit),
+  likert | thres(gr = item) ~ 1 + protection + pretest + protection:pretest + (1 | id) + (1 + protection + pretest + protection:pretest | item),
+  prior = c(prior(normal(-0.8416212, 1), class = Intercept, coef = 1, group = 1),
+            prior(normal(-0.2533471, 1), class = Intercept, coef = 2, group = 1),
+            prior(normal( 0.2533471, 1), class = Intercept, coef = 3, group = 1),
+            prior(normal( 0.8416212, 1), class = Intercept, coef = 4, group = 1),
+            
+            prior(normal(-0.8416212, 1), class = Intercept, coef = 1, group = 2),
+            prior(normal(-0.2533471, 1), class = Intercept, coef = 2, group = 2),
+            prior(normal( 0.2533471, 1), class = Intercept, coef = 3, group = 2),
+            prior(normal( 0.8416212, 1), class = Intercept, coef = 4, group = 2),
+            
+            prior(normal(-0.8416212, 1), class = Intercept, coef = 1, group = 3),
+            prior(normal(-0.2533471, 1), class = Intercept, coef = 2, group = 3),
+            prior(normal( 0.2533471, 1), class = Intercept, coef = 3, group = 3),
+            prior(normal( 0.8416212, 1), class = Intercept, coef = 4, group = 3),
+            
+            prior(normal(-0.8416212, 1), class = Intercept, coef = 1, group = 4),
+            prior(normal(-0.2533471, 1), class = Intercept, coef = 2, group = 4),
+            prior(normal( 0.2533471, 1), class = Intercept, coef = 3, group = 4),
+            prior(normal( 0.8416212, 1), class = Intercept, coef = 4, group = 4),
+            
+            prior(normal(-0.8416212, 1), class = Intercept, coef = 1, group = 5),
+            prior(normal(-0.2533471, 1), class = Intercept, coef = 2, group = 5),
+            prior(normal( 0.2533471, 1), class = Intercept, coef = 3, group = 5),
+            prior(normal( 0.8416212, 1), class = Intercept, coef = 4, group = 5),
+            
+            prior(normal(-0.8416212, 1), class = Intercept, coef = 1, group = 6),
+            prior(normal(-0.2533471, 1), class = Intercept, coef = 2, group = 6),
+            prior(normal( 0.2533471, 1), class = Intercept, coef = 3, group = 6),
+            prior(normal( 0.8416212, 1), class = Intercept, coef = 4, group = 6),
+            
+            prior(normal(0, 1), class = b),
+            prior(exponential(1), class = sd),
+            
+            prior(lkj(1), class = cor)),
+  cores = 4,
+  seed = 1,
+  init_r = 0.2,
+  file = "fits/fit1.coyne2022"
+)
+```
+
+The second version of the model is a straight generalization of the first. Here we take a distributional ordered-probit approach to allow the $\alpha$ discrimination parameters to vary across $i$ persons and $j$ items with the model
+
+$$
+\begin{align*}
+p(\text{likert} = k | \{ \tau_k \}, \mu_{ij}, \alpha_{ij}) & = \Phi(\alpha_{ij}[\tau_{jk} - \mu_{ij}]) - \Phi(\alpha_{ij}[\tau_{jk - 1} - \mu_{ij}]) \\
+\mu_{ij} & = 0 + \beta_1 \text{protection}_{ij} + \beta_2 \text{pretest}_{ij} + \beta_3 \text{protection}_{ij} \text{pretest}_{ij} \\
+& \;\;\; + \left [ u_{0i} \right ] + \left [v_{0j} + v_{1j} \text{protection}_{ij} + v_{2j} \text{pretest}_{ij} + v_{3j} \text{protection}_{ij} \text{pretest}_{ij} \right ] \\ 
+\log(\alpha_{ij}) & = 0 + \eta_1 \text{protection}_{ij} + \eta_2 \text{pretest}_{ij} + \eta_3 \text{protection}_{ij} \text{pretest}_{ij} \\
+& \;\;\; + \left [ u_{1i} \right ] + \left [v_{4j} + v_{5j} \text{protection}_{ij} + v_{6j} \text{pretest}_{ij} + v_{7j} \text{protection}_{ij} \text{pretest}_{ij} \right ] \\ 
+\begin{bmatrix} u_{0i} \\ u_{1i} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{S_uR_uS_u}) \\
+\begin{bmatrix} v_{0j} \\ \vdots \\ v_{7j} \end{bmatrix}& \sim \mathcal N(\mathbf 0, \mathbf{S_vR_vS_v})
+\end{align*}
+$$
+
+with priors
+
+$$
+\begin{align*}
+\tau_{j1} & \sim \mathcal N(-0.8416212, 1) \\
+\tau_{j2} & \sim \mathcal N(-0.2533471, 1) \\
+\tau_{j3} & \sim \mathcal N( 0.2533471, 1) \\
+\tau_{j4} & \sim \mathcal N( 0.8416212, 1) \\
+\beta_1, \dots, \beta_3 & \sim \mathcal N(0, 1) \\ 
+\eta_1, \dots, \eta_3 & \sim \mathcal N(0, 1) \\ 
+\sigma_{0u}, \sigma_{0v}, \dots, \sigma_{3v} & \sim \operatorname{Exponential}(1) \\
+\sigma_{1u}, \sigma_{4v}, \dots, \sigma_{7v} & \sim \operatorname{Exponential}(1 / 0.463) \\
+\mathbf{R_u}, \mathbf{R_v} & \sim \operatorname{LKJ}(1),
+\end{align*}
+$$
+
+where the $\eta$ parameters in the model for $\log(\alpha_{ij})$ mirror the $\beta$ parameters in the $\mu_{ij}$ model. For the sake of space, I have not explicitly mapped them out, but now the $u_{0i}$ and $u_{1i}$ parameters follow a $2 \times 2$ variance/covariance matrix and the eight parameters $v_{0j}, \dots, v_{7j}$ follow an $8 \times 8$ variance/covariance matrix.
+
+With respect to priors, $\mathcal N(0, 1)$ is meant to be weakly regularizing on the log space of the $\eta$ parameters. For the new $\sigma$  parameters, we set the mean of the exponential prior to 0.463. If you simulate from that prior and transform it into the latent $\sigma$ scale, you'll see it returns a distribution of $\sigma$  values with a percentile-based 95% interval of about 0.25 to 4. Here's what that looks like.
+
+```{r, fig.width = 5, fig.height = 2.75}
+set.seed(1)
+
+tibble(sd = rexp(n = 5e5, rate = 1 / 0.463)) %>% 
+  mutate(sigma = 1 / exp(rnorm(n = n(), mean = 0, sd = sd))) %>% 
+  filter(sigma < 10) %>% 
+  
+  ggplot(aes(x = sigma, fill = sigma > 0.25 & sigma < 4)) +
+  geom_histogram(binwidth = 0.03125, boundary = 0) +
+  scale_fill_viridis_d("inner 95% range\n(approximate)", option = "A", begin = .1, end = .6, direction = -1) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab(expression(1/exp(alpha[italic(ij)])*'|'*italic(p)(sigma[xx]==0.463))) +
+  coord_cartesian(xlim = c(0, 5))
+```
+
+If the latent $\sigma$ for the reference group is fixed to 1 for identification purposes, then a prior that allows the deviations to range as low as 0.25 (one quarter of the value) and as high as 4 (four times the value) is pretty generous. I suspect one could easily justify a stronger prior.
+
+Here's how to fit the model with `brm()`.
+
+```{r fit2}
+# 27.88503 mins
+fit2 <- brm(
+  data = coyne2022_long,
+  family = cumulative(probit),
+  bf(likert | thres(gr = item) ~ 1 + protection + pretest + protection:pretest + (1 |i| id) + (1 + protection + pretest + protection:pretest |j| item)) +
+     lf(disc                   ~ 0 + protection + pretest + protection:pretest + (1 |i| id) + (1 + protection + pretest + protection:pretest |j| item),
+        # don't forget this line
+        cmc = FALSE),
+  prior = c(prior(normal(-0.8416212, 1), class = Intercept, coef = 1, group = 1),
+            prior(normal(-0.2533471, 1), class = Intercept, coef = 2, group = 1),
+            prior(normal( 0.2533471, 1), class = Intercept, coef = 3, group = 1),
+            prior(normal( 0.8416212, 1), class = Intercept, coef = 4, group = 1),
+            
+            prior(normal(-0.8416212, 1), class = Intercept, coef = 1, group = 2),
+            prior(normal(-0.2533471, 1), class = Intercept, coef = 2, group = 2),
+            prior(normal( 0.2533471, 1), class = Intercept, coef = 3, group = 2),
+            prior(normal( 0.8416212, 1), class = Intercept, coef = 4, group = 2),
+            
+            prior(normal(-0.8416212, 1), class = Intercept, coef = 1, group = 3),
+            prior(normal(-0.2533471, 1), class = Intercept, coef = 2, group = 3),
+            prior(normal( 0.2533471, 1), class = Intercept, coef = 3, group = 3),
+            prior(normal( 0.8416212, 1), class = Intercept, coef = 4, group = 3),
+            
+            prior(normal(-0.8416212, 1), class = Intercept, coef = 1, group = 4),
+            prior(normal(-0.2533471, 1), class = Intercept, coef = 2, group = 4),
+            prior(normal( 0.2533471, 1), class = Intercept, coef = 3, group = 4),
+            prior(normal( 0.8416212, 1), class = Intercept, coef = 4, group = 4),
+            
+            prior(normal(-0.8416212, 1), class = Intercept, coef = 1, group = 5),
+            prior(normal(-0.2533471, 1), class = Intercept, coef = 2, group = 5),
+            prior(normal( 0.2533471, 1), class = Intercept, coef = 3, group = 5),
+            prior(normal( 0.8416212, 1), class = Intercept, coef = 4, group = 5),
+            
+            prior(normal(-0.8416212, 1), class = Intercept, coef = 1, group = 6),
+            prior(normal(-0.2533471, 1), class = Intercept, coef = 2, group = 6),
+            prior(normal( 0.2533471, 1), class = Intercept, coef = 3, group = 6),
+            prior(normal( 0.8416212, 1), class = Intercept, coef = 4, group = 6),
+            
+            prior(normal(0, 1), class = b),
+            
+            prior(exponential(1), class = sd),
+            prior(exponential(1 / 0.463), class = sd, dpar = disc),
+            
+            prior(lkj(1), class = cor)),
+  cores = 4,
+  seed = 1,
+  init_r = 0.2,
+  file = "fits/fit2.coyne2022"
+)
+```
+
+Check the summaries of the two models.
+
+```{r}
+summary(fit1)
+summary(fit2)
+```
+
+```{r, eval = F, echo = F}
+# threshold coefficient plots, if you're curious
+posterior_summary(fit1)[1:24, ] %>% 
+  data.frame() %>% 
+  mutate(tau = rep(1:4, times = 6),
+         item = rep(1:6, each = 4)) %>% 
+  mutate(tau = str_c("tau[", tau, "]"),
+         item = factor(item)) %>% 
+  
+  ggplot(aes(y = Estimate, ymin = Q2.5, ymax = Q97.5, x = tau,
+             group = item, color = item)) +
+  geom_pointrange(position = position_dodge(width = -0.5), fatten = 1.5) +
+  scale_color_viridis_d(expression(item~(italic(j))), option = "F", end = 0.8, direction = -1) +
+  scale_x_discrete(NULL, labels = ggplot2:::parse_safe) +
+  coord_flip(ylim = c(-3.5, 3.5)) +
+  ylab(expression(Phi))
+
+posterior_summary(fit4)[1:24, ] %>% 
+  data.frame() %>% 
+  mutate(tau = rep(1:4, times = 6),
+         item = rep(1:6, each = 4)) %>% 
+  mutate(tau = str_c("tau[", tau, "]"),
+         item = factor(item)) %>% 
+  
+  ggplot(aes(x = Estimate, xmin = Q2.5, xmax = Q97.5, y = tau,
+             group = item, color = item)) +
+  geom_vline(xintercept = c(-0.8416212, -0.2533471, 0.2533471, 0.8416212), color = "white") +
+  geom_pointinterval(point_size = 1.5, position = position_dodge(width = -0.5)) +
+  scale_color_viridis_d(expression(item~(italic(j))), option = "F", end = 0.8, direction = -1) +
+  scale_y_discrete(NULL, labels = ggplot2:::parse_safe) +
+  coord_cartesian(xlim = c(-3.5, 3.5)) +
+  xlab(expression(Phi)) +
+  theme(panel.grid = element_blank())
+```
+
+You could spend a lot of time wading through those parameter summaries. But since these are Solomon 4-group data, the parameters directly relevant for the differences-in-differences will answer our primary research question about the effect of pretesting. To bring this all into focus, here's a coefficient plot of the difference-in-differences $\beta_3$ for the $\mu$-based model `fit1`.
+
+```{r, fig.width = 7, fig.height = 3, warning = F}
+# save all group-level parameter summaries
+c1 <- coef(fit1)
+
+# wrangle 
+rbind(fixef(fit1)["protection:pretest", ], 
+      c1$item[, , "protection:pretest"]) %>% 
+  data.frame() %>% 
+  mutate(item = c("population~mean", str_c("italic(j)==", 1:6))) %>% 
+  mutate(item = factor(item, levels = c("population~mean", str_c("italic(j)==", 1:6)))) %>% 
+  
+  # plot
+  ggplot(aes(x = Estimate, xmin = Q2.5, xmax = Q97.5, y = item)) +
+  geom_vline(xintercept = 0, color = "white") +
+  geom_pointrange(aes(size = item == "population~mean",
+                      shape = item == "population~mean")) +
+  scale_shape_manual(values = 16:15, breaks = NULL) +
+  scale_size_discrete(range = c(0.5, 0.7), breaks = NULL) +
+  scale_y_discrete(NULL, labels = ggplot2:::parse_safe) +
+  xlim(-1, 1) +
+  labs(title = "Pretesting effect for protection versus loss (fit1)",
+       x = "difference in differences")
+```
+
+On the latent $\mu$ scale, the difference in differences ranges from small negative to moderately-large positive for all six items and the population mean across items. The evidence isn't particularly strong in any direction, which suggests that whereas pretesting may not be a huge factor in biasing the comparisons of the two messaging conditions, it's not clear.
+
+Here's the corresponding plot for the full distributional model `fit2`.
+
+```{r, fig.width = 8, fig.height = 3, warning = F}
+c2 <- coef(fit2)
+
+# population effects
+fixef(fit2)[c("protection:pretest", "disc_protection:pretest"), ] %>% 
+  data.frame() %>% 
+  mutate(greek = c("beta[4]", "eta[4]"),
+         item  = rep("population~mean", times = 2)) %>% 
+  # item-specific effects
+  bind_rows(
+    rbind(c2$item[, , "protection:pretest"], c2$item[, , "disc_protection:pretest"]) %>% 
+      data.frame() %>% 
+      mutate(greek = rep(c("beta[4]", "eta[4]"), each = n() / 2),
+             item  = rep(str_c("italic(j)==", 1:6), times = 2))
+  ) %>% 
+  mutate(item = factor(item, levels = c("population~mean", str_c("italic(j)==", 1:6)))) %>% 
+  
+  ggplot(aes(x = Estimate, xmin = Q2.5, xmax = Q97.5, y = item)) +
+  geom_vline(xintercept = 0, color = "white") +
+  geom_pointrange(aes(size = item == "population~mean",
+                      shape = item == "population~mean")) +
+  scale_shape_manual(values = 16:15, breaks = NULL) +
+  scale_size_discrete(range = c(0.5, 0.7), breaks = NULL) +
+  scale_y_discrete(NULL, labels = ggplot2:::parse_safe) +
+  xlim(-1, 1) +
+  labs(title = "Pretesting effect for protection versus loss (fit2)",
+       x = "difference in differences") +
+  facet_wrap(~ greek, labeller = label_parsed)
+```
+
+On the latent $\mu$ scale, the difference in differences ranges from small negative to moderately-large positive for all six items and the population mean across items. The evidence isn't particularly strong in any direction, which suggests that whereas pretesting may not be a huge factor in biasing the comparisons of the two messaging conditions, it's not clear.
+
+The difference in differences for the latent $\mu$ parameters are similar to those from the simpler model. The difference in differences for the discrimination $(\eta)$ parameters show a little more variability, but the overall pattern is the same as with the latent $\mu$ parameters. The evidence is weak and suggests that whereas pretesting may not be a huge factor in biasing the comparisons of the two messaging conditions, it's not clear.
+
+### Longitudinal.
+
+The cross-sectional versions of the model allowed us to query the basic research questions about the effect of pretesting on the experiment. However, the approach was inefficient in that it ignored the helpful information from the measures of stigma from the pretesting period. To bring those data into the model without dropping all the cases for whom those values are missing by design, we will work with he extra-long-formatted `coyne2022_long_long` version of the data to fit a longitudinal model.
+
+If we think of the `likert` values as varying across $i$ persons, $j$ items, and $t$ time points, we can model the relative probability of each ordinal category as,
+
+$$
+\begin{align*}
+p(\text{likert} = k | \{ \tau_k \}, \mu_{ijt}, \alpha = 1) & = \Phi(\alpha[\tau_{jk} - \mu_{ijt}]) - \Phi(\alpha[\tau_{jk - 1} - \mu_{ijt}]) \\
+\mu_{ijt} & = 0 + \beta_1 \text{time}_{ijt} + \left ( \beta_2 \text{protection}_{ijt} + \beta_3 \text{pretest}_{ijt} + \beta_4 \text{protection}_{ijt} \text{pretest}_{ijt} \right ) \text{time}_{ijt} \\
+& \;\;\; + \left [ u_{0i} + u_{1i}\text{time}_{ijt} \right ] + \left [v_{0j} + \left (v_{1j} + v_{2j} \text{protection}_{ijt} + v_{3j} \text{pretest}_{ijt} + v_{4j} \text{protection}_{ijt} \text{pretest}_{ijt} \right ) \text{time}_{ijt} \right ] \\ 
+\begin{bmatrix} u_{0i} \\ u_{1i} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{S_uR_uS_u}) \\
+\begin{bmatrix} v_{0j} \\ \vdots \\ v_{4j} \end{bmatrix}& \sim \mathcal N(\mathbf 0, \mathbf{S_vR_vS_v}),
+\end{align*}
+$$
+
+where the reference point $\beta_0 = 0$ is the grand mean for the pretest assessments. The $\beta_1$ parameter now captures the expected deviation from the grand mean for the participants in the risk-framed condition who did not have a pretest. The remaining $\beta$ parameters $(\beta_2, \dots, \beta_4)$ all capture the various group differences at the posttest assessment, relative to the pretest grand mean.
+
+As to the deviation parameters, notice how we have allowed participants to vary at pretest and over time with the $u_{0i}$ and $u_{1i}$. The model can handle both parameters because we are analyzing the data at the item level, which effectively gives participant up to 6 data points at each time period. With the second group of deviation parameters $(v_{0j}, \dots, v_{4j})$, we allow all $\beta$ parameters to vary across the 6 items. The $u_{0i}$ and $u_{1i}$ parameters follow a $2 \times 2$ variance/covariance matrix and the five parameters $v_{0j}, \dots, v_{4j}$ follow an $5 \times 5$ variance/covariance matrix.
+
+The priors are a simple extension of those in our first model,
+
+$$
+\begin{align*}
+\tau_{j1} & \sim \mathcal N(-0.8416212, 1) \\
+\tau_{j2} & \sim \mathcal N(-0.2533471, 1) \\
+\tau_{j3} & \sim \mathcal N( 0.2533471, 1) \\
+\tau_{j4} & \sim \mathcal N( 0.8416212, 1) \\
+\beta_1, \dots, \beta_4 & \sim \mathcal N(0, 1) \\ 
+\sigma_{0u}, \dots, \sigma_{4v} & \sim \operatorname{Exponential}(1) \\
+\mathbf R & \sim \operatorname{LKJ}(1),
+\end{align*}
+$$
+
+where the $\mathcal N(0, 1)$ prior for the $\beta$ should be weakly regularizing on the probit scale. In a similar way, the $\operatorname{Exponential}(1)$ prior will mildly bias all level-2 $\sigma$ parameters toward the unit scale, and setting $\eta = 1$ within the LKJ prior will weakly regularize the level-2 correlations off the boundaries. We also continue with the same priors on the thresholds, which convey the null assumption that all five response options are equally likely.
+
+Here's how to fit the model with `brm()`.
+
+```{r fit3}
+# 35.66254 mins
+fit3 <- brm(
+  data = coyne2022_long_long,
+  family = cumulative(probit),
+  likert | thres(gr = item) ~ 1 + time + (protection + pretest + protection:pretest) : time + 
+    (1 + time | id) + (1 + time + (protection + pretest + protection:pretest) : time | item),
+  prior = c(prior(normal(-0.8416212, 1), class = Intercept, coef = 1, group = 1),
+            prior(normal(-0.2533471, 1), class = Intercept, coef = 2, group = 1),
+            prior(normal( 0.2533471, 1), class = Intercept, coef = 3, group = 1),
+            prior(normal( 0.8416212, 1), class = Intercept, coef = 4, group = 1),
+            
+            prior(normal(-0.8416212, 1), class = Intercept, coef = 1, group = 2),
+            prior(normal(-0.2533471, 1), class = Intercept, coef = 2, group = 2),
+            prior(normal( 0.2533471, 1), class = Intercept, coef = 3, group = 2),
+            prior(normal( 0.8416212, 1), class = Intercept, coef = 4, group = 2),
+            
+            prior(normal(-0.8416212, 1), class = Intercept, coef = 1, group = 3),
+            prior(normal(-0.2533471, 1), class = Intercept, coef = 2, group = 3),
+            prior(normal( 0.2533471, 1), class = Intercept, coef = 3, group = 3),
+            prior(normal( 0.8416212, 1), class = Intercept, coef = 4, group = 3),
+            
+            prior(normal(-0.8416212, 1), class = Intercept, coef = 1, group = 4),
+            prior(normal(-0.2533471, 1), class = Intercept, coef = 2, group = 4),
+            prior(normal( 0.2533471, 1), class = Intercept, coef = 3, group = 4),
+            prior(normal( 0.8416212, 1), class = Intercept, coef = 4, group = 4),
+            
+            prior(normal(-0.8416212, 1), class = Intercept, coef = 1, group = 5),
+            prior(normal(-0.2533471, 1), class = Intercept, coef = 2, group = 5),
+            prior(normal( 0.2533471, 1), class = Intercept, coef = 3, group = 5),
+            prior(normal( 0.8416212, 1), class = Intercept, coef = 4, group = 5),
+            
+            prior(normal(-0.8416212, 1), class = Intercept, coef = 1, group = 6),
+            prior(normal(-0.2533471, 1), class = Intercept, coef = 2, group = 6),
+            prior(normal( 0.2533471, 1), class = Intercept, coef = 3, group = 6),
+            prior(normal( 0.8416212, 1), class = Intercept, coef = 4, group = 6),
+            
+            prior(normal(0, 1), class = b),
+            
+            prior(exponential(1), class = sd),
+            
+            prior(lkj(1), class = cor)),
+  cores = 4,
+  seed = 1,
+  init_r = 0.2,
+  file = "fits/fit3.coyne2022"
+)
+```
+
+As with the cross-sectional models, now we generalize out $\mu$-centric model to a full distributional model with a mean model
+
+$$
+\begin{align*}
+p(\text{likert} = k | \{ \tau_k \}, \mu_{ijt}, \alpha_{ijt}) & = \Phi(\alpha_{ijt}[\tau_{jk} - \mu_{ijt}]) - \Phi(\alpha_{ijt}[\tau_{jk - 1} - \mu_{ijt}]) \\
+\mu_{ijt} & = 0 + \beta_1 \text{time}_{ijt} + \left ( \beta_2 \text{protection}_{ijt} + \beta_3 \text{pretest}_{ijt} + \beta_4 \text{protection}_{ijt} \text{pretest}_{ijt} \right ) \text{time}_{ijt} \\
+& \;\;\; + \left [ u_{0i} + u_{1i}\text{time}_{ijt} \right ] + \left [v_{0j} + \left (v_{1j} + v_{2j} \text{protection}_{ijt} + v_{3j} 
+\text{pretest}_{ijt} + v_{4j} \text{protection}_{ijt} \text{pretest}_{ijt} \right ) \text{time}_{ijt} \right ],
+\end{align*}
+$$
+
+and $\log(\alpha)$ model,
+
+$$
+\begin{align*}
+\log(\alpha_{ijt}) & = 0 + \eta_1 \text{time}_{ijt} + \left ( \eta_2 \text{protection}_{ijt} + \eta_3 \text{pretest}_{ijt} + \eta_4 \text{protection}_{ijt} \text{pretest}_{ijt} \right ) \text{time}_{ijt} \\
+& \;\;\; + \left [ u_{2i} + u_{3i}\text{time}_{ijt} \right ] + \left [v_{5j} + \left (v_{6j} + v_{7j} \text{protection}_{ijt} + v_{8j} 
+\text{pretest}_{ijt} + v_{9j} \text{protection}_{ijt} \text{pretest}_{ijt} \right ) \text{time}_{ijt} \right ],
+\end{align*}
+$$
+
+where the $\eta$ parameters in the model for $\log(\alpha_{ijt})$ mirror the $\beta$ parameters in the $\mu_{ijt}$ model. The level-2 matrices have grown so now the $u_{0i}, \dots, u_{3i}$ parameters follow a $4 \times 4$ variance/covariance matrix and the $v_{0j}, \dots, v_{9j}$ parameters follow an $10 \times 10$ variance/covariance matrix:
+
+$$
+\begin{align*}
+\begin{bmatrix} u_{0i}  \\ \vdots \\ u_{3i} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{S_uR_uS_u}) \\
+\begin{bmatrix} v_{0j} \\ \vdots \\ v_{9j} \end{bmatrix}& \sim \mathcal N(\mathbf 0, \mathbf{S_vR_vS_v}),
+\end{align*}
+$$
+
+Continuing on with the sensibilities from the previous models, the priors are
+
+$$
+\begin{align*}
+\tau_{j1} & \sim \mathcal N(-0.8416212, 1) \\
+\tau_{j2} & \sim \mathcal N(-0.2533471, 1) \\
+\tau_{j3} & \sim \mathcal N( 0.2533471, 1) \\
+\tau_{j4} & \sim \mathcal N( 0.8416212, 1) \\
+\beta_1, \dots, \beta_4 & \sim \mathcal N(0, 1) \\ 
+\eta_1, \dots, \eta_4 & \sim \mathcal N(0, 1) \\ 
+\sigma_{0u}, \sigma_{1u}, \sigma_{0v}, \dots, \sigma_{4v} & \sim \operatorname{Exponential}(1) \\
+\sigma_{2u}, \sigma_{3u}, \sigma_{5v}, \dots, \sigma_{9v} & \sim \operatorname{Exponential}(1 / 0.463) \\
+\mathbf{R_u}, \mathbf{R_v} & \sim \operatorname{LKJ}(1).
+\end{align*}
+$$
+
+Here's how to fit the model with `brm()`.
+
+```{r fit4}
+# about 180 MB--too large to save on GitHub
+
+# 1.341376 hours
+fit4 <- brm(
+  data = coyne2022_long_long,
+  family = cumulative(probit),
+  bf(likert | thres(gr = item) ~ 1 + time + (protection + pretest + protection:pretest) : time + (1 + time |i| id) + (1 + time + (protection + pretest + protection:pretest) : time |j| item)) +
+     lf(disc                   ~ 0 + time + (protection + pretest + protection:pretest) : time + (1 + time |i| id) + (1 + time + (protection + pretest + protection:pretest) : time |j| item),
+        # don't forget this line
+        cmc = FALSE),
+  prior = c(prior(normal(-0.8416212, 1), class = Intercept, coef = 1, group = 1),
+            prior(normal(-0.2533471, 1), class = Intercept, coef = 2, group = 1),
+            prior(normal( 0.2533471, 1), class = Intercept, coef = 3, group = 1),
+            prior(normal( 0.8416212, 1), class = Intercept, coef = 4, group = 1),
+            
+            prior(normal(-0.8416212, 1), class = Intercept, coef = 1, group = 2),
+            prior(normal(-0.2533471, 1), class = Intercept, coef = 2, group = 2),
+            prior(normal( 0.2533471, 1), class = Intercept, coef = 3, group = 2),
+            prior(normal( 0.8416212, 1), class = Intercept, coef = 4, group = 2),
+            
+            prior(normal(-0.8416212, 1), class = Intercept, coef = 1, group = 3),
+            prior(normal(-0.2533471, 1), class = Intercept, coef = 2, group = 3),
+            prior(normal( 0.2533471, 1), class = Intercept, coef = 3, group = 3),
+            prior(normal( 0.8416212, 1), class = Intercept, coef = 4, group = 3),
+            
+            prior(normal(-0.8416212, 1), class = Intercept, coef = 1, group = 4),
+            prior(normal(-0.2533471, 1), class = Intercept, coef = 2, group = 4),
+            prior(normal( 0.2533471, 1), class = Intercept, coef = 3, group = 4),
+            prior(normal( 0.8416212, 1), class = Intercept, coef = 4, group = 4),
+            
+            prior(normal(-0.8416212, 1), class = Intercept, coef = 1, group = 5),
+            prior(normal(-0.2533471, 1), class = Intercept, coef = 2, group = 5),
+            prior(normal( 0.2533471, 1), class = Intercept, coef = 3, group = 5),
+            prior(normal( 0.8416212, 1), class = Intercept, coef = 4, group = 5),
+            
+            prior(normal(-0.8416212, 1), class = Intercept, coef = 1, group = 6),
+            prior(normal(-0.2533471, 1), class = Intercept, coef = 2, group = 6),
+            prior(normal( 0.2533471, 1), class = Intercept, coef = 3, group = 6),
+            prior(normal( 0.8416212, 1), class = Intercept, coef = 4, group = 6),
+            
+            prior(normal(0, 1), class = b),
+            
+            prior(exponential(1), class = sd),
+            # here's the fancy new prior line
+            prior(exponential(1 / 0.463), class = sd, dpar = disc),
+            
+            prior(lkj(1), class = cor)),
+  cores = 4,
+  seed = 1,
+  init_r = 0.2,
+  control = list(adapt_delta = .85,
+                 max_treedepth = 11),
+  file = "fits/fit4.coyne2022"
+)
+```
+
+As with the two cross-sectional models, the summaries for the two longitudinal models return a lot of output.
+
+```{r}
+summary(fit3)
+summary(fit4)
+```
+
+You could spend a lot of time wading through those parameter summaries. But since these are Solomon 4-group data, the parameters directly relevant for the differences-in-differences will answer our primary research question about the effect of pretesting. To bring this all into focus, here's a coefficient plot of the difference-in-differences $\beta_3$ for the $\mu$-based model `fit1`.
+
+Given the parameterization in our longitudinal models, it will take more effort at the data-wrangling stage to show the differences in differences in a coefficient plot. To my mind, the `tidybayes::add_linpred_draws()` function will provide a good baseline strategy. To start, here's how you might compute the item-level contrasts for `fit1`. We'll save their summaries as `mu_d_in_d_item`.
+
+```{r}
+mu_d_in_d_item <- coyne2022_long_long %>% 
+  distinct(item, protection, pretest) %>%
+  mutate(time = 1) %>% 
+  add_linpred_draws(fit3, re_formula = ~ (1 + time + (protection + pretest + protection:pretest):time | item)) %>% 
+  ungroup() %>% 
+  mutate(item = str_c("italic(j)==", item)) %>% 
+  select(-.row, -.chain, -.iteration, -time) %>% 
+  pivot_wider(names_from = protection, values_from = .linpred) %>% 
+  mutate(d = `1` - `0`) %>% 
+  select(-`1`, -`0`) %>% 
+  pivot_wider(names_from = pretest, values_from = d) %>% 
+  mutate(d_in_d = `1` - `0`) %>% 
+  group_by(item) %>% 
+  mean_qi(d_in_d)
+
+# what is this?
+mu_d_in_d_item
+```
+
+Now compute, summarize, and save the posterior for the population-level difference in differences for `fit3`.
+
+```{r}
+mu_d_in_d_population <- coyne2022_long_long %>% 
+  distinct(item, protection, pretest) %>%
+  mutate(time = 1) %>% 
+  add_linpred_draws(fit3, re_formula = NA) %>% 
+  ungroup() %>% 
+  filter(item == "1") %>% 
+  mutate(item = "population~mean") %>% 
+  select(-.row, -.chain, -.iteration, -time) %>% 
+  pivot_wider(names_from = protection, values_from = .linpred) %>% 
+  mutate(d = `1` - `0`) %>% 
+  select(-`1`, -`0`) %>% 
+  pivot_wider(names_from = pretest, values_from = d) %>% 
+  mutate(d_in_d = `1` - `0`) %>% 
+  group_by(item) %>% 
+  mean_qi(d_in_d)
+
+# what is this?
+mu_d_in_d_population
+```
+
+We're ready to combine the two summary objects and plot.
+
+```{r, fig.width = 7, fig.height = 3, warning = F}
+# combine and wrangle
+rbind(mu_d_in_d_item, mu_d_in_d_population) %>% 
+  mutate(item = factor(item, levels = c("population~mean", str_c("italic(j)==", 1:6)))) %>% 
+  
+  # plot
+  ggplot(aes(x = d_in_d, xmin = .lower, xmax = .upper, y = item)) +
+  geom_vline(xintercept = 0, color = "white") +
+  geom_pointrange(aes(size = item == "population~mean",
+                      shape = item == "population~mean")) +
+  scale_shape_manual(values = 16:15, breaks = NULL) +
+  scale_size_discrete(range = c(0.5, 0.7), breaks = NULL) +
+  scale_y_discrete(NULL, labels = ggplot2:::parse_safe) +
+  xlim(-1, 1) +
+  labs(title = "Pretesting effect for protection versus loss (fit3)",
+       x = "difference in differences")
+```
+
+If you compare that plot with its analogue from the cross-sectional model `fit1`, you'll see the 95% intervals are narrower, which is why we should prefer the longitudinal version of the model. We can extend our `add_linpred_draws()` strategy to accommodate the distributional model `fit4` by adjusting the settings in the `dpar` argument. Here's what that workflow can look like in one big step.
+
+```{r, fig.width = 7, fig.height = 3, warning = F}
+# compute and summarize
+bind_rows(
+  # population
+  coyne2022_long_long %>% 
+    distinct(item, protection, pretest) %>%
+    mutate(time = 1) %>% 
+    add_linpred_draws(fit4, re_formula = NA, dpar = c("mu", "disc")) %>% 
+    ungroup() %>% 
+    filter(item == "1") %>% 
+    mutate(item = "population~mean"),
+  # item
+  coyne2022_long_long %>% 
+    distinct(item, protection, pretest) %>%
+    mutate(time = 1) %>% 
+    add_linpred_draws(
+      fit4, 
+      re_formula = ~ (1 + time + (protection + pretest + protection:pretest):time |j| item),
+      dpar = c("mu", "disc")) %>% 
+    ungroup() %>% 
+    mutate(item = str_c("italic(j)==", item))
+) %>% 
+  # wrangle both
+  select(-.row, -.chain, -.iteration, -time, -.linpred) %>% 
+  pivot_longer(mu:disc, names_to = "parameter") %>% 
+  pivot_wider(names_from = protection, values_from = value) %>% 
+  mutate(d = `1` - `0`) %>% 
+  select(-`1`, -`0`) %>% 
+  pivot_wider(names_from = pretest, values_from = d) %>% 
+  mutate(d_in_d = `1` - `0`) %>% 
+  group_by(item, parameter) %>% 
+  mean_qi(d_in_d) %>% 
+  mutate(greek = ifelse(parameter == "mu", "mu", "alpha")) %>% 
+  mutate(item  = factor(item, levels = c("population~mean", str_c("italic(j)==", 1:6))),
+         greek = factor(greek, levels = c("mu", "alpha"))) %>% 
+  
+  # plot!
+  ggplot(aes(x = d_in_d, xmin = .lower, xmax = .upper, y = item)) +
+  geom_vline(xintercept = 0, color = "white") +
+  geom_pointrange(aes(size = item == "population~mean",
+                      shape = item == "population~mean")) +
+  scale_shape_manual(values = 16:15, breaks = NULL) +
+  scale_size_discrete(range = c(0.5, 0.7), breaks = NULL) +
+  scale_y_discrete(NULL, labels = ggplot2:::parse_safe) +
+  xlim(-1, 1) +
+  labs(title = "Pretesting effect for protection versus loss (fit4)",
+       x = "difference in differences") +
+  facet_wrap(~ greek, labeller = label_parsed)
+```
+
+Again, the overall pattern of results are similar to those from the cross-sectional `fit2`, but the 95% intervals are narrower, which is why we prefer using all the available data in the multilevel longitudinal model.
+
+## Likert scale
+
+So far, we have summarized the differences in differences in all models in the metrics of the model parameters. We compared the latent means and, with the distributional models, the latent discrimination parameters. But substantive researchers might prefer effect sizes expressed in terms of the underlying data. In this section, we'll practice three approaches:
+
+* item-level differences in the Likert-rating metric,
+* sum-score differences in the sum-score metric, and
+* sum-score differences in the POMP metric.
+
+### Item-level differences in the Likert-rating metric.
+
+I expect most substantive researchers wouldn't actually want the effect sizes presented as item-level differences in the Likert-rating metric, but the workflow in this section will prepare us for the sum-score workflows to follow. One again, we'll use a **tidybayes**-oriented workflow, but this time we will use the `add_epred_draws()` function, rather than the `add_linpred_draws()` function from above. The two functions work much the same way, but `add_epred_draws()` will return the model results in the metric of the model expectations, rather than of the parameters. Here's the initial bit of code, using the longitudinal distributional model `fit4` as our foundation.
+
+```{r}
+fit4_epred <- coyne2022_long_long %>% 
+  distinct(item, protection, pretest) %>%
+  mutate(time = 1) %>% 
+  add_epred_draws(
+    fit4, 
+    re_formula = ~ (1 + time + (protection + pretest + protection:pretest):time |j| item)) %>% 
+  ungroup()
+
+# what?
+head(fit4_epred)
+glimpse(fit4_epred)
+```
+
+Recall that with an ordinal model, one models the probabilities of a given ordinal category. Those conditional probabilities, for each posterior draw and item, are listed in the `.epred` column. In a simple model based on a single ordinal variable, you can compute the model-based mean with the equation
+
+$$
+\mathbb{E}(\text{rating}) = \sum_1^K p_k \times k,
+$$
+
+where $\mathbb{E}$ is the expectation operator (the model-based mean), $p_k$ is the probability of the $k^\text{th}$ ordinal value, and $k$ is the actual ordinal value. 
+
+Since we have modeled $j$ Likert-type items in a multilevel model, we can generalize that equation to
+
+$$
+\mathbb{E}(\text{rating}_j) = \sum_1^K p_{jk} \times k,
+$$
+
+where the probabilities now vary across $j$ items and $k$ rating options. Because we are computing all the $p_k$ values with MCMC and expressing those values as posterior distributions, we, of course, have to perform this operation within each of our MCMC draws. Here's how to do that with our `fit4_epred` object. We'll save the summaries of the results as `fit4_epred_item_means`.
+
+```{r, message = F}
+fit4_epred_item_means <- fit4_epred %>% 
+  # compute p[jk] * k
+  mutate(product = as.double(.category) * .epred) %>% 
+  # group and convert to the item-score metric by summing, by posterior draw
+  group_by(item, protection, pretest, .draw) %>% 
+  summarise(item_mean = sum(product)) %>% 
+  # group summarize across posterior draws
+  group_by(item, protection, pretest) %>% 
+  mean_qi(item_mean)
+
+# what is this?
+print(fit4_epred_item_means)
+```
+
+It might be helpful to compare those posterior summaries with the original data and sample statistics.
+
+```{r, fig.width = 8, fig.height = 6, warning = F, message = F}
+# compute and save the sample means
+sample_item_means <- coyne2022_long_long %>% 
+  filter(time == 1) %>% 
+  group_by(item, protection, pretest) %>% 
+  summarise(item_mean = mean(as.integer(likert)))
+
+# wrangle the data a little
+coyne2022_long %>%
+  mutate(y    = str_c("protection: ", protection, "\n", "pretest: ", pretest),
+         item = str_c("item #", item)) %>% 
+  
+  # plot!
+  ggplot() +
+  geom_bar(aes(x = likert),
+           fill = "grey70") +
+  geom_point(data = sample_item_means %>% 
+               mutate(y = str_c("protection: ", protection, "\n", "pretest: ", pretest),
+         item = str_c("item #", item)),
+             aes(x = item_mean, y = -15),
+             shape = 18, color = "red", size = 2) +
+  geom_pointinterval(data = fit4_epred_item_means %>% 
+                       mutate(y = str_c("protection: ", protection, "\n", "pretest: ", pretest),
+         item = str_c("item #", item)),
+                     aes(x = item_mean, xmin = .lower, xmax = .upper, y = -30),
+                     size = 3/4) +
+  scale_y_continuous(breaks = 0:2 * 40, limits = c(-40, NA)) +
+  labs(title = "Yes, you can connect the ordinal model to the sample data.",
+       subtitle = "The gray bars are the sample data distributions. The red diamonds mark the sample means. The\nblack dots and horizontal lines mark the model-based population means and their 95% intervals.",
+       x = "Likert-type scale",
+       y = "count") +
+  facet_grid(y ~ item) +
+  theme(strip.background = element_blank(),
+        strip.text.y = element_text(angle = 0, vjust = 0.5, hjust = 0))
+```
+
+You'll notice it's generally difficult to see the horizontal lines marking off the 95% intervals. That's because the posteriors for the means are so narrow that the dots marking off the posterior means are generally wider than the 95% intervals. From a scientific perspective, this is a great problem to have. If you're shaken by the differences in the posterior means and the sample means, keep in mind that the posteriors are based on a multilevel model, which imposed partial pooling across persons and items. The job of the model is to compute the population parameters, not reproduce the sample estimates. To brush up on why we like partial pooling, check out the classic (1977; https://doi.org/10.1038/scientificamerican0577-119) paper by Efron and Morris, *Stein's paradox in statistics*.
+
+Here's how to connect that workflow with the one from previous sections to compute item-level difference in differences in the Likert-rating metric, and then display the results in a coefficient plot.
+
+```{r, fig.width = 7, fig.height = 3, warning = F, message = F}
+fit4_epred %>% 
+  mutate(product = as.double(.category) * .epred) %>% 
+  group_by(item, protection, pretest, .draw) %>% 
+  summarise(item_mean = sum(product)) %>% 
+  group_by(item, protection, pretest) %>%  
+  # this part is new
+  pivot_wider(names_from = protection, values_from = item_mean) %>% 
+  mutate(d = `1` - `0`) %>% 
+  select(-`1`, -`0`) %>% 
+  pivot_wider(names_from = pretest, values_from = d) %>% 
+  mutate(d_in_d = `1` - `0`) %>% 
+  group_by(item) %>% 
+  mean_qi(d_in_d) %>% 
+  mutate(item = str_c("italic(j)==", item)) %>% 
+
+  ggplot(aes(x = d_in_d, xmin = .lower, xmax = .upper, y = item)) +
+  geom_vline(xintercept = 0, color = "white") +
+  geom_pointrange() +
+  scale_y_discrete(NULL, labels = ggplot2:::parse_safe) +
+  scale_x_continuous(limits = c(-4, 4), expand = c(0.01, 0.01)) +
+  labs(title = "Pretesting effect for protection versus loss (fit4)",
+       x = "difference in differences (item rating scale)") +
+  theme(panel.grid = element_blank())
+```
+
+As the Likert-type scales all range from 1 to 5, their difference scores necessarily have a maximum range of -4 to 4, which is where the settings on the $x$-axis come from.
+
+### Sum-score differences in the sum-score metric.
+
+Now we have practiced using the ordinal model to compute the item-level means and the item-level differences in the Likert-rating metric, we are ready to convert the results to the sum-score metric. We will continue on with the `fit4_epred` object and save the product of the conditional item rating probabilities and the rating values as `product`. The major change in the workflow is we then group the results by `protection`, `pretest`, and `.draw`. That is, we are leaving the `item` variable out of the `group_by()` line. As a consequence, summarizing the `product` values returns the expectations in a sum-score metric. Accordingly, we save those results in a column called `sum_score_mean`.
+
+```{r, message = F}
+fit4_epred_sum_score <- fit4_epred %>% 
+  mutate(product = as.double(.category) * .epred) %>% 
+  # this line has changed
+  group_by(protection, pretest, .draw) %>% 
+  summarise(sum_score_mean = sum(product)) 
+
+# what is this?
+head(fit4_epred_sum_score)
+```
+
+How we have the posterior draws for the conditional sum scores in `fit4_epred_sum_score`, we can plot their summaries along with the sample data and sample statistics.
+
+```{r, fig.width = 8, fig.height = 5, message = F}
+# compute and save the sample means
+sum_score_means <- coyne2022 %>% 
+  group_by(protection, pretest) %>% 
+  summarise(sum_score_mean = mean(StigmaPosttestTotal))
+
+# plot!
+coyne2022 %>% 
+  ggplot() +
+  geom_bar(aes(x = StigmaPosttestTotal),
+           fill = "grey70") +
+  stat_pointinterval(data = fit4_epred_sum_score,
+                     aes(x = sum_score_mean, y = -6),
+                     point_interval = mean_qi, .width = .95, size = 3/4) +
+  geom_point(data = sum_score_means,
+             aes(x = sum_score_mean, y = -3),
+             shape = 18, color = "red", size = 2.25) +
+  scale_x_continuous(breaks = 1:5 * 6) +
+  scale_y_continuous(breaks = 0:2 * 10, limits = c(-9, NA)) +
+  labs(title = "Yes, you can connect the ordinal model to the sum scores.",
+       subtitle = "The gray bars are the sample data distributions. The red diamonds mark the sample means. The\nblack dots and horizontal lines mark the model-based population means and their 95% intervals.",
+       x = "Sum scores (range: 6-30)",
+       y = "count") +
+  facet_grid(protection ~ pretest, labeller = label_both)
+```
+
+As with the item-level results, the sum-score posteriors won't necessarily align exactly with the sample statistics, but it's nice to see they're not far off.
+
+Here's how to convert the information in the `fit4_epred_sum_score` object into a difference in differences for the sum score.
+
+```{r, fig.width = 6, fig.height = 2}
+fit4_epred_sum_score %>%  
+  # wrangle like before 
+  pivot_wider(names_from = protection, values_from = sum_score_mean) %>% 
+  mutate(d = `1` - `0`) %>% 
+  select(-`1`, -`0`) %>% 
+  pivot_wider(names_from = pretest, values_from = d) %>% 
+  mutate(d_in_d = `1` - `0`) %>% 
+
+  # plot!
+  ggplot(aes(x = d_in_d)) +
+  geom_vline(xintercept = 0, color = "white") +
+  stat_halfeye(point_interval = mean_qi, .width = .95) +
+  scale_x_continuous(breaks = -4:4 * 6, limits = c(-24, 24), expand = c(0.01, 0.01)) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  labs(title = "Pretesting effect for protection versus loss (fit4)",
+       x = "difference in differences (sum-score scale)")
+```
+
+As the 6-item sum score ranges from 6 to 30, the difference score necessarily have a maximum range of -24 to 24, which is where the settings on the $x$-axis come from. Overall, the effect size for pretesting looks pretty small. If you're curious, here are the numeric summaries for the sum-score effect sizes.
+
+```{r}
+# save for reordering the output
+es_levels <- c("protection - risk (no pretest)", "protection - risk (with pretest)", "difference in differences")
+
+fit4_epred_sum_score %>%  
+  pivot_wider(names_from = protection, values_from = sum_score_mean) %>% 
+  mutate(d = `1` - `0`) %>% 
+  select(-`1`, -`0`) %>% 
+  pivot_wider(names_from = pretest, values_from = d) %>% 
+  mutate(d_in_d = `1` - `0`) %>%
+  pivot_longer(-.draw, values_to = "sum_score_difference") %>% 
+  mutate(effect_size = case_when(
+    name == "0" ~ "protection - risk (no pretest)",
+    name == "1" ~ "protection - risk (with pretest)",
+    name == "d_in_d" ~ "difference in differences"
+  )) %>% 
+  mutate(effect_size = factor(effect_size, levels = es_levels)) %>%
+  group_by(effect_size) %>% 
+  mean_qi(sum_score_difference) %>% 
+  mutate_if(is.double, round, digits = 2)
+```
+
+### Sum-score differences in the POMP metric.
+
+When we use the sum-score metric to express the difference in differences, we have presented the results as an unstandardized mean difference, from an effect-size perspective. Unstandardized mean differences are fine choices for audience who are familiar with the scale form which the sum score is derived. Given how Coyne and colleagues adapted these 6 items from a broader item pool, their audience might benefit from an alternative approach.
+
+Based on work from Cohen and colleagues [-@cohen1999problem], we might express our mean differences in a POMP-score metric. The acronym POMP stands for the *percent of maximum possible*. Say you have some score variable $y$ with a clear lower and upper limit. You can convert those data into a POMP metric with the formula
+
+$$
+\text{POMP}_i = \frac{y_i - \min(y_i)}{\max(y_i) - \min(y_i)} \times 100.
+$$
+
+Here's what that transformation would look like for our HIV stigma sum-score values.
+
+```{r, fig.height = 4, fig.width = 6, warning = F, message = F}
+tibble(sum_score = 6:30) %>% 
+  mutate(POMP = (sum_score - min(sum_score)) / (max(sum_score) - min(sum_score)) * 100) %>% 
+  mutate(label = MOTE::apa(POMP, decimals = 1, leading = T)) %>% 
+
+  ggplot(aes(x = sum_score, y = POMP, label = label)) +
+  geom_col(width = .67, fill = "grey70", color = "grey70") +
+  geom_text(nudge_y = 2, size = 2.25) +
+  scale_x_continuous("HIV stigma sum score", breaks = c(1, 2, 4, 6) * 5)
+```
+
+However, our strategy will not be to transform the HIV stigma sum-score data, itself. Rather, we will transform the model-based means into the POMP metric, will will put our group contrasts into a POMP difference metric.
+
+```{r, fig.width = 6, fig.height = 2}
+# define the min and max values
+sum_score_min <- 6
+sum_score_max <- 30
+
+# compute and save
+fit4_epred_pomp <- fit4_epred_sum_score %>%  
+  # compute the POMP scores
+  mutate(pomp = (sum_score_mean - sum_score_min) / (sum_score_max - sum_score_min) * 100) %>%
+  # drop the sum_score_mean column
+  select(-sum_score_mean) %>% 
+  # wrangle like before, but with the pomp values
+  pivot_wider(names_from = protection, values_from = pomp) %>% 
+  mutate(d = `1` - `0`) %>% 
+  select(-`1`, -`0`) %>% 
+  pivot_wider(names_from = pretest, values_from = d) %>% 
+  mutate(d_in_d = `1` - `0`) 
+
+# plot!
+fit4_epred_pomp %>% 
+  ggplot(aes(x = d_in_d)) +
+  geom_vline(xintercept = 0, color = "white") +
+  stat_halfeye(point_interval = mean_qi, .width = .95) +
+  scale_x_continuous(breaks = -5:5 * 20, limits = c(-100, 100), expand = c(0.01, 0.01)) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  labs(title = "Pretesting effect for protection versus loss (fit4)",
+       x = "difference in differences (% of maximum possible; POMP)")
+```
+
+The POMP difference in differences ranges from about -4% to 7%, with a posterior mean of about 2%. Do you think 2% is a meaningfully large difference for pretesting? The answer to that question depends on the specific research context, of course. The nice thing about POMP scoring is it makes it relatively easy to understand.
+
+If you're curious, here are the numeric summaries for the sum-score effect sizes in POMP.
+
+```{r}
+fit4_epred_pomp %>%
+  pivot_longer(-.draw, values_to = "pomp_difference") %>% 
+  mutate(effect_size = case_when(
+    name == "0" ~ "protection - risk (no pretest)",
+    name == "1" ~ "protection - risk (with pretest)",
+    name == "d_in_d" ~ "difference in differences"
+  )) %>% 
+  mutate(effect_size = factor(effect_size, levels = es_levels)) %>%
+  group_by(effect_size) %>% 
+  mean_qi(pomp_difference) %>% 
+  mutate_if(is.double, round, digits = 2)
+```
+
+## Session information
+
+```{r}
+sessionInfo()
+```
+
