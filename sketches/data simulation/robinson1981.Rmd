@@ -1,0 +1,619 @@
+---
+title: "robinson1981"
+author: "A Solomon Kurz"
+date: "`r format(Sys.Date())`"
+output: github_document
+---
+
+```{r, echo = F}
+knitr::opts_chunk$set(fig.retina = 2.5)
+options(width = 110)
+```
+
+The purpose of this file is to simulate the data from Robinson et al (1981; https://doi.org/10.1901/jaba.1981.14-307). We don't have their actual data file, but they displayed the data from 4 of the 18 boys in their Figure 2 (p. 312). I digitized those data one subplot at a time with aid from the WebPlotDigitizer app (https://automeris.io/WebPlotDigitizer/) and saved the cleaned results in 4 `.csv` files in the `Robinson et al (1981)` subfolder. Here we load the files.
+
+```{r, warning = F, message = F}
+library(tidyverse)
+library(brms)
+
+cd <- read_csv("Robinson et al (1981)/cd.csv", col_names = FALSE)
+jc <- read_csv("Robinson et al (1981)/jc.csv", col_names = FALSE)
+rb <- read_csv("Robinson et al (1981)/rb.csv", col_names = FALSE)
+tc <- read_csv("Robinson et al (1981)/tc.csv", col_names = FALSE)
+
+# what is this?
+glimpse(cd)
+glimpse(jc)
+glimpse(rb)
+glimpse(tc)
+```
+
+Now we merge the data files into a single data frame `d`, and add a few columns.
+
+```{r}
+# combine
+d <- bind_rows(cd, jc, tc, rb) %>% 
+  # rename
+  set_names(c("session", "assignments")) %>% 
+  # round the numerals to integers
+  mutate_all(round, digits = 0) %>% 
+  # add identifiers and experimental phases
+  mutate(initials = rep(c("CD", "JC", "TC", "RB"), each = n() / 4),
+         id       = rep(1:4, each = n() / 4),
+         phase    = case_when(
+           session < 15 ~ "B1",
+           session < 20 ~ "A1",
+           session >= 20 ~ "B2"
+         ) %>% 
+           factor(., levels = c("B1", "A1", "B2")))
+
+# what have we done?
+head(d)
+```
+
+Add new time variables.
+
+```{r}
+d <- d %>% 
+  mutate(session0 = session - 1) %>% 
+  group_by(phase, id) %>% 
+  mutate(psession = 1:n(),
+         psession0 = 1:n() - 1) %>% 
+  ungroup()
+
+# what did we do?
+d %>% 
+  distinct(session, session0, psession, psession0)
+```
+
+Add two new `phase`-based dummies.
+
+```{r}
+d <- d %>% 
+  mutate(A1 = ifelse(phase == "A1", 1, 0),
+         B2 = ifelse(phase == "B2", 1, 0))
+
+# what did we do?
+d %>% 
+  distinct(phase, A1, B2)
+```
+
+## EDA
+
+We might compute some descriptive statistics to get a sense of the data.
+
+```{r, message = F}
+d %>% 
+  group_by(initials, phase) %>% 
+  summarise(mean = mean(assignments),
+            var = var(assignments),
+            min = min(assignments),
+            max = max(assignments),
+            n = n()) %>% 
+  mutate_if(is.double, round, digits = 1)
+```
+
+We can also just plot. Here's a variant of Figure 2 in the original paper (p. 312).
+
+```{r}
+d %>% 
+  ggplot(aes(x = session, y = assignments, group = phase, color = phase == "A1")) +
+  geom_vline(xintercept = c(14.5, 19.5), color = "white") +
+  geom_point() +
+  geom_line() +
+  scale_color_manual("Phase", values = c("blue3", "red3"), labels = c("B", "A")) +
+  scale_y_continuous(breaks = 0:3 * 4) +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~ initials)
+```
+
+## Model
+
+I'm going to use a model to simulate the data from the 14 boys who were not depicted in Robinson and colleagues' Figure 2. This model will be based on the digitized data in `d`. The statistical model will be similar to the one I'll later propose in the content sketch (and may end up in the book), but with very constrained priors. If we describe the `assignments` counts as varying across $i$ boys and $t$ time points, we can use the multilevel distributional negative-binomial model
+
+$$
+\begin{align*}
+\text{assignments}_{it} & \sim \operatorname{Negative Binomial}(\mu_{it}, \phi_{it}) \\
+\log(\mu_{it}) & = b_{0i} + b_{1i} \text{psession0}_{it} + b_{2i} \text{A1}_{it} + b_{3i} \text{B2}_{it} + b_{4i} \text{psession0}_{it}\text{A1}_{it} + b_{5i} \text{psession0}_{it}\text{B2}_{it} \\
+\log(\phi_{it}) & = h_{0i} + h_{1i} \text{A1}_{it} + h_{2i} \text{B2}_{it} \\
+b_{0i} & = \beta_0 + u_{0i} \\
+b_{1i} & = \beta_1 + u_{1i} \\
+b_{2i} & = \beta_2 + u_{2i} \\
+b_{3i} & = \beta_3 + u_{3i} \\
+b_{4i} & = \beta_4 + u_{4i} \\
+b_{5i} & = \beta_5 + u_{5i} \\
+h_{0i} & = \eta_0 + u_{6i} \\
+h_{1i} & = \eta_1 + u_{7i} \\
+h_{2i} & = \eta_2 + u_{8i},
+\end{align*}
+$$
+
+with an upper-level structure
+
+$$
+\begin{align*}
+\begin{bmatrix} u_{0i} \\ \vdots \\ u_{8i} \end{bmatrix} & \sim \mathcal N(\mathbf 0, \mathbf{SRS}) \\
+\mathbf{S} & = \begin{bmatrix} 
+  \sigma_0 \\ 
+  0 & \sigma_1 \\ 
+  0 & 0 & \sigma_2 \\ 
+  0 & 0 & 0 & \sigma_3 \\ 
+  0 & 0 & 0 & 0 & \sigma_4 \\ 
+  0 & 0 & 0 & 0 & 0 & \sigma_5 \\ 
+  0 & 0 & 0 & 0 & 0 & 0 & \sigma_6 \\ 
+  0 & 0 & 0 & 0 & 0 & 0 & 0 & \sigma_7 \\ 
+  0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & \sigma_8
+  \end{bmatrix},
+\end{align*}
+$$
+
+and priors
+
+$$
+\begin{align*}
+\beta_0 & \sim \mathcal N(\log(5), 0.5) \\
+\beta_1, \beta_4, \beta_5 & \sim \mathcal N(0, 0.01) \\
+\beta_2 & \sim \mathcal N(0, 1) \\
+\beta_3 & \sim \mathcal N(0, 0.25) \\
+\eta_0 & \sim \mathcal N(3.800451, 0.4723807) \\
+\eta_1, \eta_2 & \sim \mathcal N(0, 0.5) \\
+\sigma_0, \sigma_2, \sigma_6, \dots, \sigma_8 & \sim \operatorname{Gamma}(11.11111, 22.22222) \\
+\sigma_1, \sigma_3, \dots, \sigma_5 & \sim \operatorname{Gamma}(2.777778, 11.11111) \\
+\mathbf{R} & \sim \operatorname{LKJ}(1),
+\end{align*}
+$$
+
+where the model for $\log(\mu_{it})$ allows for intercepts (initial status) and slopes (change over time) to vary across the boys and across the 3 experimental phases (B1, A1, and B2). In this parameterization, the B1 phase is the reference category, and the intercepts and slopes for the remaining 2 categories are depicted as deviations via the `A1` and `B2` dummy variables. Linear time is captured by the `psession0` variable, which starts at `0` at the beginning of each experimental phase, and increases by one integer with each subsequent session.
+
+The model for $\log(\phi_{it})$ is a subset of the model for $\log(\mu_{it})$, with the linear changes over time omitted. If there were more data within boys and more boys in the data set, I'd consider fitting the full model for $\log(\phi_{it})$. Given the smallness of the current data set, allowing the dispersion to vary across boys and phases seems ambitious enough.
+
+As to the priors, the $\mathcal N(\log(5), 0.5)$ prior for $\beta_0$ is meant to concentrate the intercepts for the first phase, BI, in the middle single-digit integers. If you exponentiate, here are it's median and 95% range on the count space:
+
+```{r}
+exp(log(5) + c(0, -1, 1))
+```
+
+The tighter prior $\mathcal N(0, 0.01)$ for $\beta_1$, $\beta_4$ and $\beta_5$ is designed to only allow for only minor linear trends within the experimental phases. However, the $\mathcal N(0, 1)$ prior for $\beta_2$ will allow for a rather large change in initial status for the A1 phase, relative to the B1 baseline. The $\mathcal N(0, 0.25)$ prior for $\beta_3$ will help make sure the difference between the two B phases isn't as large--they are both B phases, after all.
+
+The $\mathcal N(3.800451, 0.4723807)$ prior for $\eta_0$ may seem oddly specific. First consider that as $\phi \rightarrow \infty$, the negative binomial distribution converges with the Poisson. $\phi$ is constrained to values above zero, and as $\phi \rightarrow 0$, the sample variance will increase, relative to the Poisson. The expected variance for the Poisson distribution, recall, is the same as the mean. The variance for the negative binomial model, however, follows the formula
+
+$$
+\operatorname{Var}(y) = \mu + \frac{\mu^2}{\phi},
+$$
+
+where $\mu^2/\phi$ is the additional variance of the negative binomial compared to the Poisson. As the [Stan team puts it](https://mc-stan.org/docs/2_18/functions-reference/nbalt.html#probability-mass-function-10): "So the inverse of parameter $\phi$ controls the overdispersion, scaled by the square of the mean, $\mu^2$." Thus, the amount of extra variance in the negative binomial, relative to the Poisson, is not independent of the mean. To get a sense of how this works, here is what the ratio of the variance of negative binomial over the variance of the Poison looks like for a mean of 5 $(\mu = 5)$ and $\phi$ values within the range of 0.1 to 100.
+
+```{r, fig.width = 4, fig.height = 3, warning = F}
+tibble(mu  = 5,
+       phi = seq(from = 0.1, to = 110, by = 0.1)) %>% 
+  mutate(v_p  = mu,
+         v_nb = mu + (mu^2 / phi)) %>% 
+  mutate(ratio = v_nb / v_p) %>% 
+  
+  ggplot(aes(x = phi, y = ratio)) +
+  geom_hline(yintercept = 1, color = "white") +
+  geom_vline(xintercept = 0, color = "white") +
+  geom_line() +
+  scale_x_continuous(expression(phi), limits = c(-1, 105), expand = c(0, 0)) +
+  scale_y_continuous(expression(Var[NB]/Var[Poisson]), breaks = c(1, 3, 5, 7, 9)) +
+  coord_cartesian(ylim = c(1, 10)) +
+  theme(panel.grid = element_blank())
+```
+
+When $\phi = 50$, the negative-binomial variance is 10% larger than that of the Poisson. When $\phi = 5$, the negative-binomial variance is twice the Poisson, and the ratio rapidly increases as $\phi$ decreases from there. 
+
+```{r}
+tibble(mu  = 5,
+       phi = c(5, 50)) %>% 
+  mutate(ratio = (mu + (mu^2 / phi)) / mu)
+```
+
+To put a prior on $\phi$, we want a continuous distribution over the positive real numbers. When you don't attach a linear model to $\phi$, the **brms** default is $\operatorname{Gamma}(0.01, 0.01)$, which is fine as far as defaults go, but it places a lot of prior mass near zero. Another thing to consider is when you do attach a linear model to $\phi$, **brms** then switches to the log link, which is entirely sensible, but requires we change how we think about the priors. The parameter space for $\log \phi$ ranges all the way from $-\infty$ to $\infty$, which makes priors from the Student-$t$ family a more natural fit. So I propose you think about priors for $\phi$ in terms of the lognormal distribution, which translates directly to the normal distribution when you take the log. Here's what the lognormal distribution looks like with a mean of 50 and a standard deviation of 25.
+
+```{r, fig.width = 4.5, fig.height = 3, warning = F}
+# desired sample statistics
+m <- 50
+s <- 25
+
+# convert those values into the lognormal parameters
+mu    <- log(m / sqrt(s^2 / m^2 + 1))
+sigma <- sqrt(log(s^2 / m^2 + 1))
+
+# plot!
+tibble(x = seq(from = 0.1, to = 105, by = 0.1)) %>% 
+  mutate(d = dlnorm(x, meanlog = mu, sdlog = sigma)) %>% 
+  ggplot(aes(x = x, y = d)) +
+  geom_area() +
+  scale_x_continuous(expression(phi), limits = c(0, 105), expand = c(0, 0)) +
+  scale_y_continuous("density", breaks = NULL) +
+  labs(subtitle = "Lognormal with a mean of 50 and standard deviaiton of 25") +
+  theme(panel.grid = element_blank())
+```
+
+This lognormal prior puts a lot of mass near 50, which regularizes the negative-binomial variance to be just a little greater than the Poisson variance. It has a long, thick right tail, which easily allows for even less dispersion. Though this prior does allow for small $\phi$ values, it gives very little prior mass for values near the single-digit range, which is right around where the negative-binomial variance asymptotes, relative to the Poisson. If you were to log transform this distribution, it would turn into $\mathcal N(3.800451, 0.4723807)$.
+
+```{r}
+mu
+sigma
+```
+
+This is the origin of the priors for $\eta_0$. The $\mathcal N(0, 0.5)$ prior for $\eta_1$ and $\eta_2$ is meant to allow for moderately large changes in $\phi$ across the experimental phases.
+
+The gamma priors for all the level-2 $\sigma$ parameters are meant to encourage small- to moderately-sized boy-level deviations from the population parameters.
+
+$$
+\begin{align*}
+\sigma_0, \sigma_2, \sigma_6, \dots, \sigma_8 & \sim \operatorname{Gamma}(11.11111, 22.22222) \\
+\sigma_1, \sigma_3, \dots, \sigma_5 & \sim \operatorname{Gamma}(2.777778, 11.11111)
+\end{align*}
+$$
+
+The values from the hyperparameters were computed with the handy `gamma_s_and_r_from_mean_sd()` function, which is based on [Kruschke's work](https://sites.google.com/site/doingbayesiandataanalysis/). With `gamma_s_and_r_from_mean_sd()`, you can compute the gamma shape and rate parameters for a given mean and standard deviation. 
+
+```{r}
+gamma_s_and_r_from_mean_sd <- function(mean, sd) {
+  if (mean <= 0) stop("mean must be > 0")
+  if (sd   <= 0) stop("sd must be > 0")
+  shape <- mean^2 / sd^2
+  rate  <- mean   / sd^2
+  return(list(shape = shape, rate = rate))
+}
+```
+
+The $\operatorname{Gamma}(11.11111, 22.22222)$ prior has a mean of 0.5 and a standard deviation of 0.15, and the $\operatorname{Gamma}(2.777778, 11.11111)$ prior has a mean of 0.52 and a standard deviation of 0.15. Here are what they look like in a couple plots.
+
+```{r, fig.width = 4.5, fig.height = 3.5, warning = F}
+# Gamma(11.11111, 22.22222)
+g <- gamma_s_and_r_from_mean_sd(mean = 0.5, sd = 0.15)
+
+tibble(x = seq(from = 0.001, to = 2, by = 0.002)) %>% 
+  mutate(d = dgamma(x, shape = g$shape, rate = g$rate)) %>% 
+  ggplot(aes(x = x, y = d)) +
+  geom_area() +
+  scale_y_continuous("density", breaks = NULL, limits = c(0, 3.2)) +
+  labs(title = "Gamma(11.11111, 22.22222)",
+       subtitle = "mean: 0.5\nstandard deviation: 0.15\n99% range: [0.1975333, 0.9698473]",,
+       x = expression(italic(p)(sigma[italic(x)]))) +
+  theme(panel.grid = element_blank())
+
+# Gamma(2.777778, 11.11111)
+g <- gamma_s_and_r_from_mean_sd(mean = 0.25, sd = 0.15)
+
+tibble(x = seq(from = 0.001, to = 2, by = 0.002)) %>% 
+  mutate(d = dgamma(x, shape = g$shape, rate = g$rate)) %>% 
+  ggplot(aes(x = x, y = d)) +
+  geom_area() +
+  scale_y_continuous("density", breaks = NULL, limits = c(0, 3.2)) +
+  labs(title = "Gamma(2.777778, 11.11111)",
+       subtitle = "mean: 0.25\nstandard deviation: 0.15\n99% range: [0.02482858 0.79910949]",
+       x = expression(italic(p)(sigma[italic(x)]))) +
+  theme(panel.grid = element_blank())
+```
+
+```{r, eval = F, echo = F}
+g <- gamma_s_and_r_from_mean_sd(mean = 0.5, sd = 0.15)
+qgamma(p = c(.005, .995), shape = g$shape, rate = g$rate)  # 99% range
+qgamma(p = c(.050, .950), shape = g$shape, rate = g$rate)  # 90% range
+
+g <- gamma_s_and_r_from_mean_sd(mean = 0.25, sd = 0.15)
+qgamma(p = c(.005, .995), shape = g$shape, rate = g$rate)  # 99% range
+qgamma(p = c(.050, .950), shape = g$shape, rate = g$rate)  # 90% range
+```
+
+Finally, the $\operatorname{LKJ}(1)$ prior will regularize the various level-2 correlations $\mathbf{R}$ matrix toward zero.
+
+Here's how to fit the model with `brm()`.
+
+```{r fit, results = "hide", message = F}
+# 1.378158 mins
+fit <- brm(
+  data = d,
+  family = negbinomial,
+  bf(assignments ~ 0 + Intercept + psession0 + phase + psession0:phase + (1 + psession0 + phase + psession0:phase |i| id),
+     shape       ~ 0 + Intercept             + phase                   + (1             + phase                   |i| id)),
+  prior = c(prior(normal(0, 0.25),     class = b),
+            prior(normal(log(5), 0.5), class = b, coef = Intercept),
+            prior(normal(0, 0.01),      class = b, coef = psession0),
+            prior(normal(0, 0.01),      class = b, coef = "psession0:phaseA1"),
+            prior(normal(0, 0.01),      class = b, coef = "psession0:phaseB2"),
+            prior(normal(0, 1),        class = b, coef = phaseA1),
+            prior(gamma(11.11111, 22.22222), class = sd),
+            prior(gamma(2.777778, 11.11111), class = sd, coef = phaseB2,             group = id),
+            prior(gamma(2.777778, 11.11111), class = sd, coef = psession0,           group = id),
+            prior(gamma(2.777778, 11.11111), class = sd, coef = "psession0:phaseA1", group = id),
+            prior(gamma(2.777778, 11.11111), class = sd, coef = "psession0:phaseB2", group = id),
+            
+            prior(normal(0, 0.5),              class = b,                   dpar = shape),
+            prior(normal(3.800451, 0.4723807), class = b, coef = Intercept, dpar = shape),
+            prior(gamma(11.11111, 22.22222), class = sd, dpar = shape),
+            
+            prior(lkj(1), class = cor)),
+  cores = 4, 
+  seed = 1,
+  control = list(adapt_delta = .99)
+)
+```
+
+Check the model summary.
+
+```{r}
+summary(fit)
+```
+
+Everything looks on the up-and-up. 
+
+## Simulate
+
+The next step is to simulate full timeseries of 100 synthetic boys with the `brms::predict()` function.
+
+```{r}
+nd <- d %>% 
+  distinct(session, psession0, phase, A1, B2) %>% 
+  expand(nesting(session, psession0, phase, A1, B2),
+         id = 101:200)
+
+set.seed(1)
+
+p <- predict(
+  fit,
+  newdata = nd,
+  allow_new_levels = TRUE,
+  ndraws = 1,
+  summary = FALSE) %>% 
+  t() %>% 
+  data.frame() %>% 
+  set_names("assignments") %>% 
+  bind_cols(nd) 
+```
+
+Here's what a subset of the new synthetic data set looks like.
+
+```{r, fig.width = 9, fig.height = 6}
+p %>% 
+  filter(id %in% sample(101:200, size = 20)) %>% 
+  
+  ggplot(aes(x = session, y = assignments, group = phase, color = phase == "A1")) +
+  geom_vline(xintercept = c(14.5, 19.5), color = "white") +
+  geom_point() +
+  geom_line() +
+  scale_color_manual("Phase", values = c("blue3", "red3"), labels = c("B", "A")) +
+  scale_y_continuous(breaks = 0:3 * 4) +
+  coord_cartesian(ylim = c(0, 12)) +
+  facet_wrap(~ id) +
+  theme(panel.grid = element_blank())
+```
+
+On the whole, it looks pretty good. However, in their caption for Figure 2, Robinson and colleagues clarified the boys whose data were depicted in the top row (CD and JC) completed the most assignments in the class. Further, the boys whose data were depicted in the bottom row (TC and RB) completed to fewest assignments in the class. To get a sense, here are the average number of assignments those four boys completed during their B phases.
+
+```{r}
+d %>% 
+  filter(phase != "A1") %>% 
+  group_by(initials, id) %>% 
+  summarise(m = mean(assignments))
+```
+
+Thus, we want to select data from synthetic boys whose average number of assignments range between 1.1481481 and 2.8888889. Further, you'll note that the largest number of assignments completed on a given day was 12. When I read through the article, it wasn't clear to me if there was a maximum number of assignments students could complete in a given day. But in the absence of that information, I prefer to select data from synthetic boys who has maximum values at 12 or below. Here's how to pull a vector of the `id` numbers of the synthetic boys whose data meet those constraints.
+
+```{r}
+id_list <- p %>% 
+  filter(phase != "A1") %>% 
+  group_by(id) %>% 
+  summarise(mean = mean(assignments),
+            max = max(assignments)) %>% 
+  filter(mean > 1.1481481 & mean < 2.8888889) %>% 
+  filter(max < 13) %>% 
+  pull(id)
+
+# what is this?
+str(id_list)
+```
+
+It turns out 40 of the 100 synthetic boys met those constraints. Now we'll use the `filter()` and the `sample()` functions to take a random subset of 14 of those 40 synthetic boys. We'll then assign them new `id` numbers, starting with `5` and ending with `18`.
+
+```{r}
+set.seed(2)
+
+p <- p %>% 
+  filter(id %in% sample(id_list, size = 14)) %>% 
+  arrange(id, session) %>% 
+  mutate(id = rep(5:18, each = 32))
+```
+
+Next, we'll want to follow the conventions in Robinson et al and assign initials to our synthetic boys. As a first step, we'll save a vector of the initials of the four real boys displayed in Figure 2.
+
+```{r}
+robinson1981_initials <- d %>% 
+  distinct(initials) %>% 
+  pull()
+
+robinson1981_initials
+```
+
+Now we will use the `randomNames()` function from the [**randomNames** package](https://CRAN.R-project.org/package=randomNames) to simulate a large set of random names, convert the names to initials, and then select a random subset of 14 distinct initials which are not duplicates of the initials of the four boys from Figure 2.
+
+```{r}
+set.seed(3)
+
+simulated_initials <- 
+  tibble(name = randomNames::randomNames(100, name.order = "first.last", name.sep = "_")) %>% 
+  separate(name, into = c("first", "last"), sep = "_") %>% 
+  mutate(initials = str_c(str_sub(first, 1, 1), str_sub(last, 1, 1))) %>% 
+  mutate(initials = toupper(initials)) %>% 
+  distinct(initials) %>% 
+  filter(initials != robinson1981_initials[1]) %>% 
+  filter(initials != robinson1981_initials[2]) %>% 
+  filter(initials != robinson1981_initials[3]) %>% 
+  filter(initials != robinson1981_initials[4]) %>% 
+  slice_sample(n = 14) %>% 
+  mutate(id = 5:18)
+
+# what do we have?
+simulated_initials
+```
+
+Tack the initials onto the simulated data sets.
+
+```{r}
+p <- p %>% 
+  left_join(simulated_initials, by = "id")
+
+# what?
+head(p)
+```
+
+Now we can finally add the simulated data sets to the data of the four boys from Figure 2.
+
+```{r}
+robinson1981 <- d %>% 
+  select(assignments, session, psession0, phase, A1, B2, id, initials) %>% 
+  bind_rows(p) %>% 
+  select(id, initials, session, phase, assignments) %>% 
+  mutate(data_type = ifelse(id < 5, "digitized", "synthetic"))
+
+# what is this?
+glimpse(robinson1981)
+```
+
+Here's a look at the full data set.
+
+```{r, fig.width = 9, fig.height = 6}
+robinson1981 %>% 
+  ggplot(aes(x = session, y = assignments, group = phase, color = data_type)) +
+  geom_vline(xintercept = c(14.5, 19.5), color = "white") +
+  geom_point() +
+  geom_line() +
+  scale_color_viridis_d(option = "D", end = .4) +
+  scale_y_continuous(breaks = 0:3 * 4) +
+  coord_cartesian(ylim = c(0, 12)) +
+  facet_wrap(~ id) +
+  theme(legend.position = c(.8, .1),
+        panel.grid = element_blank())
+```
+
+To my mind, the synthetic data did a pretty okay job mimicking the characteristics of the original digitized data.
+
+Here's a plot of the aggregated sums, similar to how Robinson and colleagues displayed in their Figure 1 (p. 311).
+
+```{r, fig.width = 5, fig.height = 3, message = F}
+robinson1981 %>% 
+  group_by(session, phase) %>% 
+  summarise(assignments = sum(assignments)) %>%
+  
+  ggplot(aes(x = session, y = assignments, group = phase, color = phase == "A1")) +
+  geom_vline(xintercept = c(14.5, 19.5), color = "white") +
+  geom_point() +
+  geom_line() +
+  scale_color_manual("Phase", values = c("blue3", "red3"), labels = c("B", "A")) +
+  scale_x_continuous(limits = c(0, 33), expand = c(0, 0)) +
+  scale_y_continuous(breaks = 0:8 * 10, limits = c(0, 88), expand = c(0, 0)) +
+  theme(panel.grid = element_blank())
+```
+
+The session sums in the `robinson1981` data don't have the same extreme spread as those Robdinson et al depicted in their Figure 1, but the gross patterns are there, even including what they described as a "'sawtooth' effect" (p. 311).
+
+Now save the results in an external file.
+
+```{r}
+save(robinson1981, file = "/Users/solomonkurz/Dropbox/Experimental-design-and-the-GLMM/sketches/data/robinson1981.rda")
+```
+
+## Session information
+
+```{r}
+sessionInfo()
+```
+
+```{r fit_a, echo = F, eval = F}
+# if you want, you can double check what the model of the simulated data looks like
+
+# make the psession0 column
+robinson1981 <- robinson1981 %>% 
+  group_by(phase, id) %>% 
+  mutate(psession0 = 1:n() - 1) %>% 
+  ungroup()
+
+# 2.18662 mins
+fit_a <- brm(
+  data = robinson1981,
+  family = negbinomial,
+  bf(assignments ~ 0 + Intercept + psession0 + phase + psession0:phase + (1 + psession0 + phase + psession0:phase |i| id),
+     shape ~ 0 + Intercept + phase + (1 + phase |i| id)),
+  prior = c(prior(normal(log(5), 0.5), class = b, coef = Intercept),
+            prior(normal(0, 0.25), class = b),
+            prior(normal(0, 1), class = b, coef = phaseA1),
+            prior(exponential(1), class = sd),
+            prior(lkj(1), class = cor),
+            
+            # M = 50, S = 25
+            prior(normal(0, 1), class = b, dpar = shape),
+            prior(normal(3.800451, 0.4723807), class = b, coef = Intercept, dpar = shape),
+            prior(exponential(1), class = sd, dpar = shape)),
+  cores = 4, 
+  seed = 1,
+  control = list(adapt_delta = .9)
+)
+
+# summarize
+summary(fit_a)
+
+# plot
+fitted(fit_a, robust = T) %>% 
+  data.frame() %>% 
+  bind_cols(robinson1981) %>%
+  
+  ggplot(aes(x = session, group = phase, color = phase == "A1", fill = phase == "A1")) +
+  geom_vline(xintercept = c(14.5, 19.5), color = "white") +
+  geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5),
+              alpha = 1/4, size = 0) +
+  geom_line(aes(y = Estimate)) +
+  geom_point(aes(y = assignments)) +
+  scale_color_manual("Phase", values = c("blue3", "red3"), labels = c("B", "A")) +
+  scale_fill_manual("Phase", values = c("blue3", "red3"), labels = c("B", "A")) +
+  scale_y_continuous(breaks = 0:3 * 4) +
+  coord_cartesian(ylim = c(0, 12)) +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~ id)
+
+fitted(fit_a, robust = T) %>% 
+  data.frame() %>% 
+  bind_cols(robinson1981) %>%
+  
+  ggplot(aes(x = session, group = interaction(id, phase), color = phase == "A1", fill = phase == "A1")) +
+  geom_vline(xintercept = c(14.5, 19.5), color = "white") +
+  geom_line(aes(y = Estimate),
+            size = 1/2, alpha = 1/2) +
+  scale_color_manual("Phase", values = c("blue3", "red3"), labels = c("B", "A")) +
+  scale_fill_manual("Phase", values = c("blue3", "red3"), labels = c("B", "A")) +
+  scale_y_continuous(breaks = 0:3 * 4) +
+  coord_cartesian(ylim = c(0, 12)) +
+  theme(panel.grid = element_blank())
+
+# examine the shape estimates
+fitted(fit_a) %>% 
+  data.frame() %>% 
+  bind_cols(robinson1981) %>% 
+  # filter(Estimate > Q97.5) %>% 
+  filter(id %in% c(8, 15))
+
+fitted(fit_a,
+       dpar = "shape",
+       robust = T) %>% 
+  data.frame() %>% 
+  bind_cols(robinson1981) %>% 
+  filter(id %in% c(8, 15))  %>%
+  distinct(Estimate, Q2.5, Q97.5, id) 
+
+fitted(fit_a,
+       dpar = "shape",
+       robust = T) %>% 
+  data.frame() %>% 
+  bind_cols(robinson1981) %>% 
+  distinct(Estimate, Q2.5, Q97.5, id) %>% 
+  arrange(Estimate) %>% 
+  mutate(row = 1:n()) %>% 
+  
+  ggplot(aes(x = Estimate, xmin = Q2.5, xmax = Q97.5, y = row)) +
+  geom_pointrange(fatten = 1.1) +
+  coord_cartesian(xlim = c(0, 200))
+```
+
