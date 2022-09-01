@@ -167,7 +167,7 @@ where the model for $\log(\mu_{it})$ allows for intercepts (initial status) and 
 
 The model for $\log(\phi_{it})$ is a subset of the model for $\log(\mu_{it})$, with the linear changes over time omitted. If there were more data within boys and more boys in the data set, I'd consider fitting the full model for $\log(\phi_{it})$. Given the smallness of the current data set, allowing the dispersion to vary across boys and phases seems ambitious enough.
 
-As to the priors, the $\mathcal N(\log(5), 0.5)$ prior for $\beta_0$ is meant to concentrate the intercepts for the first phase, BI, in the middle single-digit integers. If you exponentiate, here are it's median and 95% range on the count space:
+As to the priors, the $\mathcal N(\log(5), 0.5)$ prior for $\beta_0$ is meant to concentrate the intercepts for the first phase, B1, in the middle single-digit integers. If you exponentiate, here are its median and 95% range on the count space:
 
 ```{r}
 exp(log(5) + c(0, -1, 1))
@@ -313,9 +313,9 @@ fit <- brm(
      shape       ~ 0 + Intercept             + phase                   + (1             + phase                   |i| id)),
   prior = c(prior(normal(0, 0.25),     class = b),
             prior(normal(log(5), 0.5), class = b, coef = Intercept),
-            prior(normal(0, 0.01),      class = b, coef = psession0),
-            prior(normal(0, 0.01),      class = b, coef = "psession0:phaseA1"),
-            prior(normal(0, 0.01),      class = b, coef = "psession0:phaseB2"),
+            prior(normal(0, 0.01),     class = b, coef = psession0),
+            prior(normal(0, 0.01),     class = b, coef = "psession0:phaseA1"),
+            prior(normal(0, 0.01),     class = b, coef = "psession0:phaseB2"),
             prior(normal(0, 1),        class = b, coef = phaseA1),
             prior(gamma(11.11111, 22.22222), class = sd),
             prior(gamma(2.777778, 11.11111), class = sd, coef = phaseB2,             group = id),
