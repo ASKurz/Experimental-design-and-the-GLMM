@@ -1,0 +1,98 @@
+---
+title: "clarke2021"
+author: "A Solomon Kurz"
+date: "`r format(Sys.Date())`"
+output: github_document
+---
+
+The purpose of this file is to reformat the data from Clarke et al (2021; https://doi.org/10.1111/add.15072). The original data are openly available on the OSF at https://osf.io/pr8zu/, and they were downloaded for this project on June 27, 2022.
+
+Load the **tidyverse**.
+
+```{r, warning = F, message = F}
+library(tidyverse)
+```
+
+Upload the data file for the primary outcomes as reported in the Results section.
+
+```{r}
+d <- readxl::read_excel("Clarke et al (2021)/Alcohol study 2 full dataset.xlsx",
+                        na = "-999")
+
+# what is this?
+glimpse(d)
+head(d)
+```
+
+The names in the `.xlsx` file are descriptive, but cumbersome for programming. Here we rename several of the variables to follow the tidyverse style (see https://style.tidyverse.org/syntax.html#object-names).
+
+```{r}
+d <- d %>% 
+  rename(age     = Age,
+         alcohol = `Primary outcome`,
+         audit   = `AUDIT score`)
+```
+
+The original participant identification indicator `PID` is undesirably non-sequential. Here we make a new sequential `id` variable.
+
+```{r}
+d <- d %>% 
+  mutate(id = 1:n())
+```
+
+The four numerals in the `Gender` might be better expressed as levels in a factor variable.
+
+```{r}
+d <- d %>% 
+  mutate(gender = factor(Gender,
+                         levels = 1:4,
+                         labels = c("Male", "Female", "Other", "Prefer not to say")))
+```
+
+The four experimental conditions are encoded in the numeric `Condition` variable. Here we add a complimentary `hwl` factor variable to provide a more descriptive account. We then add two dummy variables, `image` and `text`.
+
+```{r}
+d <- d %>%
+  mutate(hwl = case_when(
+    Condition == 1 ~ "control",
+    Condition == 2 ~ "text only",
+    Condition == 3 ~ "image only",
+    Condition == 4 ~ "image and text")) %>% 
+  mutate(hwl = factor(hwl, levels = c("control", "image only", "text only", "image and text")))  %>% 
+  mutate(image = ifelse(hwl %in% c("image only", "image and text"), 1, 0),
+         text  = ifelse(hwl %in% c("text only", "image and text"), 1, 0))
+```
+
+Though the four levels of the `Condition` variable follow a certain pleasing logic, Clarke and colleagues described the experimental conditions as Group 1 through Group 4 in the Results of the paper (e.g., Table 3 on page 47). Critically, their Group 1 corresponds to `Condition == 4` in the data and their Group 4 corresponds to `Condition == 1`. Here we make that ordering adjustment for a new variable called `group`.
+
+```{r}
+d <- d %>% 
+  mutate(group = recode(Condition,
+                        `1` = 4, 
+                        `4` = 1))
+```
+
+Now subset the data file and save the results as `clarke2021`.
+
+```{r}
+clarke2021 <- d %>% 
+  select(id, age, gender, audit, alcohol, group, hwl, image, text)
+
+# what?
+head(clarke2021)
+```
+
+## Save
+
+Save the results in an external `.rda` file.
+
+```{r}
+save(clarke2021, file = "clarke2021.rda")
+```
+
+## Session information
+
+```{r}
+sessionInfo()
+```
+
