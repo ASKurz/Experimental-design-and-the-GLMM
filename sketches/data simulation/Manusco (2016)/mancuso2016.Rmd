@@ -5,6 +5,11 @@ date: "`r format(Sys.Date())`"
 output: github_document
 ---
 
+```{r, echo = F}
+knitr::opts_chunk$set(fig.retina = 2.5)
+options(width = 110)
+```
+
 The purpose of this file is to simulate the data from Mancuso & Miltenberger (2016; https://doi.org/10.1002/jaba.267). We don't have their actual data file, they displayed their data in Figure 1 (p. 191). Here we'll work through that figure to make a data file that approximates their original data.
 
 Load the **tidyverse** and **juicr**.
@@ -12,12 +17,11 @@ Load the **tidyverse** and **juicr**.
 ```{r, warning = F, message = F}
 library(tidyverse)
 library(juicr)
-library(patchwork)
 ```
 
 First use the `juicr::GUI_juicr()` function to digitize the data, one participant at a time, from Figure 1 in Mancuso & Miltenberger (p. 191).
 
-```{r}
+```{r, eval = F}
 GUI_juicr("pics/rate01.png")
 GUI_juicr("pics/rate02.png")
 GUI_juicr("pics/rate03.png")
@@ -28,13 +32,14 @@ GUI_juicr("pics/rate06.png")
 
 Now we combine the data in the .csv files, round the `session` values to integers, round the `rate` values to the third decimal place, and add participant identifiers.
 
-```{r}
+```{r, warning = F, message = F}
 d <- tibble(files = list.files(pattern = "rate0[1-6]*_juicr_extracted_points")) %>% 
   mutate(data = map(files, read_csv)) %>% 
   unnest(data) %>% 
   transmute(sn      = str_extract(files, "\\d+") %>% as.double(),
             session = round(x.calibrated, digits = 0),
             rate    = round(y.calibrated, digits = 3)) %>% 
+  mutate(session0 = session - 1) %>% 
   arrange(sn, session) %>% 
   mutate(id = case_when(
     sn == 1 ~ "Jen",
@@ -66,26 +71,17 @@ d <- d %>%
 
 Here the `phase == "a"` is the baseline period, `phase == "b"` is the post-intervention assessment period, and `phase == "c"` is the follow-up.
 
-We can now make a version of Figure 1 from the paper.
+Though the dependent variable was displayed as a rate in Figure 1, the underlying data were behavioral counts divided by the time periods in which they were measured. The difficulty is the authors did not report the actual durations of each student's speach, other than the general statement:
 
-```{r}
-p1 <- d %>% 
-  mutate(phase = factor(phase,
-                        labels = c("baseline", "postintervention", "follow-up"))) %>% 
-  ggplot(aes(x = session, y = rate, color = phase, shape = phase)) +
-  geom_point() +
-  geom_line() +
-  scale_color_manual(NULL, values = c("red3", "blue3", "green4")) +
-  scale_shape_manual(values = c(16, 16, 15), breaks = NULL) +
-  scale_y_continuous("rate", limits = c(0, NA), expand = expansion(mult = c(0.05, 0.25))) +
-  facet_wrap(~ id, scales = "free_y", ncol = 1)
+> All sessions included 3- to 5-min speeches. (p. 189)
 
-p1
-```
+A little further, we read:
 
+> The researcher did not provide any guidelines for the speech outline. Each participant was allowed to use her outline during her speech. At 4 min into the speech, the researcher signaled that the participant had 1 min left to speak, and when 5 min had elapsed, the researcher signaled the end of the speech. If the participant attempted to end the speech before 3 min had elapsed or stopped speaking for more than 15 s, the researcher said, "please continue." Speeches ended when 5 min had elapsed or when at least 3 min had elapsed and the participant ended the speech. (pp. 189--190)
 
+Here we'll use modified beta distributions to simulate the speech durations. $\operatorname{Beta}(0.5, 0.7)$ will make for speech durations slightly biased toward the lower limit and $\operatorname{Beta}(0.5, 0.7)$ will make for speech durations slightly biased toward the upper limit. Here are what those modified beta densities look like in a plot.
 
-```{r}
+```{r, fig.width = 5, fig.height = 2.75}
 tibble(x = c(seq(from = 0.001, to = 0.999, by = 0.001),
              seq(from = 0.001, to = 0.999, by = 0.001))) %>% 
   mutate(phase = rep(c("baseline", "post baseline"), each = n() / 2)) %>% 
@@ -100,24 +96,12 @@ tibble(x = c(seq(from = 0.001, to = 0.999, by = 0.001),
   facet_wrap(~ phase)
 ```
 
-```{r}
-tibble(phase = rep(c("baseline", "post baseline"), each = 1e4))%>% 
-  # add the minutes variable
-  mutate(minutes = ifelse(phase == "baseline", 
-                          rbeta(n = n(), shape1 = 0.5, shape2 = 0.7),
-                          rbeta(n = n(), shape1 = 0.7, shape2 = 0.5))) %>% 
-  mutate(minutes = minutes * 2 + 3) %>% 
-  
-  ggplot(aes(x = minutes)) +
-  geom_histogram() +
-  facet_wrap(~ phase)
-```
+Simulate and save.
 
 ```{r}
 set.seed(1)
 
 d <- d %>% 
-  # add the minutes variable
   mutate(beta = ifelse(phase == "a", 
                        rbeta(n = n(), shape1 = 0.5, shape2 = 0.7),
                        rbeta(n = n(), shape1 = 0.7, shape2 = 0.5))) %>% 
@@ -131,51 +115,33 @@ Now rearrange the columns in the `d` data and save the results as `mancuso2016`.
 
 ```{r}
 mancuso2016 <- d %>% 
-  select(sn, id, session, phase, count, seconds, minutes, rate)
+  select(sn, id, session, session0, phase, count, seconds, minutes, rate)
 
 # what is this?
 head(mancuso2016)
 ```
 
+We can now make a version of Figure 1 from the paper.
 
-
-```{r}
-p2 <- mancuso2016 %>% 
+```{r, fig.width = 5, fig.height = 6}
+mancuso2016 %>% 
   mutate(phase = factor(phase,
                         labels = c("baseline", "postintervention", "follow-up"))) %>% 
-  ggplot(aes(x = session, y = count / minutes, color = phase, shape = phase)) +
+  ggplot(aes(x = session, y = rate, color = phase, shape = phase)) +
   geom_point() +
   geom_line() +
   scale_color_manual(NULL, values = c("red3", "blue3", "green4")) +
   scale_shape_manual(values = c(16, 16, 15), breaks = NULL) +
-  scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0.05, 0.25))) +
-  facet_wrap(~ id, scales = "free_y", ncol = 1)
-
-# combine
-p1 + p2 + plot_layout(guides = "collect")
-```
-
-```{r}
-mancuso2016 %>% 
-  mutate(phase = factor(phase,
-                        labels = c("baseline", "postintervention", "follow-up"))) %>% 
-  
-  ggplot(aes(x = session, y = count, color = phase, shape = phase)) +
-  geom_point(aes(size = minutes)) +
-  scale_color_manual(NULL, values = c("red3", "blue3", "green4")) +
-  scale_shape_manual(values = c(16, 16, 15), breaks = NULL) +
-  scale_size_continuous("speech length\n(minutes)", range = c(2/3, 2), 
-                        breaks = c(3, 5), limits = c(3, 5)) +
-  scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0.05, 0.25))) +
+  scale_y_continuous("rate", limits = c(0, NA), expand = expansion(mult = c(0.05, 0.25))) +
   facet_wrap(~ id, scales = "free_y", ncol = 1)
 ```
 
-
+## Save
 
 Now save the results in an external file.
 
-```{r}
-save(mancuso2016, file = "/Users/solomonkurz/Dropbox/Experimental-design-and-the-GLMM/sketches/data  simulation/mancuso2016.rda")
+```{r, eval = F}
+save(mancuso2016, file = "/Users/solomonkurz/Dropbox/Experimental-design-and-the-GLMM/sketches/data/mancuso2016.rda")
 ```
 
 ## Session information
@@ -183,5 +149,4 @@ save(mancuso2016, file = "/Users/solomonkurz/Dropbox/Experimental-design-and-the
 ```{r}
 sessionInfo()
 ```
-
 
