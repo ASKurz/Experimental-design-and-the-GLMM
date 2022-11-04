@@ -27,17 +27,17 @@ Mancuso & Miltenberger (2015; https://doi.org/10.1002/jaba.267) used a nice mult
 # load the data
 load(file = "/Users/solomonkurz/Dropbox/Experimental-design-and-the-GLMM/sketches/data/mancuso2016.rda")
 
-mancuso2016 <- mancuso2016
-
 # what is this?
 glimpse(mancuso2016)
 ```
 
-The participant pseudonyms are listed in the `id` column. The session number is coded $1, \dots, N$ in the `session` column and coded the same minus $1$ in the `session01` column. The two phases `baseline` and `postintervention` are saved as characters in the `condition` column. The same information is coded in a dummy format in the `post` column.
+The participant numbers are listed in the `sn` column and their pseudonyms are in the `id` column. The session number is coded $1, \dots, N$ in the `session` column and coded the same minus $1$ in the `session0` column. The three experimental phases0--`a` (baseline), `b` (postintervention assessment), and `c` (follow-up)-- are saved as characters in the `phase` column.
 
-After a short baseline-assessment period (A), each student met for individual habit-reversal and competing-response training. Then each student met for multiple post-intervention assessment periods (B) where they gave new speeches. All speeches were a minimum of 3 minutes long and a maximum of 5 minutes long.
+After a short baseline-assessment period (A), each student met for individual habit-reversal and competing-response training. Then each student met for multiple post-intervention assessment periods (B) where they gave new speeches. All speeches were a minimum of 3 minutes long and a maximum of 5 minutes long. 
 
-The duration of the speeches is in the `minutes` column. The number of filled pauses is in the `count` column and the number of counts per minute is in the `rate` column. 
+Each student also had one follow-up assessment, during which they gave a final 3-to-5-minute speech. According to the authors, these occurred some 2 to 5 weeks after their final postintervention session and the exact times were not provided in the paper. In the `mancuso2016` data set, as well as in the paper, we have simply assigned these follow-up assessments as two sessions after each student's final postintervention session.
+
+The duration of the speeches is expressed in the `seconds` and `minutes` columns. The number of filled pauses is in the `count` column. Finally, the number of counts per minute is in the `rate` column.
 
 ### EDA.
 
@@ -45,19 +45,20 @@ Here are the number of baseline and post-intervention sessions, by student.
 
 ```{r}
 mancuso2016 %>% 
-  drop_na(count) %>% 
-  count(id, condition) %>% 
-  pivot_wider(names_from = condition, values_from = n)
+  count(id, phase) %>% 
+  pivot_wider(names_from = phase, values_from = n)
 ```
 
-A complexity of the multiple-baseline design is each student has a different number of measurement occasions and those occasions were collected over different combinations of the experimental `condition`.
+A complexity of the multiple-baseline design is each student has a different number of measurement occasions and those occasions were collected over different combinations of the experimental phases.
 
 We can get a sense of that data structure with a quick missing data analysis plot.
 
 ```{r, fig.width = 5, fig.height = 2.5}
 mancuso2016 %>% 
+  full_join(mancuso2016 %>% expand(id, session = 1:20),
+            by = c("id", "session")) %>% 
   mutate(r = ifelse(is.na(count), "missing", "observed")) %>% 
-  mutate(r = factor(r, levels = c("observed", "missing"))) %>% 
+  mutate(r = factor(r, levels = c("observed", "missing")))  %>% 
   
   ggplot(aes(x = session, y = id)) +
   geom_tile(aes(fill = r),
@@ -68,37 +69,49 @@ mancuso2016 %>%
   ggtitle("Missing data analysis")
 ```
 
-This kind of unevenness in the data over time would be a disaster with classical statistical procedures such as an analysis of variance (ANOVA). As we'll see, it's no problem at all for a GLMM. In some of our previous analyses, we handled missing data with multiple imputation. When we have longitudinal data of this kind, it's often easier to handle the missing data with full-information maximum likelihood.
+This kind of unevenness in the data over time would be a disaster with classical statistical procedures such as an analysis of variance (ANOVA). As we'll see, it's no problem at all for a GLMM.
 
 Anyway, here's a quick descriptive plot of the data.
 
-```{r, fig.width = 6, fig.height = 3.5}
+```{r, fig.width = 7, fig.height = 3.5}
 mancuso2016 %>% 
-  drop_na(count) %>% 
-  
-  ggplot(aes(x = session, y = count / minutes, color = condition)) +
+  mutate(phase = factor(phase,
+                        labels = c("baseline", "postintervention", "follow-up"))) %>% 
+  ggplot(aes(x = session, y = rate, color = phase, shape = phase)) +
   geom_point() +
   geom_line() +
-  scale_color_manual(NULL, values = c("red3", "blue3")) +
-  scale_y_continuous("rate", limits = c(0, NA)) +
+  scale_color_manual(NULL, values = c("red3", "blue3", "green4")) +
+  scale_shape_manual(values = c(16, 16, 15), breaks = NULL) +
+  scale_y_continuous("rate", limits = c(0, NA), expand = expansion(mult = c(0.05, 0.25))) +
   facet_wrap(~ id, scales = "free_y")
 ```
 
 We could also use the `geom_smooth()` method to get a sense of the treands across students and conditions.
 
-```{r, fig.width = 6, fig.height = 3.5}
+```{r, fig.width = 7, fig.height = 3.5}
 mancuso2016 %>% 
-  drop_na(count) %>% 
-  
-  ggplot(aes(x = session, y = count / minutes , color = condition)) +
+  mutate(phase = factor(phase,
+                        labels = c("baseline", "postintervention", "follow-up"))) %>% 
+  ggplot(aes(x = session, y = rate, color = phase, shape = phase)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE, formula = y ~ x, size = 1/2) +
-  scale_color_manual(NULL, values = c("red3", "blue3")) +
-  scale_y_continuous("rate", limits = c(0, NA)) +
+  scale_color_manual(NULL, values = c("red3", "blue3", "green4")) +
+  scale_shape_manual(values = c(16, 16, 15), breaks = NULL) +
+  scale_y_continuous("rate", limits = c(0, NA), expand = expansion(mult = c(0.05, 0.25))) +
   facet_wrap(~ id, scales = "free_y")
 ```
 
 We explicitly removed the standard error ribbons from the plot with `se = FALSE` because, IMO, they would be invalid. They're based on OLS estimation, which isn't particularly appropriate for that of this kind. However, the lines are okay for quick-and-dirty exploratory plots.
+
+### Subset.
+
+```{r}
+mancuso2016_ab <- mancuso2016 %>% 
+  filter(phase != "c")
+
+mancuso2016_ab
+```
+
 
 ## Models
 
@@ -115,7 +128,7 @@ $$
 \end{align*}
 $$
 
-I'm purposefully leaving the details of the model blank because, IMO, this is not a good idea. This approach ignores that the actual dependent variables are the number of target behaviors in a given session. We know that variables like that are counts, which are non-negative integers. So, let's instead entertain models that actually acknowledge that.
+I'm purposefully leaving the details of the model blank because, IMO, this is not a good idea. This approach ignores that the actual dependent variables are the number of target behaviors in a given session. We know that variables like that are counts, which are non-negative integers. So, let's instead entertain models designed for those characteristics.
 
 ### Option 2. The multilevel Poisson with random effects for the experimental condition.
 
@@ -124,7 +137,7 @@ Probably the model that will best answer the experimental question is a conditio
 $$
 \begin{align*}
 \text{count}_{ij} & \sim \operatorname{Poisson}(\lambda_{ij}) \\
-\log(\lambda_{ij}) & = \log(\text{minutes}_{ij}) + a_i + b_i \text{post}_{ij} \\
+\log(\lambda_{ij}) & = \log(\text{minutes}_{ij}) + a_i + b_i \text{phase}_{ij} \\
 a_i & = \alpha + u_i \\
 b_i & = \beta + v_i \\
 \begin{bmatrix} u_i \\ v_i \end{bmatrix} & \sim
@@ -165,10 +178,10 @@ exp(2.302585 + c(-2, 0, 2))
 
 Here's how fit that model with `brm()`.
 
-```{r}
+```{r fit1}
 # unconditional means model
 fit1 <- brm(
-  data = mancuso2016,
+  data = mancuso2016_ab,
   family = poisson,
   count ~ 1 + offset(log(minutes)) + (1 | id),
   prior = c(prior(normal(log(10), 1), class = Intercept),
@@ -191,24 +204,25 @@ fixef(fit1)[, -2] %>% exp()
 Let's see how that matches up with the sample statistics.
 
 ```{r}
-mancuso2016 %>% 
+mancuso2016_ab %>% 
   summarise(mean = mean(count / minutes, na.rm = TRUE))
 ```
 
 Now let's fit the theory-based model that differentiates between the A and B conditions. 
 
-```{r}
+```{r fit2}
 # theory-based model
 fit2 <- brm(
-  data = mancuso2016,
+  data = mancuso2016_ab,
   family = poisson,
-  count ~ 0 + Intercept + offset(log(minutes)) + post + (1 + post | id),
+  count ~ 0 + Intercept + offset(log(minutes)) + phase + (1 + phase | id),
   prior = c(prior(normal(log(10), 1), class = b, coef = Intercept),
-            prior(normal(0, 1), class = b, coef = post),
+            prior(normal(0, 1), class = b, coef = phaseb),
             prior(exponential(1), class = sd),
             prior(lkj(2), class = cor)),
   cores = 4,
   seed = 1,
+  control = list(adapt_delta = .99),
   file = "fits/fit2.mancuso2016"
 )
 
@@ -248,7 +262,7 @@ post <- as_draws_df(fit2)
 # the two means in the log metric
 post %>% 
   transmute(`mu[baseline]` = b_Intercept,
-            `mu[postintervention]` = b_Intercept + b_post) %>% 
+            `mu[postintervention]` = b_Intercept + b_phaseb) %>% 
   pivot_longer(everything()) %>% 
   group_by(name) %>% 
   mean_qi(value)
@@ -256,7 +270,7 @@ post %>%
 # the two means in the count metric
 post %>% 
   transmute(`mu[baseline]` = exp(b_Intercept),
-            `mu[postintervention]` = exp(b_Intercept + b_post)) %>% 
+            `mu[postintervention]` = exp(b_Intercept + b_phaseb)) %>% 
   pivot_longer(everything()) %>% 
   group_by(name) %>% 
   mean_qi(value)
@@ -264,12 +278,12 @@ post %>%
 # the difference between the two means in the count metric
 post %>% 
   mutate(`mu[baseline]` = exp(b_Intercept),
-         `mu[postintervention]` = exp(b_Intercept + b_post)) %>% 
+         `mu[postintervention]` = exp(b_Intercept + b_phaseb)) %>% 
   mutate(contrast = `mu[postintervention]` - `mu[baseline]`) %>% 
   mean_qi(contrast)
 ```
 
-What this is telling us is the population average effect for the habit-reversal and competing-response training is a reduction in 6.3 counts, per minute, with a 95% credible interval of 3.5 to 10.3 counts.
+What this is telling us is the population average effect for the habit-reversal and competing-response training is a reduction in 6.4 counts, per minute, with a 95% credible interval of 3.6 to 11.0 counts.
 
 Compare the results of our multilevel model with the summary of the results in the original paper:
 
@@ -280,9 +294,9 @@ The major advantage of our GLMM approach is we were able to accompany both popul
 The behavior analysts in the room will probably want to see the participant-level results displayed with a plot. Here we'll use the `fitted()` method.
 
 ```{r}
-f <- fitted(fit2, newdata = mancuso2016) %>% 
+f <- fitted(fit2, newdata = mancuso2016_ab) %>% 
   data.frame() %>% 
-  bind_cols(mancuso2016) %>% 
+  bind_cols(mancuso2016_ab) %>% 
   mutate(rate_hat = Estimate / minutes,
          lwr = Q2.5  / minutes,
          upr = Q97.5 / minutes)
@@ -293,11 +307,11 @@ glimpse(f)
 
 Here's a version of Figure 1 in the original paper.
 
-```{r, fig.width = 4.5, fig.height = 5.5}
+```{r, fig.width = 4.5, fig.height = 6}
 # annotation
 baseline <- 
   mancuso2016 %>% 
-  filter(id == "Amy" & session %in% c(2, 11)) %>% 
+  filter(id == "Amy" & session %in% c(2, 10)) %>% 
   select(id, session) %>% 
   mutate(rate  = c(2, 13),
          label = c("baseline", "postintervention assessment"))
@@ -307,23 +321,20 @@ shade <-
   mancuso2016 %>% 
   distinct(id) %>% 
   mutate(xmin = -Inf,
-         xmax = c(3.5, 4.5, 5.5, 5.5, 7.5, 8.5),
+         xmax = c(8.5, 7.5, 5.5, 5.5, 4.5, 3.5),
          ymin = -Inf,
          ymax = Inf)
 
-# wrangle
+# plot!
 f %>% 
-  drop_na(count) %>% 
-
-  # plot!
   ggplot() +
   geom_rect(data = shade,
             aes(xmin = xmin, xmax = xmax,
                 ymin = ymin, ymax = ymax),
             fill = alpha("grey80", alpha = 1/2)) +
-  geom_ribbon(aes(x = session, ymin = lwr, ymax = upr, group = post),
+  geom_ribbon(aes(x = session, ymin = lwr, ymax = upr, group = phase),
               alpha = 1/3) +
-  geom_line(aes(x = session, y = rate_hat, group = post),
+  geom_line(aes(x = session, y = rate_hat, group = phase),
             size = 1/4) +
   geom_point(aes(x = session, y = count / minutes),
              size = 2/3) +
@@ -350,7 +361,7 @@ That last model did not entertain the possibility there were changes over time i
 $$
 \begin{align*}
 \text{count}_{ij} & \sim \operatorname{Poisson}(\lambda_{ij}) \\
-\log(\lambda_{ij}) & = \log(\text{minutes}_{ij}) + a_i + b_i \text{post}_{ij} + c_i \text{time01}_{ij} + d_i \text{post}_{ij} \times \text{time01}_{ij} \\
+\log(\lambda_{ij}) & = \log(\text{minutes}_{ij}) + a_i + b_i \text{phase}_{ij} + c_i \text{time01}_{ij} + d_i \text{phase}_{ij} \times \text{time01}_{ij} \\
 a_i & = \alpha + u_i \\
 b_i & = \beta + v_i \\
 c_i & = \gamma + w_i \\
@@ -388,20 +399,22 @@ where now
 
 As indicated by their $i$ subscripts, all these are allowed to vary across students, which is the major advantage of a within-person design. Here's how to fit the model with `brm()`.
 
-```{r}
+```{r fit3}
 # fit
 fit3 <- brm(
-  data = mancuso2016,
+  data = mancuso2016_ab,
   family = poisson,
-  count ~ 0 + Intercept + offset(log(minutes)) + post + session01 + post:session01 + 
-    (1 + post + session01 + post:session01 | id),
+  count ~ 0 + Intercept + offset(log(minutes)) + phase + session0 + phase:session0 + 
+    (1 + phase + session0 + phase:session0 | id),
   prior = c(prior(normal(log(10), 1), class = b, coef = Intercept),
-            prior(normal(0, 1), class = b, coef = post),
+            prior(normal(0, 1), class = b, coef = phaseb),
+            prior(normal(0, 0.1), class = b, coef = session0),
+            prior(normal(0, 0.1), class = b, coef = "phaseb:session0"),
             prior(exponential(1), class = sd),
             prior(lkj(1), class = cor)),
   cores = 4,
   seed = 1,
-  control = list(adapt_delta = .95),
+  control = list(adapt_delta = .96),
   file = "fits/fit3.mancuso2016"
 )
 
@@ -415,28 +428,25 @@ As far as the variance parameters listed in the `Group-Level Effects` section, t
 
 This is all very abstract. Let's flesh this out with another version of Figure 1. Again, we'll use the `fitted()` method to display the student-level trajectories.
 
-```{r, fig.width = 5.5, fig.height = 5.5}
+```{r, fig.width = 5.5, fig.height = 6}
 # compute
-f <- fitted(fit3, newdata = mancuso2016) %>% 
+f <- fitted(fit3, newdata = mancuso2016_ab) %>% 
   data.frame() %>% 
-  bind_cols(mancuso2016) %>% 
+  bind_cols(mancuso2016_ab) %>% 
   mutate(rate_hat = Estimate / minutes,
          lwr = Q2.5  / minutes,
          upr = Q97.5 / minutes)
 
-# wrangle
+# plot!
 f %>% 
-  drop_na(count) %>% 
-
-  # plot!
   ggplot() +
   geom_rect(data = shade,
             aes(xmin = xmin, xmax = xmax,
                 ymin = ymin, ymax = ymax),
             fill = alpha("grey80", alpha = 1/2)) +
-  geom_ribbon(aes(x = session, ymin = lwr, ymax = upr, group = post),
+  geom_ribbon(aes(x = session, ymin = lwr, ymax = upr, group = phase),
               alpha = 1/3) +
-  geom_line(aes(x = session, y = rate_hat, group = post),
+  geom_line(aes(x = session, y = rate_hat, group = phase),
             size = 1/4) +
   # this is new
   geom_point(aes(x = session, y = count / minutes, size = minutes)) +
@@ -463,10 +473,66 @@ This version of the model also explicitly shows the students' performances durin
 
 Also, notice how in this version of the figure, we allowed the size of the data point dots to vary by their `minutes` values. Since each student's speech was somewhere between 3 and 5 minutes long, why not try to find a way to explicitly show that? Recall that since these are not the real data from the study, you can't trust any apparent patterns in the duration of these speeches. But if we had access to the real data, interesting insights might pop out. The main point is that you should always be on the lookout to find ways to squeeze more information out of your data.
 
+### What about follow-up?
+
+So far, we have restricted our analyses to the data in the `phase == "a"` (baseline) and `phase == "b"` (postintervention assessment). We might also want to see how well the trends in the postintervention assessment period extend to the follow-up assessments. Since the follow-up assessments occurred some 2 to 5 weeks after each students' final postintervention session, and the exact times were not provided in the paper, it's not completely clear how to use the model to predict the follow-up performance. Ideally, we'd have exact measurement points. For the sake of pedagogy, we'll take a cue from the way the authors presented the data in their original Figure 1: We'll treat the follow-up assessments as if they were one `session` removed from the last postintervention session.
+
+As a first step, we'll define the data set we'll feed into the `newdata` argument.
+
+```{r}
+# define the new data
+nd <- mancuso2016 %>% 
+  filter(phase == "c") %>% 
+  mutate(phase = "b")
+
+# what is this?
+nd
+```
+
+Here we use the `predict()` function to compute the posterior-predictive distribution for the values specified in our `nd` data. By setting `summary = FALSE`, we're asking for an array of `count` values. Since we have 6 students and there were 4,000 post-warmup posterior draws in the `fit3` model, predict will return an $4{,}000 \times 6$ numerical array. The rest of the code below `predict()` converts the results into a more useful format.
+
+```{r}
+# compute predicted range
+set.seed(1)
+
+p <- predict(fit3, newdata = nd, summary = FALSE) %>% 
+  # wrangle
+  data.frame() %>% 
+  set_names(pull(nd, sn)) %>% 
+  pivot_longer(everything()) %>% 
+  mutate(sn = as.double(name)) %>% 
+  left_join(nd %>% select(sn, id), by = "sn")
+
+# what is this?
+glimpse(p)
+```
+
+Now we plot.
+
+```{r, fig.width = 7, fig.height = 4.25}
+p %>% 
+  ggplot(aes(x = value)) +
+  geom_bar(fill = "gray67") +
+  stat_interval(.width = .95, size = 3/4, color = "black") +
+  geom_point(data = nd,
+             aes(x = count, y = -40),
+             color = "green4", shape = 15) +
+  scale_x_continuous("habit count", limits = c(-0.5, NA)) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  labs(title = "Postrior-predictive check for follow-up assessment",
+       subtitle = "Histograms are of 4,000 posterior predictive draws for each student's follow-up. Their inner 95%\nranges are in the black horizontal lines at their base. The green squares show each student's actual\nhabit count at follow-up.") +
+  theme_linedraw() +
+  theme(panel.grid = element_blank(),
+        strip.background = element_blank(),
+        strip.text = element_text(color = "black", hjust = 1)) +
+  facet_wrap(~ id)
+```
+
+Here we see that the number of poor speaking habits each student displayed during their follow-up speech was largely consistent with their performance during their postintervention assessment phases.
+
 ## Session information
 
 ```{r}
 sessionInfo()
 ```
-
 
