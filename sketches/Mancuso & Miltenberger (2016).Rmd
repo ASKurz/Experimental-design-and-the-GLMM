@@ -141,17 +141,14 @@ $$
 a_i & = \alpha + u_i \\
 b_i & = \beta + v_i \\
 \begin{bmatrix} u_i \\ v_i \end{bmatrix} & \sim
-  \operatorname{Normal} \left ( 
-    \begin{bmatrix} 0 \\ 0 \end{bmatrix}, \mathbf \Sigma 
-    \right) \\
+  \operatorname{Normal} \left ( \begin{bmatrix} 0 \\ 0 \end{bmatrix}, \mathbf \Sigma \right ) \\
 \mathbf \Sigma & = \mathbf{SRS} \\
 \mathbf S & =  \begin{bmatrix} \sigma_u & 0 \\ 0 & \sigma_v \end{bmatrix} \\
 \mathbf R & =  \begin{bmatrix} 1 & \rho \\ \rho & 1 \end{bmatrix} \\
 \alpha & \sim \operatorname{Normal}(2.3, 0.5) \\
 \beta  & \sim \operatorname{Normal}(0, 1) \\
-\sigma_u & \sim \operatorname{Exponential}(1) \\
-\sigma_v & \sim \operatorname{Exponential}(1) \\
-\rho    & \sim \operatorname{LKJ}(2),
+\sigma_u, \sigma_v & \sim \operatorname{Exponential}(1) \\
+\rho & \sim \operatorname{LKJ}(2),
 \end{align*}
 $$
 
