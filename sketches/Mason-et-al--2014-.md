@@ -1,7 +1,7 @@
 Mason et al (2014)
 ================
 A Solomon Kurz
-2022-03-08
+2022-11-07
 
 Load our primary packages.
 
@@ -42,8 +42,8 @@ glimpse(mason2014)
     ## $ session01 <dbl> 0.04347826, 0.06521739, 0.08695652, 0.10869565, 0.13043478, 0.15217391, 0.17391304, 0.1956…
 
 The participant pseudonyms are listed in the `id` column. The session
-number is coded 1, …, *N* in the `session` column and coded the same
-minus 1 in the `session0` column. The two phases `A` and `B` are saved
+number is coded $1, \dots, N$ in the `session` column and coded the same
+minus $1$ in the `session0` column. The two phases `A` and `B` are saved
 in the `phase` column. The number of filled pauses is in the `count`
 column and the number of times the children displayed communicative acts
 during recess is recorded in the `count` column.
@@ -58,7 +58,7 @@ article.
 theme_set(
   theme_gray(base_size = 13) +
   theme(panel.grid = element_blank(),
-        strip.background= element_blank(),
+        strip.background = element_blank(),
         strip.text.x = element_text(hjust = 1))
 )
 
@@ -81,7 +81,7 @@ mason2014 %>%
 <img src="Mason-et-al--2014-_files/figure-gfm/unnamed-chunk-4-1.png" width="480" />
 
 We could also use the `geom_smooth()` method to get a sense of the
-trends across students and conditions.
+linear trends across students and conditions.
 
 ``` r
 mason2014 %>% 
@@ -100,112 +100,89 @@ mason2014 %>%
 
 We explicitly removed the standard error ribbons from the plot with
 `se = FALSE` because, IMO, they would be invalid. They’re based on OLS
-estimation, which isn’t particularly appropriate for that of this kind.
+estimation, which isn’t particularly appropriate for data of this kind.
 However, the lines are okay for quick-and-dirty exploratory plots.
 
 ## Models: First round
 
 The first model will be the simple conditional-means model with the
 Poisson likelihood. If we let the outcome variable `count` vary across
-*i* kids and *j* time points, we can express the model as
+$i$ kids and $j$ time points, we can express the model as
 
 $$
-\\begin{align\*}
-\\text{count}\_{ij} & \\sim \\operatorname{Poisson}(\\lambda\_{ij}) \\\\
-\\log(\\lambda\_{ij}) & = \\beta_0 + \\beta_1 \\text{phase}\_{ij} + u\_{0i} + u\_{1i} \\\\
-\\begin{bmatrix} u\_{0i} \\\\ u\_{1i} \\end{bmatrix} & \\sim
-  \\operatorname{Normal} \\left ( 
-    \\begin{bmatrix} 0 \\\\ 0 \\end{bmatrix}, \\mathbf \\Sigma 
-    \\right) \\\\
-\\mathbf \\Sigma & = \\mathbf{SRS} \\\\
-\\mathbf S & =  \\begin{bmatrix} \\sigma_0 & \\\\ 0 & \\sigma_1 \\end{bmatrix} \\\\
-\\mathbf R & =  \\begin{bmatrix} 1 & \\\\ \\rho & 1 \\end{bmatrix},
-\\end{align\*}
+\begin{align*}
+\text{count}_{ij} & \sim \operatorname{Poisson}(\lambda_{ij}) \\
+\log(\lambda_{ij}) & = \beta_0 + \beta_1 \text{phase}_{ij} + u_{0i} + u_{1i} \\
+\begin{bmatrix} u_{0i} \\ u_{1i} \end{bmatrix} & \sim
+  \operatorname{Normal} \left ( 
+    \begin{bmatrix} 0 \\ 0 \end{bmatrix}, \mathbf \Sigma 
+    \right) \\
+\mathbf \Sigma & = \mathbf{SRS} \\
+\mathbf S & =  \begin{bmatrix} \sigma_0 & \\ 0 & \sigma_1 \end{bmatrix} \\
+\mathbf R & =  \begin{bmatrix} 1 & \\ \rho & 1 \end{bmatrix},
+\end{align*}
 $$
 
 where the left side of the equation in the second line,
-log (*λ*<sub>*i**j*</sub>), clarifies we are using the conventional log
-link to ensure the model only predicts positive average counts. The
-*β*<sub>0</sub> parameter is the population average number of counts at
-baseline A phase and *β*<sub>1</sub> is population average change in
-counts during the post-intervention B phase. The kid-specific deviations
-around the population means are depicted by the *u*<sub>0*i*</sub> and
-*u*<sub>1*i*</sub> terms, which are modeled as bivariate normal with
-means of zero and the variance/covariance matrix **Σ**. Following the
-**brms** convention, we decompose **Σ** into the matrix of standard
-deviations **S** and the correlation matrix **R** which, though somewhat
-confusing at first, will make it easier for the software to fit the
-model and ultimately easier for us to assign the priors.
+$\log(\lambda_{ij})$, clarifies we are using the conventional log link
+to ensure the model only predicts positive counts. The $\beta_0$
+parameter is the population average number of counts at baseline A phase
+and $\beta_1$ is population average change in counts during the
+post-intervention B phase. The kid-specific deviations around the
+population means are depicted by the $u_{0i}$ and $u_{1i}$ terms, which
+are modeled as bivariate normal with means of zero and the
+variance/covariance matrix $\mathbf \Sigma$. Following the **brms**
+convention, we decompose $\mathbf \Sigma$ into the matrix of standard
+deviations $\mathbf S$ and the correlation matrix $\mathbf R$ which,
+though somewhat confusing at first, will make it easier for the software
+to fit the model and ultimately easier for us to assign the priors.
 
-The next issue is how to contend with the priors. Since this is a small
-data set with only three kids, I recommend we use some domain knowledge
-and a little courage of heart to set moderately-informative and
-regularizing priors. Let’s start with the population average during the
-A phase, *β*<sub>0</sub>. We know from the outset that this intervention
+The next issue is how we might contend with the priors. Since this is a
+small data set with only three kids, I recommend we use some domain
+knowledge and a little courage of heart to set moderately-informative
+and regularizing priors. Let’s start with the population average during
+the A phase, $\beta_0$. We know from the outset that this intervention
 is designed to increase counts in a population of kids for whom the
 number of counts is typically low. If you peruse the behavior-analytic
 literature a bit, you’ll also notice that in cases like this, counts of
 this kind tend to be near zero, but not necessarily all at zero. As a
 start, we could propose the average count might be 5, which we will
-express as log (5) because we are modeling on the log scale. It’s
+express as $\log(5)$ because we are modeling on the log scale. It’s
 typical to use Gaussian priors for parameters of this kind. If we were
-to use 𝒩(log(5),0.89392), that would give us a 99% prior probability the
-mean was between 0.5 and 50, and a 90% probability it’s between 1.15 and
-21.75, which seems like a good place to start.
+to use $\mathcal N(\log(5), 0.89392)$, that would give us a 99% prior
+probability the mean was between 0.5 and 50, and a 90% probability it’s
+between 1.15 and 21.75, which seems like a good place to start.
+
+With a little help from **ggdist**, here’s what the
+$\mathcal N(\log(5), 0.89392)$ distribution looks like on the
+exponentiated count scale.
 
 ``` r
-# what is the z-value for the 99% intervals for the standard normal?
-qnorm(p = c(.005, .995), mean = 0, sd = 1)
+# log(5) is about 1.609438
+prior(lognormal(1.609438, 0.89392)) %>% 
+  parse_dist() %>%
+
+  ggplot(aes(y = prior, dist = .dist, args = .args)) +
+  stat_dist_halfeye(.width = c(.9, .99)) +
+  scale_x_continuous("count", breaks = c(0, 5, 21.75, 50),
+                     labels = c("0", "5", 21.75, "50")) +
+  scale_y_discrete(NULL, breaks = NULL, expand = expansion(add = 0.06)) +
+  coord_cartesian(xlim = c(0, 50))
 ```
 
-    ## [1] -2.575829  2.575829
+<img src="Mason-et-al--2014-_files/figure-gfm/unnamed-chunk-6-1.png" width="432" />
 
-``` r
-# what is the z-value for the 90% intervals for the standard normal?
-qnorm(p = c(.05, .95), mean = 0, sd = 1)
-```
+The median is marked off by the dot and the 99% and 90% intervals are
+depicted by the thinner an thicker horizontal lines at the base. In case
+it wasn’t clear, a normal distribution on the log scale is a lognormal
+distribution on the exponentiated count scale.
 
-    ## [1] -1.644854  1.644854
-
-``` r
-# save the values and check
-z99 <- 2.575829
-pnorm(z99) - pnorm(-z99)
-```
-
-    ## [1] 0.99
-
-``` r
-z90 <- 1.644854
-pnorm(z90) - pnorm(-z90)
-```
-
-    ## [1] 0.9000001
-
-``` r
-# now save the candidate hyper parameter for sigma
-sigma <- 0.89392
-
-# what are the 99% limits for N(log(5), sigma)?
-exp(log(5) + z99 * c(-sigma, 0, sigma))
-```
-
-    ## [1]  0.5  5.0 50.0
-
-``` r
-# what are the 90% limits for N(log(5), sigma)?
-exp(log(5) + z90 * c(-sigma, 0, sigma))
-```
-
-    ## [1]  1.149205  5.000000 21.754177
-
-Next we consider *β*<sub>1</sub>, the change in average counts for the B
+Next we consider $\beta_1$, the change in average counts for the B
 phase. We know that behavior analysts often go for effect sizes that are
 large enough to see plainly with your eyes. A difference in 1 on the log
-scale is pretty good. For example, assuming a populaiton mean of
-log (5), an estimate of *β*<sub>1</sub> = 1 would mean an average
-increase of 8.6 counts to a new average of 13.6 counts, which seems
-generous.
+scale is pretty good. For example, assuming a population mean of
+$\log(5)$, an estimate of $\beta_1 = 1$ would mean an average increase
+of 8.6 counts to a new average of 13.6 counts, which seems generous.
 
 ``` r
 b0 <- log(5)
@@ -224,32 +201,34 @@ exp(b0 + b1)
 
     ## [1] 13.59141
 
-If we set *β*<sub>1</sub> ∼ 𝒩(0,1), that would rule out outrageously
+Setting $\beta_1 \sim \mathcal N(0, 1)$ would rule out outrageously
 large changes, but easily allow for moderately large like we might
 expect. If you wanted to be more conservative, I could easily see a
-justification for something as small as *β*<sub>1</sub> ∼ 𝒩(0,0.5).
+justification for something as small as
+$\beta_1 \sim \mathcal N(0, 0.5)$.
 
-Our next issue has to do with the level-2 variance parameters
-*σ*<sub>0</sub> and *σ*<sub>1</sub>. When we have many more upper-level
-groups (i.e., kids), a nice default is the exponential distribution with
-a mean of 1, which puts a lot of prior mass betwen zero and 1, but
-gently tapers off to the right. With only 3 kids in the data, we might
-want to use a little bit of theory to motivate a stronger prior. We know
-that from the outset, behavior analysts believe that people are not
-exchangable in the way hydrogen atoms are. Individual differences are
-inportant and behavior analysts prefer modela and analytic strategies
-which highlight them. In the case of our model, this suggests we should
-use priors that push the variance parameters away from zero. However, we
-also know that given this is a study of children from a well-defined
-psyshiatric subpopulation, we probably shouldn’t epect to se massive
-differences among the kids. So we want a prior that can both nudge the
-variance parameters away from zero, but still keep the model from
-entertaining very large values. The gamma distribution can fit this
-criteria. In text, Kruschke provided a few convience functions that
-allow researchers to derive the *α* and *β* parameters taht corresopnd
-to gamma distributions with pre-defined means and standard deviaitons or
-modes and standard deviations. Here we’ll use the function that uses the
-mode and standard deviation and request a gamma with a mode of 0.5 and a
+Our next issue has to do with the level-2 variance parameters $\sigma_0$
+and $\sigma_1$. When we have many more upper-level groups (i.e., kids),
+a nice default is the exponential distribution with a mean of 1, which
+puts a lot of prior mass between zero and 1, but gently tapers off to
+the right. With only 3 kids in the data, we might want to use a little
+bit of theory to motivate a stronger prior. We know that from the
+outset, behavior analysts believe that people are not exchangeable in
+the way hydrogen atoms are. Individual differences are important and
+behavior analysts prefer models and analytic strategies which highlight
+those differences. For our model, this suggests we should use priors
+that push the variance parameters away from zero. However, we also know
+that given this is a study of children from a well-defined psychiatric
+subpopulation, we probably shouldn’t expect to see massive differences
+among the kids. So we want a prior that can both nudge the variance
+parameters away from zero, but still keep the model from entertaining
+very large values. The gamma distribution can fit this criteria. In [his
+text](https://sites.google.com/site/doingbayesiandataanalysis/),
+Kruschke provided a few convenience functions which allow researchers to
+derive the $\alpha$ and $\beta$ parameters that correspond to gamma
+distributions with pre-defined means and standard deviations, or modes
+and standard deviations. Here we’ll use the function that uses the mode
+and standard deviation and request a gamma with a mode of 0.5 and a
 standard deviation of 0.25.
 
 ``` r
@@ -273,22 +252,22 @@ gamma_a_b_from_omega_sigma(mode = 0.5, sd = 0.25)
     ## $rate
     ## [1] 9.656854
 
-We can use functions from **ggdist** to plot the this gamma prior and
-compare it with the familiar exponential prior for which *λ* = 1.
+We can use **ggdist** functions to plot the this gamma prior and compare
+it with the familiar exponential prior for which $\lambda = 1$.
 
 ``` r
-c(prior(exp(1), class = sd),
-  prior(gamma(5.828427, 9.656854), class = sd)) %>% 
-  parse_dist(prior) %>%
+c(prior(exp(1)),
+  prior(gamma(5.828427, 9.656854))) %>% 
+  parse_dist() %>%
   mutate(prior = fct_rev(prior)) %>% 
   
   ggplot(aes(y = prior, dist = .dist, args = .args)) +
   geom_vline(xintercept = 0.5, color = "white") +
   stat_dist_halfeye(.width = c(.9, .99)) +
+  scale_y_discrete(expand = expansion(add = 0.06)) +
   labs(x = "prior",
        y = NULL) +
-  coord_cartesian(xlim = c(0, 5),
-                  ylim = c(1.5, 2))
+  coord_cartesian(xlim = c(0, 5))
 ```
 
 <img src="Mason-et-al--2014-_files/figure-gfm/unnamed-chunk-9-1.png" width="432" />
@@ -316,25 +295,25 @@ To my eye, this prior would allow for kid-level differences to range
 anywhere form small to moderately large while also fulfilling our
 desires to keep the posterior off of the zero boundary and discourage
 outrageously large differences. Finally, we’ll need to set a prior for
-the correlation *ρ* between the two level-2 variance parameters. Here
-we’ll use an LKJ (4), which will regularize towards zero. With those
-priors in place, we can specify the full model as
+the correlation $\rho$ between the two level-2 $\textit{SD}$ parameters.
+Here we’ll use an $\operatorname{LKJ}(4)$, which will regularize towards
+zero. With those priors in place, we can specify the full model as
 
 $$
-\\begin{align\*}
-\\text{count}\_{ij} & \\sim \\operatorname{Poisson}(\\lambda\_{ij}) \\\\
-\\log(\\lambda\_{ij}) & = \\beta_0 + \\beta_1 \\text{phase}\_{ij} + u\_{0i} + u\_{1i} \\\\
-\\begin{bmatrix} u\_{0i} \\\\ u\_{1i} \\end{bmatrix} & \\sim
-  \\operatorname{Normal} \\left ( 
-    \\begin{bmatrix} 0 \\\\ 0 \\end{bmatrix}, \\mathbf{SRS} 
-    \\right) \\\\
-\\mathbf S & =  \\begin{bmatrix} \\sigma_0 & \\\\ 0 & \\sigma_1 \\end{bmatrix} \\\\
-\\mathbf R & =  \\begin{bmatrix} 1 & \\\\ \\rho & 1 \\end{bmatrix} \\\\
-\\beta_0 & \\sim \\operatorname{Normal}(\\log(5), 0.89392) \\\\
-\\beta_1  & \\sim \\operatorname{Normal}(0, 1) \\\\
-\\sigma_0\\ \\&\\ \\sigma_1 & \\sim \\operatorname{Gamma}(5.828427, 9.656854) \\\\
-\\rho    & \\sim \\operatorname{LKJ}(4).
-\\end{align\*}
+\begin{align*}
+\text{count}_{ij} & \sim \operatorname{Poisson}(\lambda_{ij}) \\
+\log(\lambda_{ij}) & = \beta_0 + \beta_1 \text{phase}_{ij} + u_{0i} + u_{1i} \\
+\begin{bmatrix} u_{0i} \\ u_{1i} \end{bmatrix} & \sim
+  \operatorname{Normal} \left ( 
+    \begin{bmatrix} 0 \\ 0 \end{bmatrix}, \mathbf{SRS} 
+    \right) \\
+\mathbf S & =  \begin{bmatrix} \sigma_0 & \\ 0 & \sigma_1 \end{bmatrix} \\
+\mathbf R & =  \begin{bmatrix} 1 & \\ \rho & 1 \end{bmatrix} \\
+\beta_0 & \sim \operatorname{Normal}(\log(5), 0.89392) \\
+\beta_1  & \sim \operatorname{Normal}(0, 1) \\
+\sigma_0, \sigma_1 & \sim \operatorname{Gamma}(5.828427, 9.656854) \\
+\rho    & \sim \operatorname{LKJ}(4).
+\end{align*}
 $$
 
 Here’s how to fit the model with `brm()`.
@@ -364,20 +343,20 @@ Before we start interpreting the model, let’s fit the next two
 alternative models. The first is the unconditional growth model
 
 $$
-\\begin{align\*}
-\\text{count}\_{ij} & \\sim \\operatorname{Poisson}(\\lambda\_{ij}) \\\\
-\\log(\\lambda\_{ij}) & = \\beta_0 + \\beta_1 \\text{session01}\_{ij} + u\_{0i} + u\_{1i} \\\\
-\\begin{bmatrix} u\_{0i} \\\\ u\_{1i} \\end{bmatrix} & \\sim
-  \\operatorname{Normal} \\left ( 
-    \\begin{bmatrix} 0 \\\\ 0 \\end{bmatrix}, \\mathbf{SRS} 
-    \\right) \\\\
-\\mathbf S & =  \\begin{bmatrix} \\sigma_0 & \\\\ 0 & \\sigma_1 \\end{bmatrix} \\\\
-\\mathbf R & =  \\begin{bmatrix} 1 & \\\\ \\rho & 1 \\end{bmatrix} \\\\
-\\beta_0 & \\sim \\operatorname{Normal}(\\log(5), 0.89392) \\\\
-\\beta_1  & \\sim \\operatorname{Normal}(0, 1) \\\\
-\\sigma_0\\ \\&\\ \\sigma_1 & \\sim \\operatorname{Gamma}(5.828427, 9.656854) \\\\
-\\rho    & \\sim \\operatorname{LKJ}(4),
-\\end{align\*}
+\begin{align*}
+\text{count}_{ij} & \sim \operatorname{Poisson}(\lambda_{ij}) \\
+\log(\lambda_{ij}) & = \beta_0 + \beta_1 \text{session01}_{ij} + u_{0i} + u_{1i} \\
+\begin{bmatrix} u_{0i} \\ u_{1i} \end{bmatrix} & \sim
+  \operatorname{Normal} \left ( 
+    \begin{bmatrix} 0 \\ 0 \end{bmatrix}, \mathbf{SRS} 
+    \right) \\
+\mathbf S & =  \begin{bmatrix} \sigma_0 & \\ 0 & \sigma_1 \end{bmatrix} \\
+\mathbf R & =  \begin{bmatrix} 1 & \\ \rho & 1 \end{bmatrix} \\
+\beta_0 & \sim \operatorname{Normal}(\log(5), 0.89392) \\
+\beta_1  & \sim \operatorname{Normal}(0, 1) \\
+\sigma_0, \sigma_1 & \sim \operatorname{Gamma}(5.828427, 9.656854) \\
+\rho    & \sim \operatorname{LKJ}(4),
+\end{align*}
 $$
 
 which has the same basic structure as the conditional means model we
@@ -386,55 +365,54 @@ variable for a continuous measure of time, `session01`. This variable
 has been scales so that the first session is 0, the last session (47)
 has been scaled to 1, all the intermediary sessions are the
 corresponding factions. In principle, you could use the `session`
-variable, instead, but `session01` will make it easer for the HMC
+variable, instead, but `session01` will make it easier for the HMC
 algorithm to fit the model and it will make it easier to set the prior
-on *β*<sub>1</sub>, which is now interpreted as the average change in
-counts from the first session to the last. In this case, we will just
-continue using the regularizing 𝒩(0,1).
+on $\beta_1$, which is now interpreted as the average change in counts
+from the first session to the last. In this case, we will just continue
+using the regularizing $\mathcal N(0, 1)$.
 
 Our third model is the conditional growth model
 
 $$
-\\begin{align\*}
-\\text{count}\_{ij} & \\sim \\operatorname{Poisson}(\\lambda\_{ij}) \\\\
-\\log(\\lambda\_{ij}) & = \\beta_0 + \\beta_1 \\text{session01}\_{ij} + \\beta_2 \\text{phase}\_{ij} + \\beta_3 \\text{session01}\_{ij}\\text{phase}\_{ij} \\\\
-                   & \\;\\;\\; + u\_{0i} + u\_{1i} + u\_{2i} + u\_{3i} \\\\
-\\begin{bmatrix} u\_{0i} \\\\ u\_{1i} \\\\ u\_{2i} \\\\ u\_{3i} \\end{bmatrix} & \\sim
-  \\operatorname{Normal} \\left ( 
-    \\mathbf 0, \\mathbf{SRS} 
-    \\right) \\\\
-\\mathbf S & = 
-  \\begin{bmatrix} 
-    \\sigma_0 \\\\ 
-    0 & \\sigma_1 \\\\ 
-    0 & 0 & \\sigma_2 \\\\ 
-    0 & 0 & 0 & \\sigma_3 
-  \\end{bmatrix} \\\\
-\\mathbf R & = 
-  \\begin{bmatrix} 
-    1 & \\\\ 
-    \\rho\_{21} & 1 \\\\ 
-    \\rho\_{31} & \\rho\_{32} & 1 \\\\ 
-    \\rho\_{41} & \\rho\_{42} & \\rho\_{43} & 1 
-  \\end{bmatrix} \\\\
-\\beta_0 & \\sim \\operatorname{Normal}(\\log(5), 0.89392) \\\\
-\\beta_1, \\dots, \\beta_3  & \\sim \\operatorname{Normal}(0, 1) \\\\
-\\sigma_0, \\dots,  \\sigma_3 & \\sim \\operatorname{Gamma}(5.828427, 9.656854) \\\\
-\\rho    & \\sim \\operatorname{LKJ}(2),
-\\end{align\*}
+\begin{align*}
+\text{count}_{ij} & \sim \operatorname{Poisson}(\lambda_{ij}) \\
+\log(\lambda_{ij}) & = \beta_0 + \beta_1 \text{session01}_{ij} + \beta_2 \text{phase}_{ij} + \beta_3 \text{session01}_{ij}\text{phase}_{ij} \\
+                   & \;\;\; + u_{0i} + u_{1i} + u_{2i} + u_{3i} \\
+\begin{bmatrix} u_{0i} \\ u_{1i} \\ u_{2i} \\ u_{3i} \end{bmatrix} & \sim
+  \operatorname{Normal} \left ( 
+    \mathbf 0, \mathbf{SRS} 
+    \right) \\
+\mathbf S & = 
+  \begin{bmatrix} 
+    \sigma_0 \\ 
+    0 & \sigma_1 \\ 
+    0 & 0 & \sigma_2 \\ 
+    0 & 0 & 0 & \sigma_3 
+  \end{bmatrix} \\
+\mathbf R & = 
+  \begin{bmatrix} 
+    1 & \\ 
+    \rho_{21} & 1 \\ 
+    \rho_{31} & \rho_{32} & 1 \\ 
+    \rho_{41} & \rho_{42} & \rho_{43} & 1 
+  \end{bmatrix} \\
+\beta_0 & \sim \operatorname{Normal}(\log(5), 0.89392) \\
+\beta_1, \dots, \beta_3  & \sim \operatorname{Normal}(0, 1) \\
+\sigma_0, \dots,  \sigma_3 & \sim \operatorname{Gamma}(5.828427, 9.656854) \\
+\rho    & \sim \operatorname{LKJ}(2),
+\end{align*}
 $$
 
-where *β*<sub>0</sub> is the population average count at the first
-session within the A `phase`; *β*<sub>1</sub> is the population average
-change by the final session (47), presuming the A `phase`;
-*β*<sub>2</sub> is the population average change in counts for the B
-`phase`, from the perspective of the first trial; and *β*<sub>3</sub> is
-the population average interaction for `phase` and `session01`, which
-allows the growth trajectories to differ by `phase`. As we allow all
-four parameters to vary by kid, we end up with four *u*<sub>*i*</sub>
-parameters and a corresponding 4 × 4 matrix for both **S** and **R**.
-Given the size of the **R** matrix, we have reduced the prior to
-LKJ (2).
+where $\beta_0$ is the population average count at the first session
+within the A `phase`; $\beta_1$ is the population average change by the
+final session (47), presuming the A `phase`; $\beta_2$ is the population
+average change in counts for the B `phase`, from the perspective of the
+first trial; and $\beta_3$ is the population average interaction for
+`phase` and `session01`, which allows the growth trajectories to differ
+by `phase`. As we allow all four parameters to vary by kid, we end up
+with four $u_i$ parameters and a corresponding $4 \times 4$ matrix for
+both $\mathbf S$ and $\mathbf R$. Given the size of the $\mathbf R$
+matrix, we have reduced the prior to $\operatorname{LKJ}(2)$.
 
 Here’s how to fit both models.
 
@@ -564,8 +542,8 @@ summary(fit3)
 
 As you look through the parameter summaries, you’ll notice all of the
 posteriors are will within the expected ranges we set with our priors.
-Though we’ll come back to it in more detail, later, notice how the *σ*
-posteriors compare with their priors.
+Though we’ll come back to it in more detail, later, notice how the
+$\sigma$ posteriors compare with their priors.
 
 We might compare how well the models make sense of the data from a
 cross-validation perspective with the LOO-CV estimates.
@@ -648,7 +626,7 @@ glimpse(nd)
     ## $ session01 <dbl> 0.04347826, 0.05434783, 0.06521739, 0.07608696, 0.08695652, 0.09782609, 0.10869565, 0.1195…
 
 Now use the `nd` data to compute the fitted lines for each of the three
-models with `fitted()`, saving the resutls as `f1` through `f3`.
+models with `fitted()`, saving the results as `f1` through `f3`.
 
 ``` r
 f1 <- fitted(fit1, newdata = nd) %>% 
@@ -723,7 +701,7 @@ p3 <- f3 %>%
 (p1 / p2 / p3) & theme(plot.title.position = "plot")
 ```
 
-<img src="Mason-et-al--2014-_files/figure-gfm/unnamed-chunk-17-1.png" width="768" />
+<img src="Mason-et-al--2014-_files/figure-gfm/unnamed-chunk-15-1.png" width="768" />
 
 The plot help clarify the similar LOO-CV results for `fit1` and `fit3`.
 Within each phase of the intervention, there was relatively little
@@ -736,53 +714,54 @@ allowed us to see this clearly.
 
 The plots above and the earlier exploratory plots all show how the
 behavioral counts varied around their central tendencies less in the A
-phase than in the B phase. As its sole parameter *λ* controls both the
-mean and the variance, the Poisson distribution naturally accounts for
-this difference in variation. However, yoking the mean and variance is
-restrictive in that sometimes behavioral counts have more variation than
-expected simply by their mean. In such cases, the negative-binomial
+phase than in the B phase. As its sole parameter $\lambda$ controls both
+the mean and the variance, the Poisson distribution naturally accounts
+for this difference in variation. However, yoking the mean and variance
+is restrictive in that sometimes behavioral counts have more variation
+than expected simply by their mean. In such cases, the negative-binomial
 distribution is a good alternative. We can generalize the full
 conditional Poisson growth model `fit3` to a conditional
 negative-binomial growth model as
 
 $$
-\\begin{align\*}
-\\text{count}\_{ij} & \\sim \\operatorname{Negative Binomial}(\\lambda\_{ij}, \\phi) \\\\
-\\log(\\lambda\_{ij}) & = \\beta_0 + \\beta_1 \\text{session01}\_{ij} + \\beta_2 \\text{phase}\_{ij} + \\beta_3 \\text{session01}\_{ij}\\text{phase}\_{ij} \\\\
-                   & \\;\\;\\; + u\_{0i} + u\_{1i} + u\_{2i} + u\_{3i} \\\\
-\\begin{bmatrix} u\_{0i} \\\\ u\_{1i} \\\\ u\_{2i} \\\\ u\_{3i} \\end{bmatrix} & \\sim
-  \\operatorname{Normal} \\left ( 
-    \\mathbf 0, \\mathbf{SRS} 
-    \\right) \\\\
-\\mathbf S & = 
-  \\begin{bmatrix} 
-    \\sigma_0 & & & \\\\ 
-    0 & \\sigma_1 & &\\\\ 
-    0 & 0 & \\sigma_2 \\\\ 
-    0 & 0 & 0 & \\sigma_3 
-  \\end{bmatrix} \\\\
-\\mathbf R & = 
-  \\begin{bmatrix} 
-    1 & \\\\ 
-    \\rho\_{21} & 1 \\\\ 
-    \\rho\_{31} & \\rho\_{32} & 1 \\\\ 
-    \\rho\_{41} & \\rho\_{42} & \\rho\_{43} & 1 
-  \\end{bmatrix} \\\\
-\\beta_0 & \\sim \\operatorname{Normal}(\\log(5), 0.89392) \\\\
-\\beta_1, \\dots, \\beta_3 & \\sim \\operatorname{Normal}(0, 1) \\\\
-\\sigma_0, \\dots, \\sigma_3 & \\sim \\operatorname{Gamma}(5.828427, 9.656854) \\\\
-\\rho & \\sim \\operatorname{LKJ}(2) \\\\
-\\phi & \\sim \\operatorname{Gamma}(0.01, 0.01),
-\\end{align\*}
+\begin{align*}
+\text{count}_{ij} & \sim \operatorname{Negative Binomial}(\lambda_{ij}, \phi) \\
+\log(\lambda_{ij}) & = \beta_0 + \beta_1 \text{session01}_{ij} + \beta_2 \text{phase}_{ij} + \beta_3 \text{session01}_{ij}\text{phase}_{ij} \\
+                   & \;\;\; + u_{0i} + u_{1i} + u_{2i} + u_{3i} \\
+\begin{bmatrix} u_{0i} \\ u_{1i} \\ u_{2i} \\ u_{3i} \end{bmatrix} & \sim
+  \operatorname{Normal} \left ( 
+    \mathbf 0, \mathbf{SRS} 
+    \right) \\
+\mathbf S & = 
+  \begin{bmatrix} 
+    \sigma_0 & & & \\ 
+    0 & \sigma_1 & &\\ 
+    0 & 0 & \sigma_2 \\ 
+    0 & 0 & 0 & \sigma_3 
+  \end{bmatrix} \\
+\mathbf R & = 
+  \begin{bmatrix} 
+    1 & \\ 
+    \rho_{21} & 1 \\ 
+    \rho_{31} & \rho_{32} & 1 \\ 
+    \rho_{41} & \rho_{42} & \rho_{43} & 1 
+  \end{bmatrix} \\
+\beta_0 & \sim \operatorname{Normal}(\log(5), 0.89392) \\
+\beta_1, \dots, \beta_3 & \sim \operatorname{Normal}(0, 1) \\
+\sigma_0, \dots, \sigma_3 & \sim \operatorname{Gamma}(5.828427, 9.656854) \\
+\rho & \sim \operatorname{LKJ}(2) \\
+\phi & \sim \operatorname{Gamma}(0.01, 0.01),
+\end{align*}
 $$
 
 where all parameters are the same, except for the dispersion precision
-*ϕ*, to which we have assigned the **brms** default prior
-Gamma (0.01,0.01). To get a sense of that prior, we might plot.
+$\phi$, to which we have assigned the **brms** default prior
+$\operatorname{Gamma}(0.01, 0.01)$. To get a sense of that prior, we
+might plot.
 
 ``` r
 prior(gamma(0.01, 0.01), class = sd)%>% 
-  parse_dist(prior) %>%
+  parse_dist() %>%
 
   ggplot(aes(y = 0, dist = .dist, args = .args)) +
   stat_dist_halfeye(.width = .99, size = 2, n = 2e3) +
@@ -791,11 +770,11 @@ prior(gamma(0.01, 0.01), class = sd)%>%
   coord_cartesian(xlim = c(0, 100))
 ```
 
-<img src="Mason-et-al--2014-_files/figure-gfm/unnamed-chunk-18-1.png" width="312" />
+<img src="Mason-et-al--2014-_files/figure-gfm/unnamed-chunk-16-1.png" width="312" />
 
-The Gamma (0.01,0.01) prior places 99% of the prior mass between about 0
-and 56, but has a very long right tail, which can allow for quite large
-values of *ϕ*.
+The $\operatorname{Gamma}(0.01, 0.01)$ prior places 99% of the prior
+mass between about 0 and 56, but has a very long right tail, which can
+allow for quite large values of $\phi$.
 
 ``` r
 qgamma(p = c(.005, .995), shape = 0.01, rate = 0.01) %>% round(digits = 1)
@@ -803,111 +782,111 @@ qgamma(p = c(.005, .995), shape = 0.01, rate = 0.01) %>% round(digits = 1)
 
     ## [1]  0.0 55.6
 
-With this parameterization, lower values of *ϕ* (say in the single-digit
-range), indicate relatively large deviations from the Poisson
-distribution. As *ϕ* increases into the double-digit range, those
-deviations decrease. As *ϕ* approaches the triple-digit range and
-beyond, the negative-binomial distribution merges into the Poisson. The
-**brms** default *ϕ* ∼ Gamma (0.01,0.01) allows the precision to take on
-values form any of those ranges, as needed, and is a fine place to
-start.
+With this parameterization, lower values of $\phi$ (say in the
+single-digit range), indicate relatively large deviations from the
+Poisson distribution. As $\phi$ increases into the double-digit range,
+those deviations decrease. As $\phi$ approaches the triple-digit range
+and beyond, the negative-binomial distribution merges into the Poisson.
+The **brms** default $\phi \sim \operatorname{Gamma}(0.01, 0.01)$ allows
+the precision to take on values form any of those ranges, as needed, and
+is a fine place to start.
 
-This first negative-binomial model is limited in that it holds *ϕ*
+This first negative-binomial model is limited in that it holds $\phi$
 constant across our three kids. We can relax that assumption by fitting
 a distributional negative-binomial model
 
 $$
-\\begin{align\*}
-\\text{count}\_{ij} & \\sim \\operatorname{Negative Binomial}(\\lambda\_{ij}, \\phi_i) \\\\
-\\log(\\lambda\_{ij}) & = \\beta_0 + \\beta_1 \\text{session01}\_{ij} + \\beta_2 \\text{phase}\_{ij} + \\beta_3 \\text{session01}\_{ij}\\text{phase}\_{ij} \\\\
-                   & \\;\\;\\; + u\_{\\beta_0i} + u\_{\\beta_1i} + u\_{\\beta_2i} + u\_{\\beta_3i} \\\\
-\\log(\\phi_i) & = \\eta_0 + u\_{\\eta_0 i} \\\\
-\\begin{bmatrix} u\_{\\beta_0i} \\\\ u\_{\\beta_1i} \\\\ u\_{\\beta_2i} \\\\ u\_{\\beta_3i} \\\\ u\_{\\eta_0i} \\\\ \\end{bmatrix} & \\sim
-  \\operatorname{Normal} \\left ( 
-    \\mathbf 0, \\mathbf{SRS} 
-    \\right) \\\\
-\\mathbf S & = 
-  \\begin{bmatrix} 
-    \\sigma\_{\\beta_0} \\\\ 
-    0 & \\sigma\_{\\beta_1} \\\\ 
-    0 & 0 & \\sigma\_{\\beta_2} \\\\ 
-    0 & 0 & 0 & \\sigma\_{\\beta_3} \\\\ 
-    0 & 0 & 0 & 0 & \\sigma\_{\\eta_0} 
-  \\end{bmatrix} \\\\
-\\mathbf R & = 
-  \\begin{bmatrix} 
-    1 & \\\\ 
-    \\rho\_{21} & 1 \\\\ 
-    \\rho\_{31} & \\rho\_{32} & 1 \\\\ 
-    \\rho\_{41} & \\rho\_{42} & \\rho\_{43} & 1 \\\\ 
+\begin{align*}
+\text{count}_{ij} & \sim \operatorname{Negative Binomial}(\lambda_{ij}, \phi_i) \\
+\log(\lambda_{ij}) & = \beta_0 + \beta_1 \text{session01}_{ij} + \beta_2 \text{phase}_{ij} + \beta_3 \text{session01}_{ij}\text{phase}_{ij} \\
+                   & \;\;\; + u_{\beta_0i} + u_{\beta_1i} + u_{\beta_2i} + u_{\beta_3i} \\
+\log(\phi_i) & = \eta_0 + u_{\eta_0 i} \\
+\begin{bmatrix} u_{\beta_0i} \\ u_{\beta_1i} \\ u_{\beta_2i} \\ u_{\beta_3i} \\ u_{\eta_0i} \\ \end{bmatrix} & \sim
+  \operatorname{Normal} \left ( 
+    \mathbf 0, \mathbf{SRS} 
+    \right) \\
+\mathbf S & = 
+  \begin{bmatrix} 
+    \sigma_{\beta_0} \\ 
+    0 & \sigma_{\beta_1} \\ 
+    0 & 0 & \sigma_{\beta_2} \\ 
+    0 & 0 & 0 & \sigma_{\beta_3} \\ 
+    0 & 0 & 0 & 0 & \sigma_{\eta_0} 
+  \end{bmatrix} \\
+\mathbf R & = 
+  \begin{bmatrix} 
+    1 & \\ 
+    \rho_{21} & 1 \\ 
+    \rho_{31} & \rho_{32} & 1 \\ 
+    \rho_{41} & \rho_{42} & \rho_{43} & 1 \\ 
     0 & 0 & 0 & 0 & 1 
-  \\end{bmatrix} \\\\
-\\beta_0 & \\sim \\operatorname{Normal}(\\log(5), 0.89392) \\\\
-\\beta_1, \\dots, \\beta_3 & \\sim \\operatorname{Normal}(0, 1) \\\\
-\\eta_0 & \\sim \\operatorname{Student-t}(3, 0, 2.5) \\\\ 
-\\sigma\_{\\beta_0}, \\dots, \\sigma\_{\\eta_0} & \\sim \\operatorname{Gamma}(5.828427, 9.656854) \\\\
-\\rho & \\sim \\operatorname{LKJ}(2),
-\\end{align\*}
+  \end{bmatrix} \\
+\beta_0 & \sim \operatorname{Normal}(\log(5), 0.89392) \\
+\beta_1, \dots, \beta_3 & \sim \operatorname{Normal}(0, 1) \\
+\eta_0 & \sim \operatorname{Student-t}(3, 0, 2.5) \\ 
+\sigma_{\beta_0}, \dots, \sigma_{\eta_0} & \sim \operatorname{Gamma}(5.828427, 9.656854) \\
+\rho & \sim \operatorname{LKJ}(2),
+\end{align*}
 $$
 
-where log (*ϕ*<sub>*i*</sub>) now varies across kids via a linear model
-with a grand mean *η*<sub>0</sub> and kid-specific deviations around the
-mean *u*<sub>*η*<sub>0</sub>*i*</sub>. This increases both **S** and
-**R** matrices to a 5 × 5 structure and the
-*u*<sub>*η*<sub>0</sub>*i*</sub> deviations are orthogonal to the other
-four deviation terms. We have used the **brms** default for
-*η*<sub>0</sub>, which will allow for a large range of *ϕ* values on the
-log scale. For simplicity, we extend the Gamma (5.828427,9.656854) prior
-to the new *σ*<sub>*η*<sub>0</sub></sub> variance parameter, to match
-the others. This specification indicates our uncertainty about where the
-central tendency for *ϕ* might be, but where ever it ends up, it should
-not vary drastically by kid.
+where $\log(\phi_i)$ now varies across kids via a linear model with a
+grand mean $\eta_0$ and kid-specific deviations around the mean
+$u_{\eta_0 i}$. This increases both $\mathbf S$ and $\mathbf R$ matrices
+to a $5 \times 5$ structure and the $u_{\eta_0 i}$ deviations are
+orthogonal to the other four deviation terms. We have used the **brms**
+default for $\eta_0$, which will allow for a large range of $\phi$
+values on the log scale. For simplicity, we extend the
+$\operatorname{Gamma}(5.828427, 9.656854)$ prior to the new
+$\sigma_{\eta_0}$ variance parameter, to match the others. This
+specification indicates our uncertainty about where the central tendency
+for $\phi$ might be, but where ever it ends up, it should not vary
+drastically by kid.
 
 Our final model extends the distributional approach further in that we
-also allow log (*ϕ*) to vary by `phase` within each kid.
+also allow $\log(\phi)$ to vary by `phase` within each kid.
 
 $$
-\\begin{align\*}
-\\text{count}\_{ij} & \\sim \\operatorname{Negative Binomial}(\\lambda\_{ij}, \\phi_i) \\\\
-\\log(\\lambda\_{ij}) & = \\beta_0 + \\beta_1 \\text{session01}\_{ij} + \\beta_2 \\text{phase}\_{ij} + \\beta_3 \\text{session01}\_{ij}\\text{phase}\_{ij} \\\\
-                   & \\;\\;\\; + u\_{\\beta_0i} + u\_{\\beta_1i} + u\_{\\beta_2i} + u\_{\\beta_3i} \\\\
-\\log(\\phi_i) & = \\eta_0 + \\eta_1 \\text{phase}\_{ij} + u\_{\\eta_0 i} + u\_{\\eta_1 i} \\\\
-\\begin{bmatrix} u\_{\\beta_0i} \\\\ u\_{\\beta_1i} \\\\ u\_{\\beta_2i} \\\\ u\_{\\beta_3i} \\\\ u\_{\\eta_0i} \\\\ u\_{\\eta_1i} \\\\ \\end{bmatrix} & \\sim
-  \\operatorname{Normal} \\left ( 
-    \\mathbf 0, \\mathbf{SRS} 
-    \\right) \\\\
-\\mathbf S & = 
-  \\begin{bmatrix} 
-    \\sigma\_{\\beta_0} \\\\ 
-    0 & \\sigma\_{\\beta_1} \\\\ 
-    0 & 0 & \\sigma\_{\\beta_2} \\\\ 
-    0 & 0 & 0 & \\sigma\_{\\beta_3} \\\\ 
-    0 & 0 & 0 & 0 & \\sigma\_{\\eta_0}  \\\\ 
-    0 & 0 & 0 & 0 & 0 & \\sigma\_{\\eta_1} 
-  \\end{bmatrix} \\\\
-\\mathbf R & = 
-  \\begin{bmatrix} 
-    1 & \\\\ 
-    \\rho\_{21} & 1 \\\\ 
-    \\rho\_{31} & \\rho\_{32} & 1 \\\\ 
-    \\rho\_{41} & \\rho\_{42} & \\rho\_{43} & 1 \\\\ 
-    0 & 0 & 0 & 0 & 1 \\\\ 
-    0 & 0 & 0 & 0 & \\rho\_{65} & 1 
-  \\end{bmatrix} \\\\
-\\beta_0 & \\sim \\operatorname{Normal}(\\log(5), 0.89392) \\\\
-\\beta_1, \\dots, \\beta_3 & \\sim \\operatorname{Normal}(0, 1) \\\\
-\\eta_0 & \\sim \\operatorname{Student-t}(3, 0, 2.5) \\\\ 
-\\eta_1 & \\sim \\operatorname{Normal}(0, 1) \\\\
-\\sigma\_{\\beta_0}, \\dots, \\sigma\_{\\eta_1} & \\sim \\operatorname{Gamma}(5.828427, 9.656854) \\\\
-\\rho & \\sim \\operatorname{LKJ}(2).
-\\end{align\*}
+\begin{align*}
+\text{count}_{ij} & \sim \operatorname{Negative Binomial}(\lambda_{ij}, \phi_i) \\
+\log(\lambda_{ij}) & = \beta_0 + \beta_1 \text{session01}_{ij} + \beta_2 \text{phase}_{ij} + \beta_3 \text{session01}_{ij}\text{phase}_{ij} \\
+                   & \;\;\; + u_{\beta_0i} + u_{\beta_1i} + u_{\beta_2i} + u_{\beta_3i} \\
+\log(\phi_i) & = \eta_0 + \eta_1 \text{phase}_{ij} + u_{\eta_0 i} + u_{\eta_1 i} \\
+\begin{bmatrix} u_{\beta_0i} \\ u_{\beta_1i} \\ u_{\beta_2i} \\ u_{\beta_3i} \\ u_{\eta_0i} \\ u_{\eta_1i} \\ \end{bmatrix} & \sim
+  \operatorname{Normal} \left ( 
+    \mathbf 0, \mathbf{SRS} 
+    \right) \\
+\mathbf S & = 
+  \begin{bmatrix} 
+    \sigma_{\beta_0} \\ 
+    0 & \sigma_{\beta_1} \\ 
+    0 & 0 & \sigma_{\beta_2} \\ 
+    0 & 0 & 0 & \sigma_{\beta_3} \\ 
+    0 & 0 & 0 & 0 & \sigma_{\eta_0}  \\ 
+    0 & 0 & 0 & 0 & 0 & \sigma_{\eta_1} 
+  \end{bmatrix} \\
+\mathbf R & = 
+  \begin{bmatrix} 
+    1 & \\ 
+    \rho_{21} & 1 \\ 
+    \rho_{31} & \rho_{32} & 1 \\ 
+    \rho_{41} & \rho_{42} & \rho_{43} & 1 \\ 
+    0 & 0 & 0 & 0 & 1 \\ 
+    0 & 0 & 0 & 0 & \rho_{65} & 1 
+  \end{bmatrix} \\
+\beta_0 & \sim \operatorname{Normal}(\log(5), 0.89392) \\
+\beta_1, \dots, \beta_3 & \sim \operatorname{Normal}(0, 1) \\
+\eta_0 & \sim \operatorname{Student-t}(3, 0, 2.5) \\ 
+\eta_1 & \sim \operatorname{Normal}(0, 1) \\
+\sigma_{\beta_0}, \dots, \sigma_{\eta_1} & \sim \operatorname{Gamma}(5.828427, 9.656854) \\
+\rho & \sim \operatorname{LKJ}(2).
+\end{align*}
 $$
 
-For simplicity, we assigned the weakly-regularizing 𝒩(0,1) prior to
-*η*<sub>1</sub>, much like with the *β*<sub>1</sub> through
-*β*<sub>3</sub> parameters. The new free parameter in the **R** matrix,
-*ρ*<sub>65</sub>, will allow the random intercepts and slopes for the
-log (*ϕ*<sub>*i*</sub>) model to correlate with each other.
+For simplicity, we assigned the weakly-regularizing $\mathcal N(0, 1)$
+prior to $\eta_1$, much like with the $\beta_1$ through $\beta_3$
+parameters. The new free parameter in the $\mathbf R$ matrix,
+$\rho_{65}$, will allow the random intercepts and slopes for the
+$\log(\phi_i)$ model to correlate with each other.
 
 Here’s how to fit the three new models with `brm()`.
 
@@ -1088,8 +1067,8 @@ summary(fit6)
     ## and Tail_ESS are effective sample size measures, and Rhat is the potential
     ## scale reduction factor on split chains (at convergence, Rhat = 1).
 
-You’ll notice that for all of them, the posteriors for *ϕ* tended toward
-the low to moderately-low end of the scale.
+You’ll notice that for all of them, the posteriors for $\phi$ tended
+toward the low to moderately-low end of the scale.
 
 We might compute the LOO-CV estimates and compare these models with the
 simpler Poisson `fit3`.
@@ -1241,7 +1220,7 @@ plot4 <- f6 %>%
 (plot1 / plot2 / plot3 / plot4) & theme(plot.title.position = "plot")
 ```
 
-<img src="Mason-et-al--2014-_files/figure-gfm/unnamed-chunk-24-1.png" width="768" />
+<img src="Mason-et-al--2014-_files/figure-gfm/unnamed-chunk-21-1.png" width="768" />
 
 The jagged outer bands in each plot depict the posterior-predictive
 distributions. In good-fitting models, those bands should contain about
@@ -1253,13 +1232,13 @@ much better job capturing the data. Although the distributional models
 simpler conventional negative-binomial model `fit4` does a pretty good
 job, too.
 
-### Plot *σ* posteriors agains the priors.
+### Plot $\sigma$ posteriors agains the priors.
 
 We spent a lot of time earlier in the section reasoning about how we
-might set the priors for the *σ* parameters. We can plot the posteriors
-for those parameters against their prior distributions to get a sense of
-how much the data updated the priors. Here we’ll practice with the
-largest model, `fit6`.
+might set the priors for the $\sigma$ parameters. We can plot the
+posteriors for those parameters against their prior distributions to get
+a sense of how much the data updated the priors. Here we’ll practice
+with the largest model, `fit6`.
 
 ``` r
 as_draws_df(fit6) %>% 
@@ -1287,18 +1266,17 @@ as_draws_df(fit6) %>%
   theme(panel.grid = element_blank())
 ```
 
-<img src="Mason-et-al--2014-_files/figure-gfm/unnamed-chunk-25-1.png" width="576" />
+<img src="Mason-et-al--2014-_files/figure-gfm/unnamed-chunk-22-1.png" width="576" />
 
-The marginal posteriors for the *σ* parameters connected to the mean
-model, *σ*<sub>*β*<sub>0</sub></sub>, …, *σ*<sub>*β*<sub>3</sub></sub>,
-all shrank a little towards zero. The marginal posteriors for the *σ*
-parameters connected to the dispersion model are almost identical to the
-priors. In both cases, the results help clarify we need data from more
-than 3 kids to return high-quality data-informed posteriors for the
-level-2 variance parameters. This is why it’s wise to fret about your
-*σ* priors when fitting multilevel growth models to small-*n* data sets.
-You can still fit the models, but the priors will be doing some heavy
-lifting.
+The marginal posteriors for the $\sigma$ parameters connected to the
+mean model, $\sigma_{\beta_0}, \dots, \sigma_{\beta_3}$, all shrank a
+little towards zero. The marginal posteriors for the $\sigma$ parameters
+connected to the dispersion model are almost identical to the priors. In
+both cases, the results help clarify we need data from more than 3 kids
+to return high-quality data-informed posteriors for the level-2 variance
+parameters. This is why it’s wise to fret about your $\sigma$ priors
+when fitting multilevel growth models to small-$n$ data sets. You can
+still fit the models, but the priors will be doing some heavy lifting.
 
 ## Session information
 
@@ -1306,13 +1284,13 @@ lifting.
 sessionInfo()
 ```
 
-    ## R version 4.1.2 (2021-11-01)
+    ## R version 4.2.0 (2022-04-22)
     ## Platform: x86_64-apple-darwin17.0 (64-bit)
-    ## Running under: macOS Catalina 10.15.7
+    ## Running under: macOS Big Sur/Monterey 10.16
     ## 
     ## Matrix products: default
-    ## BLAS:   /Library/Frameworks/R.framework/Versions/4.1/Resources/lib/libRblas.0.dylib
-    ## LAPACK: /Library/Frameworks/R.framework/Versions/4.1/Resources/lib/libRlapack.dylib
+    ## BLAS:   /Library/Frameworks/R.framework/Versions/4.2/Resources/lib/libRblas.0.dylib
+    ## LAPACK: /Library/Frameworks/R.framework/Versions/4.2/Resources/lib/libRlapack.dylib
     ## 
     ## locale:
     ## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
@@ -1321,34 +1299,34 @@ sessionInfo()
     ## [1] stats     graphics  grDevices utils     datasets  methods   base     
     ## 
     ## other attached packages:
-    ##  [1] patchwork_1.1.1 tidybayes_3.0.2 brms_2.16.3     Rcpp_1.0.8      forcats_0.5.1   stringr_1.4.0  
-    ##  [7] dplyr_1.0.7     purrr_0.3.4     readr_2.0.1     tidyr_1.2.0     tibble_3.1.6    ggplot2_3.3.5  
-    ## [13] tidyverse_1.3.1
+    ##  [1] patchwork_1.1.2 tidybayes_3.0.2 brms_2.18.0     Rcpp_1.0.9      forcats_0.5.1   stringr_1.4.1  
+    ##  [7] dplyr_1.0.10    purrr_0.3.4     readr_2.1.2     tidyr_1.2.1     tibble_3.1.8    ggplot2_3.3.6  
+    ## [13] tidyverse_1.3.2
     ## 
     ## loaded via a namespace (and not attached):
-    ##   [1] readxl_1.3.1         backports_1.4.1      plyr_1.8.6           igraph_1.2.6         svUnit_1.0.6        
-    ##   [6] splines_4.1.2        crosstalk_1.1.1      TH.data_1.0-10       rstantools_2.1.1     inline_0.3.19       
-    ##  [11] digest_0.6.29        htmltools_0.5.2      rsconnect_0.8.24     fansi_1.0.2          magrittr_2.0.2      
-    ##  [16] checkmate_2.0.0      tzdb_0.1.2           modelr_0.1.8         RcppParallel_5.1.4   matrixStats_0.61.0  
-    ##  [21] xts_0.12.1           sandwich_3.0-1       prettyunits_1.1.1    colorspace_2.0-2     rvest_1.0.1         
-    ##  [26] ggdist_3.0.1         haven_2.4.3          xfun_0.25            callr_3.7.0          crayon_1.4.2        
-    ##  [31] jsonlite_1.7.3       lme4_1.1-27.1        survival_3.2-13      zoo_1.8-9            glue_1.6.1          
-    ##  [36] gtable_0.3.0         emmeans_1.7.1-1      distributional_0.2.2 pkgbuild_1.2.0       rstan_2.21.3        
-    ##  [41] abind_1.4-5          scales_1.1.1         mvtnorm_1.1-2        DBI_1.1.1            miniUI_0.1.1.1      
-    ##  [46] xtable_1.8-4         diffobj_0.3.4        stats4_4.1.2         StanHeaders_2.21.0-7 DT_0.19             
-    ##  [51] htmlwidgets_1.5.3    httr_1.4.2           threejs_0.3.3        arrayhelpers_1.1-0   posterior_1.1.0.9000
-    ##  [56] ellipsis_0.3.2       pkgconfig_2.0.3      loo_2.4.1            farver_2.1.0         dbplyr_2.1.1        
-    ##  [61] utf8_1.2.2           labeling_0.4.2       tidyselect_1.1.1     rlang_1.0.1          reshape2_1.4.4      
-    ##  [66] later_1.3.0          munsell_0.5.0        cellranger_1.1.0     tools_4.1.2          cli_3.1.1           
-    ##  [71] generics_0.1.2       broom_0.7.10         ggridges_0.5.3       evaluate_0.14        fastmap_1.1.0       
-    ##  [76] yaml_2.2.1           processx_3.5.2       knitr_1.33           fs_1.5.0             nlme_3.1-153        
-    ##  [81] mime_0.11            projpred_2.0.2       xml2_1.3.2           compiler_4.1.2       bayesplot_1.8.1     
-    ##  [86] shinythemes_1.2.0    rstudioapi_0.13      gamm4_0.2-6          reprex_2.0.1         stringi_1.7.4       
-    ##  [91] highr_0.9            ps_1.6.0             Brobdingnag_1.2-6    lattice_0.20-45      Matrix_1.3-4        
-    ##  [96] nloptr_1.2.2.2       markdown_1.1         shinyjs_2.0.0        tensorA_0.36.2       vctrs_0.3.8         
-    ## [101] pillar_1.7.0         lifecycle_1.0.1      bridgesampling_1.1-2 estimability_1.3     httpuv_1.6.2        
-    ## [106] R6_2.5.1             promises_1.2.0.1     gridExtra_2.3        codetools_0.2-18     boot_1.3-28         
-    ## [111] colourpicker_1.1.0   MASS_7.3-54          gtools_3.9.2         assertthat_0.2.1     withr_2.4.3         
-    ## [116] shinystan_2.5.0      multcomp_1.4-17      mgcv_1.8-38          parallel_4.1.2       hms_1.1.0           
-    ## [121] grid_4.1.2           coda_0.19-4          minqa_1.2.4          rmarkdown_2.10       shiny_1.6.0         
-    ## [126] lubridate_1.7.10     base64enc_0.1-3      dygraphs_1.1.1.6
+    ##   [1] readxl_1.4.1         backports_1.4.1      plyr_1.8.7           igraph_1.3.4         svUnit_1.0.6        
+    ##   [6] splines_4.2.0        crosstalk_1.2.0      TH.data_1.1-1        rstantools_2.2.0     inline_0.3.19       
+    ##  [11] digest_0.6.29        htmltools_0.5.3      fansi_1.0.3          magrittr_2.0.3       checkmate_2.1.0     
+    ##  [16] googlesheets4_1.0.1  tzdb_0.3.0           modelr_0.1.8         RcppParallel_5.1.5   matrixStats_0.62.0  
+    ##  [21] xts_0.12.1           sandwich_3.0-2       prettyunits_1.1.1    colorspace_2.0-3     rvest_1.0.2         
+    ##  [26] ggdist_3.2.0         haven_2.5.1          xfun_0.33            callr_3.7.1          crayon_1.5.1        
+    ##  [31] jsonlite_1.8.0       lme4_1.1-30          survival_3.4-0       zoo_1.8-10           glue_1.6.2          
+    ##  [36] gtable_0.3.1         gargle_1.2.0         emmeans_1.8.0        distributional_0.3.1 pkgbuild_1.3.1      
+    ##  [41] rstan_2.21.7         abind_1.4-5          scales_1.2.1         mvtnorm_1.1-3        DBI_1.1.3           
+    ##  [46] miniUI_0.1.1.1       xtable_1.8-4         diffobj_0.3.5        stats4_4.2.0         StanHeaders_2.21.0-7
+    ##  [51] DT_0.24              htmlwidgets_1.5.4    httr_1.4.4           threejs_0.3.3        arrayhelpers_1.1-0  
+    ##  [56] posterior_1.3.1      ellipsis_0.3.2       pkgconfig_2.0.3      loo_2.5.1            farver_2.1.1        
+    ##  [61] dbplyr_2.2.1         utf8_1.2.2           labeling_0.4.2       tidyselect_1.1.2     rlang_1.0.6         
+    ##  [66] reshape2_1.4.4       later_1.3.0          munsell_0.5.0        cellranger_1.1.0     tools_4.2.0         
+    ##  [71] cli_3.4.0            generics_0.1.3       broom_1.0.1          ggridges_0.5.3       evaluate_0.16       
+    ##  [76] fastmap_1.1.0        yaml_2.3.5           processx_3.7.0       knitr_1.40           fs_1.5.2            
+    ##  [81] nlme_3.1-159         mime_0.12            projpred_2.2.1       xml2_1.3.3           compiler_4.2.0      
+    ##  [86] bayesplot_1.9.0      shinythemes_1.2.0    rstudioapi_0.13      gamm4_0.2-6          reprex_2.0.2        
+    ##  [91] stringi_1.7.8        highr_0.9            ps_1.7.1             Brobdingnag_1.2-8    lattice_0.20-45     
+    ##  [96] Matrix_1.4-1         nloptr_2.0.3         markdown_1.1         shinyjs_2.1.0        tensorA_0.36.2      
+    ## [101] vctrs_0.4.1          pillar_1.8.1         lifecycle_1.0.2      bridgesampling_1.1-2 estimability_1.4.1  
+    ## [106] httpuv_1.6.5         R6_2.5.1             promises_1.2.0.1     gridExtra_2.3        codetools_0.2-18    
+    ## [111] boot_1.3-28          colourpicker_1.1.1   MASS_7.3-58.1        gtools_3.9.3         assertthat_0.2.1    
+    ## [116] withr_2.5.0          shinystan_2.6.0      multcomp_1.4-20      mgcv_1.8-40          parallel_4.2.0      
+    ## [121] hms_1.1.1            grid_4.2.0           coda_0.19-4          minqa_1.2.4          rmarkdown_2.16      
+    ## [126] googledrive_2.0.0    shiny_1.7.2          lubridate_1.8.0      base64enc_0.1-3      dygraphs_1.1.1.6
