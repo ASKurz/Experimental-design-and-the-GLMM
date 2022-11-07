@@ -46,7 +46,7 @@ We can look at the data with a version of Figure 2 from the original article.
 theme_set(
   theme_gray(base_size = 13) +
   theme(panel.grid = element_blank(),
-        strip.background= element_blank(),
+        strip.background = element_blank(),
         strip.text.x = element_text(hjust = 1))
 )
 
@@ -66,7 +66,7 @@ mason2014 %>%
   facet_wrap(~ id, ncol = 1)
 ```
 
-We could also use the `geom_smooth()` method to get a sense of the trends across students and conditions.
+We could also use the `geom_smooth()` method to get a sense of the linear trends across students and conditions.
 
 ```{r, fig.width = 5, fig.height = 4}
 mason2014 %>% 
@@ -81,7 +81,7 @@ mason2014 %>%
   facet_wrap(~ id, ncol = 1)
 ```
 
-We explicitly removed the standard error ribbons from the plot with `se = FALSE` because, IMO, they would be invalid. They're based on OLS estimation, which isn't particularly appropriate for that of this kind. However, the lines are okay for quick-and-dirty exploratory plots.
+We explicitly removed the standard error ribbons from the plot with `se = FALSE` because, IMO, they would be invalid. They're based on OLS estimation, which isn't particularly appropriate for data of this kind. However, the lines are okay for quick-and-dirty exploratory plots.
 
 ## Models: First round
 
@@ -101,35 +101,28 @@ $$
 \end{align*}
 $$
 
-where the left side of the equation in the second line, $\log(\lambda_{ij})$, clarifies we are using the conventional log link to ensure the model only predicts positive average counts. The $\beta_0$ parameter is the population average number of counts at baseline A phase and $\beta_1$ is population average change in counts during the post-intervention B phase. The kid-specific deviations around the population means are depicted by the $u_{0i}$ and $u_{1i}$ terms, which are modeled as bivariate normal with means of zero and the variance/covariance matrix $\mathbf \Sigma$. Following the **brms** convention, we decompose $\mathbf \Sigma$ into the matrix of standard deviations $\mathbf S$ and the correlation matrix $\mathbf R$ which, though somewhat confusing at first, will make it easier for the software to fit the model and ultimately easier for us to assign the priors. 
+where the left side of the equation in the second line, $\log(\lambda_{ij})$, clarifies we are using the conventional log link to ensure the model only predicts positive counts. The $\beta_0$ parameter is the population average number of counts at baseline A phase and $\beta_1$ is population average change in counts during the post-intervention B phase. The kid-specific deviations around the population means are depicted by the $u_{0i}$ and $u_{1i}$ terms, which are modeled as bivariate normal with means of zero and the variance/covariance matrix $\mathbf \Sigma$. Following the **brms** convention, we decompose $\mathbf \Sigma$ into the matrix of standard deviations $\mathbf S$ and the correlation matrix $\mathbf R$ which, though somewhat confusing at first, will make it easier for the software to fit the model and ultimately easier for us to assign the priors.
 
-The next issue is how to contend with the priors. Since this is a small data set with only three kids, I recommend we use some domain knowledge and a little courage of heart to set moderately-informative and regularizing priors. Let's start with the population average during the A phase, $\beta_0$. We know from the outset that this intervention is designed to increase counts in a population of kids for whom the number of counts is typically low. If you peruse the behavior-analytic literature a bit, you'll also notice that in cases like this, counts of this kind tend to be near zero, but not necessarily all at zero. As a start, we could propose the average count might be 5, which we will express as $\log(5)$ because we are modeling on the log scale. It's typical to use Gaussian priors for parameters of this kind. If we were to use $\mathcal N(\log(5), 0.89392)$, that would give us a 99% prior probability the mean was between 0.5 and 50, and a 90% probability it's between 1.15 and 21.75, which seems like a good place to start.
+The next issue is how we might contend with the priors. Since this is a small data set with only three kids, I recommend we use some domain knowledge and a little courage of heart to set moderately-informative and regularizing priors. Let's start with the population average during the A phase, $\beta_0$. We know from the outset that this intervention is designed to increase counts in a population of kids for whom the number of counts is typically low. If you peruse the behavior-analytic literature a bit, you'll also notice that in cases like this, counts of this kind tend to be near zero, but not necessarily all at zero. As a start, we could propose the average count might be 5, which we will express as $\log(5)$ because we are modeling on the log scale. It's typical to use Gaussian priors for parameters of this kind. If we were to use $\mathcal N(\log(5), 0.89392)$, that would give us a 99% prior probability the mean was between 0.5 and 50, and a 90% probability it's between 1.15 and 21.75, which seems like a good place to start.
 
-```{r}
-# what is the z-value for the 99% intervals for the standard normal?
-qnorm(p = c(.005, .995), mean = 0, sd = 1)
-# what is the z-value for the 90% intervals for the standard normal?
-qnorm(p = c(.05, .95), mean = 0, sd = 1)
+With a little help from **ggdist**, here's what the $\mathcal N(\log(5), 0.89392)$ distribution looks like on the exponentiated count scale.
 
+```{r, fig.width = 4.5, fig.height = 2.75}
+# log(5) is about 1.609438
+prior(lognormal(1.609438, 0.89392)) %>% 
+  parse_dist() %>%
 
-# save the values and check
-z99 <- 2.575829
-pnorm(z99) - pnorm(-z99)
-
-z90 <- 1.644854
-pnorm(z90) - pnorm(-z90)
-
-# now save the candidate hyper parameter for sigma
-sigma <- 0.89392
-
-# what are the 99% limits for N(log(5), sigma)?
-exp(log(5) + z99 * c(-sigma, 0, sigma))
-
-# what are the 90% limits for N(log(5), sigma)?
-exp(log(5) + z90 * c(-sigma, 0, sigma))
+  ggplot(aes(y = prior, dist = .dist, args = .args)) +
+  stat_dist_halfeye(.width = c(.9, .99)) +
+  scale_x_continuous("count", breaks = c(0, 5, 21.75, 50),
+                     labels = c("0", "5", 21.75, "50")) +
+  scale_y_discrete(NULL, breaks = NULL, expand = expansion(add = 0.06)) +
+  coord_cartesian(xlim = c(0, 50))
 ```
 
-Next we consider $\beta_1$, the change in average counts for the B phase. We know that behavior analysts often go for effect sizes that are large enough to see plainly with your eyes. A difference in 1 on the log scale is pretty good. For example, assuming a populaiton mean of $\log(5)$, an estimate of $\beta_1 = 1$ would mean an average increase of 8.6 counts to a new average of 13.6 counts, which seems generous. 
+The median is marked off by the dot and the 99% and 90% intervals are depicted by the thinner an thicker horizontal lines at the base. In case it wasn't clear, a normal distribution on the log scale is a lognormal distribution on the exponentiated count scale.
+
+Next we consider $\beta_1$, the change in average counts for the B phase. We know that behavior analysts often go for effect sizes that are large enough to see plainly with your eyes. A difference in 1 on the log scale is pretty good. For example, assuming a population mean of $\log(5)$, an estimate of $\beta_1 = 1$ would mean an average increase of 8.6 counts to a new average of 13.6 counts, which seems generous. 
 
 ```{r}
 b0 <- log(5)
@@ -142,9 +135,9 @@ exp(b0 + b1) - exp(b0)
 exp(b0 + b1)
 ```
 
-If we set $\beta_1 \sim \mathcal N(0, 1)$, that would rule out outrageously large changes, but easily allow for moderately large like we might expect. If you wanted to be more conservative, I could easily see a justification for something as small as $\beta_1 \sim \mathcal N(0, 0.5)$.
+Setting $\beta_1 \sim \mathcal N(0, 1)$ would rule out outrageously large changes, but easily allow for moderately large like we might expect. If you wanted to be more conservative, I could easily see a justification for something as small as $\beta_1 \sim \mathcal N(0, 0.5)$.
 
-Our next issue has to do with the level-2 variance parameters $\sigma_0$ and $\sigma_1$. When we have many more upper-level groups (i.e., kids), a nice default is the exponential distribution with a mean of 1, which puts a lot of prior mass betwen zero and 1, but gently tapers off to the right. With only 3 kids in the data, we might want to use a little bit of theory to motivate a stronger prior. We know that from the outset, behavior analysts believe that people are not exchangable in the way hydrogen atoms are. Individual differences are inportant and behavior analysts prefer modela and analytic strategies which highlight them. In the case of our model, this suggests we should use priors that push the variance parameters away from zero. However, we also know that given this is a study of children from a well-defined psyshiatric subpopulation, we probably shouldn't epect to se massive differences among the kids. So we want a prior that can both nudge the variance parameters away from zero, but still keep the model from entertaining very large values. The gamma distribution can fit this criteria. In text, Kruschke provided a few convience functions that allow researchers to derive the $\alpha$ and $\beta$ parameters taht corresopnd to gamma distributions with pre-defined means and standard deviaitons or modes and standard deviations. Here we'll use the function that uses the mode and standard deviation and request a gamma with a mode of 0.5 and a standard deviation of 0.25.
+Our next issue has to do with the level-2 variance parameters $\sigma_0$ and $\sigma_1$. When we have many more upper-level groups (i.e., kids), a nice default is the exponential distribution with a mean of 1, which puts a lot of prior mass between zero and 1, but gently tapers off to the right. With only 3 kids in the data, we might want to use a little bit of theory to motivate a stronger prior. We know that from the outset, behavior analysts believe that people are not exchangeable in the way hydrogen atoms are. Individual differences are important and behavior analysts prefer models and analytic strategies which highlight those differences. For our model, this suggests we should use priors that push the variance parameters away from zero. However, we also know that given this is a study of children from a well-defined psychiatric subpopulation, we probably shouldn't expect to see massive differences among the kids. So we want a prior that can both nudge the variance parameters away from zero, but still keep the model from entertaining very large values. The gamma distribution can fit this criteria. In [his text](https://sites.google.com/site/doingbayesiandataanalysis/), Kruschke provided a few convenience functions which allow researchers to derive the $\alpha$ and $\beta$ parameters that correspond to gamma distributions with pre-defined means and standard deviations, or modes and standard deviations. Here we'll use the function that uses the mode and standard deviation and request a gamma with a mode of 0.5 and a standard deviation of 0.25.
 
 ```{r}
 gamma_a_b_from_omega_sigma <- function(mode, sd) {
@@ -161,21 +154,21 @@ gamma_a_b_from_omega_sigma <- function(mode, sd) {
 gamma_a_b_from_omega_sigma(mode = 0.5, sd = 0.25)
 ```
 
-We can use functions from **ggdist** to plot the this gamma prior and compare it with the familiar exponential prior for which $\lambda = 1$.
+We can use **ggdist** functions to plot the this gamma prior and compare it with the familiar exponential prior for which $\lambda = 1$.
 
 ```{r, fig.width = 4.5, fig.height = 3}
-c(prior(exp(1), class = sd),
-  prior(gamma(5.828427, 9.656854), class = sd)) %>% 
-  parse_dist(prior) %>%
+c(prior(exp(1)),
+  prior(gamma(5.828427, 9.656854))) %>% 
+  parse_dist() %>%
   mutate(prior = fct_rev(prior)) %>% 
   
   ggplot(aes(y = prior, dist = .dist, args = .args)) +
   geom_vline(xintercept = 0.5, color = "white") +
   stat_dist_halfeye(.width = c(.9, .99)) +
+  scale_y_discrete(expand = expansion(add = 0.06)) +
   labs(x = "prior",
        y = NULL) +
-  coord_cartesian(xlim = c(0, 5),
-                  ylim = c(1.5, 2))
+  coord_cartesian(xlim = c(0, 5))
 ```
 
 This gamma prior would put 99% of the prior mas between 0.15 and 1.44 and 90% of the mass between 0.26 and 1.06.
@@ -190,7 +183,7 @@ qgamma(p = c(.005, .995), shape = g$shape, rate = g$rate)
 qgamma(p = c(.050, .950), shape = g$shape, rate = g$rate)
 ```
 
-To my eye, this prior would allow for kid-level differences to range anywhere form small to moderately large while also fulfilling our desires to keep the posterior off of the zero boundary and discourage outrageously large differences. Finally, we'll need to set a prior for the correlation $\rho$ between the two level-2 variance parameters. Here we'll use an $\operatorname{LKJ}(4)$, which will regularize towards zero. With those priors in place, we can specify the full model as
+To my eye, this prior would allow for kid-level differences to range anywhere form small to moderately large while also fulfilling our desires to keep the posterior off of the zero boundary and discourage outrageously large differences. Finally, we'll need to set a prior for the correlation $\rho$ between the two level-2 $\textit{SD}$ parameters. Here we'll use an $\operatorname{LKJ}(4)$, which will regularize towards zero. With those priors in place, we can specify the full model as
 
 $$
 \begin{align*}
@@ -204,14 +197,14 @@ $$
 \mathbf R & =  \begin{bmatrix} 1 & \\ \rho & 1 \end{bmatrix} \\
 \beta_0 & \sim \operatorname{Normal}(\log(5), 0.89392) \\
 \beta_1  & \sim \operatorname{Normal}(0, 1) \\
-\sigma_0\ \&\ \sigma_1 & \sim \operatorname{Gamma}(5.828427, 9.656854) \\
+\sigma_0, \sigma_1 & \sim \operatorname{Gamma}(5.828427, 9.656854) \\
 \rho    & \sim \operatorname{LKJ}(4).
 \end{align*}
 $$
 
 Here's how to fit the model with `brm()`.
 
-```{r}
+```{r fit1}
 # conditional means model
 fit1 <- brm(
   data = mason2014,
@@ -244,12 +237,12 @@ $$
 \mathbf R & =  \begin{bmatrix} 1 & \\ \rho & 1 \end{bmatrix} \\
 \beta_0 & \sim \operatorname{Normal}(\log(5), 0.89392) \\
 \beta_1  & \sim \operatorname{Normal}(0, 1) \\
-\sigma_0\ \&\ \sigma_1 & \sim \operatorname{Gamma}(5.828427, 9.656854) \\
+\sigma_0, \sigma_1 & \sim \operatorname{Gamma}(5.828427, 9.656854) \\
 \rho    & \sim \operatorname{LKJ}(4),
 \end{align*}
 $$
 
-which has the same basic structure as the conditional means model we just fit. The only difference is we have switched out the `phase` variable for a continuous measure of time, `session01`. This variable has been scales so that the first session is 0, the last session (47) has been scaled to 1, all the intermediary sessions are the corresponding factions. In principle, you could use the `session` variable, instead, but `session01` will make it easer for the HMC algorithm to fit the model and it will make it easier to set the prior on $\beta_1$, which is now interpreted as the average change in counts from the first session to the last. In this case, we will just continue using the regularizing $\mathcal N(0, 1)$.
+which has the same basic structure as the conditional means model we just fit. The only difference is we have switched out the `phase` variable for a continuous measure of time, `session01`. This variable has been scales so that the first session is 0, the last session (47) has been scaled to 1, all the intermediary sessions are the corresponding factions. In principle, you could use the `session` variable, instead, but `session01` will make it easier for the HMC algorithm to fit the model and it will make it easier to set the prior on $\beta_1$, which is now interpreted as the average change in counts from the first session to the last. In this case, we will just continue using the regularizing $\mathcal N(0, 1)$.
 
 Our third model is the conditional growth model
 
@@ -287,7 +280,7 @@ where $\beta_0$ is the population average count at the first session within the 
 
 Here's how to fit both models.
 
-```{r}
+```{r fit2}
 # unconditional growth model
 fit2 <- brm(
   data = mason2014,
@@ -387,7 +380,7 @@ nd <- bind_rows(
 glimpse(nd)
 ```
 
-Now use the `nd` data to compute the fitted lines for each of the three models with `fitted()`, saving the resutls as `f1` through `f3`.
+Now use the `nd` data to compute the fitted lines for each of the three models with `fitted()`, saving the results as `f1` through `f3`.
 
 ```{r}
 f1 <- fitted(fit1, newdata = nd) %>% 
@@ -502,7 +495,7 @@ where all parameters are the same, except for the dispersion precision $\phi$, t
 
 ```{r, fig.width = 3.25, fig.height = 3}
 prior(gamma(0.01, 0.01), class = sd)%>% 
-  parse_dist(prior) %>%
+  parse_dist() %>%
 
   ggplot(aes(y = 0, dist = .dist, args = .args)) +
   stat_dist_halfeye(.width = .99, size = 2, n = 2e3) +
@@ -600,7 +593,7 @@ For simplicity, we assigned the weakly-regularizing $\mathcal N(0, 1)$ prior to 
 
 Here's how to fit the three new models with `brm()`.
 
-```{r}
+```{r fit4}
 # NB conditional growth model
 fit4 <- brm(
   data = mason2014,
