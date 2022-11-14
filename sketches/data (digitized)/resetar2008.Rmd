@@ -1,0 +1,119 @@
+---
+title: "resetar2008"
+author: "A Solomon Kurz"
+date: "`r format(Sys.Date())`"
+output: github_document
+---
+
+```{r, echo = F}
+knitr::opts_chunk$set(fig.retina = 2.5)
+options(width = 110)
+```
+
+The purpose of this file is to make a data set resembling those in Resetar & Noell (2008; https://doi.org/10.1901/jaba.2008.41-447). In the `Resetar & Noell (2008).Rmd` file, we digitized the data which Resetar and Noell displayed in their Figure 1 (p. 450) and saved the results in a series of `.csv` files. Here we'll collect those files and wrangle the data into a useful format.
+
+Load the **tidyverse**.
+
+```{r, warning = F, message = F}
+library(tidyverse)
+```
+
+As a first step, we load collect the data from the four `.csv` files into a single data frame.
+
+```{r}
+d <- tibble(sn = 1:4) %>% 
+  mutate(file = str_c("Resetar & Noell (2008)/count0", sn, "_juicr_extracted_points.csv")) %>% 
+  mutate(data = map(file, read_csv, show_col_types = FALSE)) %>% 
+  unnest(data)
+
+# what is this?
+glimpse(d)
+```
+
+A few of the columns are of interest:
+
+* `sn` contains the generic participants identifiers, ranging from `1` to `4`.
+* `x.calibrated` contains the digitized session numbers from the x-axis of Figure 1. This will need to be rounded to integer values.
+* `y.calibrated` contains the digitized behavioral counts from the y-axis of Figure 1. This will also need to be rounded to integer values.
+* `group` contains generic grouping names for the three experimental conditions. This will need to be converted to more sensible non-default names.
+
+Here we wrangle the data into a more useful format and save the results as `resetar2008`.
+
+```{r}
+resetar2008 <- d %>% 
+  # wrangle the columns of interest and drop the unnecessary ones
+  transmute(sn      = sn,
+            session = round(x.calibrated, digits = 0),
+            count   = round(y.calibrated, digits = 0),
+            group   = str_remove(group, "Grp")) %>% 
+  # make a version of session that starts with zero
+  mutate(session0 = session - 1) %>% 
+  # sort the data by sn and session
+  arrange(sn, session)  %>% 
+  # assign the pseudonyms as displayed in Figure 1
+  mutate(id = case_when(
+    sn == 1 ~ "Kailey",
+    sn == 2 ~ "Heidi",
+    sn == 3 ~ "Emma",
+    sn == 4 ~ "Kaleb") %>% 
+      fct_reorder(., sn)) %>% 
+  # convert the generic groupings into behavioral phases
+  mutate(phase = case_when(
+    group == "orange" ~ "a",
+    group == "cherry" ~ "b",
+    group == "kiwi"   ~ "c")
+    ) %>% 
+  # convert the experimental phaess into descriptive experimental conditions
+  mutate(condition = factor(phase, labels = c("No reward", "Teacher selected", "MSWO selected"))) %>% 
+  # reorder the columns
+  select(sn, id, session, session0, phase, condition, count)
+```
+
+Take a look at the data.
+
+```{r}
+glimpse(resetar2008)
+```
+
+Now we can make a version of Figure 1 from the original paper.
+
+```{r}
+resetar2008 %>% 
+  ggplot(aes(x = session, y = count, 
+             group = condition, shape = condition, color = condition)) +
+  geom_point(size = 2) +
+  geom_path(linewidth = 1/4) +
+  scale_shape_manual(NULL, values = c(18, 15, 17)) +
+  scale_color_brewer(NULL, palette = "Dark2") +
+  scale_x_continuous(breaks = 0:12 * 2, limits = c(0, 24)) +
+  scale_y_continuous(limits = c(0, NA)) +
+  theme(panel.grid.minor = element_blank()) +
+  facet_wrap(~ id, scales = "free_y", ncol = 1)
+```
+
+```{r, eval = F, echo = F}
+resetar2008 %>% 
+  ggplot(aes(x = session, y = count, 
+             group = condition, shape = condition, color = condition)) +
+  geom_point(size = 2) +
+  geom_path(size = 1/4) +
+  scale_shape_manual(NULL, values = c(18, 15, 17)) +
+  scale_color_brewer(NULL, palette = "Dark2") +
+  scale_x_continuous(breaks = 0:12 * 2, expand = expansion(add = c(0, 0.5)), limits = c(0, 24)) +
+  scale_y_continuous(expand = expansion(add = c(0.5, 10)), limits = c(0, NA)) +
+  theme(panel.grid.minor = element_blank()) +
+  facet_wrap(~ id, scales = "free_y", ncol = 1)
+```
+
+Now save the results in an external file.
+
+```{r, eval = F}
+save(resetar2008, file = "resetar2008.rda")
+```
+
+## Session information
+
+```{r}
+sessionInfo()
+```
+
