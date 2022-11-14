@@ -5,10 +5,10 @@ A Solomon Kurz
 
 The purpose of this file is to make a data set resembling those in
 Resetar & Noell (2008; <https://doi.org/10.1901/jaba.2008.41-447>). In
-the `Resetar & Noell (2008).Rmd` file, we digitized the data which
-Resetar and Noell displayed in their Figure 1 (p. 450) and saved the
-results in a series of `.csv` files. Here we’ll collect those files and
-wrangle the data into a useful format.
+the `Digitize Resetar & Noell (2008).Rmd` file, we digitized the data
+which Resetar and Noell displayed in their Figure 1 (p. 450) and saved
+the results in a series of `.csv` files. Here we’ll collect those files
+and wrangle the data into a useful format.
 
 Load the **tidyverse**.
 
