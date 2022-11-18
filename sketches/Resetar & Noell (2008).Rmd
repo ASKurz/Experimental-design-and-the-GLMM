@@ -1,0 +1,662 @@
+---
+title: "Resetar & Noell (2008)"
+author: "A Solomon Kurz"
+date: "`r format(Sys.Date())`"
+output: github_document
+---
+
+```{r, echo = F}
+knitr::opts_chunk$set(fig.retina = 2.5)
+options(width = 110)
+```
+
+Load our primary packages.
+
+```{r, warning = F, message = F}
+library(tidyverse)
+library(brms)
+library(tidybayes)
+
+theme_set(
+  theme_linedraw() +
+  theme(panel.grid = element_blank(),
+        strip.background = element_rect(fill = "grey92", color = "grey92"),
+        strip.text = element_text(color = "black"))
+)
+```
+
+## Can we better identify reinforcers?
+
+Resetar & Noell (2008; https://doi.org/10.1901/jaba.2008.41-447) used an $N = 4$ an ABC alternating treatments design to compare "the effectiveness of a multiple-stimulus-without-replacement (MSWO) preference assessment and teacher preference ranking in identifying reinforcers for use in a general education setting with typically developing elementary-school children" (p. 447).
+
+```{r}
+# load the data
+load(file = "data (digitized)/resetar2008.rda")
+
+# what is this?
+glimpse(resetar2008)
+```
+
+## EDA
+
+```{r, message = F}
+resetar2008 %>% 
+  group_by(id, condition) %>% 
+  summarise(mean     = mean(count),
+            sd       = sd(count),
+            variance = var(count),
+            n        = n()) %>% 
+  mutate_if(is.double, round, digits = 0)
+```
+
+Although we have different number of measurement occasions per child, the condition was always presented in the same order. It might be easiest to explore that in a plot.
+
+```{r, fig.width = 4, fig.height = 4}
+resetar2008 %>% 
+  ggplot(aes(x = session, y = condition, label = phase)) +
+  geom_tile(aes(fill = phase),
+            show.legend = FALSE, alpha = 2/3) +
+  geom_text() +
+  scale_fill_brewer(NULL, palette = "Dark2") +
+  ylab(NULL) +
+  facet_wrap(~ id, ncol = 1)
+```
+
+This is admittedly an odd plot. The main thing to notice is the shaded blocks follow the same pattern within and between children. Thus, the order of the alternating treatments were fixed within and between participants. It always starts with A (No reward), which is followed by B (Teacher selected), which is followed by C (MSWO selected).
+
+Now let's visualize the data more like Resetar and Noell did in their Figure 1 (p. 450).
+
+```{r, fig.width = 5, fig.height = 5}
+resetar2008 %>% 
+  ggplot(aes(x = session, y = count, 
+             group = condition, shape = condition, color = condition)) +
+  geom_point(size = 2) +
+  geom_path(linewidth = 1/4) +
+  scale_shape_manual(NULL, values = c(18, 15, 17)) +
+  scale_color_brewer(NULL, palette = "Dark2") +
+  scale_x_continuous(breaks = 0:12 * 2, limits = c(0, 24)) +
+  scale_y_continuous(limits = c(0, NA)) +
+  facet_wrap(~ id, ncol = 1)
+```
+
+From the paper, we read: "The dependent measure was the number of digits correctly answered in 2 min during each grade-level math probe" (p. 448). Thus, the way these data are presented to us, they are unbounded counts.
+
+### Dummies.
+
+We already have time expressed in several ways in the data. Here's a way to make dummy variables for the different levels of `phase`.
+
+```{r}
+resetar2008 <- resetar2008 %>% 
+  mutate(a = ifelse(phase == "a", 1, 0),
+         b = ifelse(phase == "b", 1, 0),
+         c = ifelse(phase == "c", 1, 0))
+
+# what did we do?
+resetar2008 %>% 
+  distinct(phase, a, b, c) %>% 
+  arrange(phase)
+```
+
+### Time.
+
+To help with the HMC algorithm, we're going to want to rescale the time variable so it starts at zero and ends near 1. The `session0` variable satisfies the first criteria. To get a sense of how to scale the variable further, we'll want to get a sense of the last values, by each child.
+
+```{r}
+resetar2008 %>% 
+  group_by(sn) %>% 
+  summarise(max_session0 = max(session0))
+```
+
+Since the last common `session0` value for all four children was 17, we might scale the variable by dividing by 17 and name the results as `session01`.
+
+```{r}
+resetar2008 <- resetar2008 %>% 
+  mutate(session01 = session0 / 17)
+```
+
+To help get a sense, here are the number of cases in the data for which `session01 >= 1`, along with the corresponding `session` and `session0` values.
+
+```{r}
+resetar2008 %>% 
+  count(session, session0, session01) %>% 
+  filter(session01 >= 1)
+```
+
+## Models
+
+In this file, we'll fit one model with the Poisson likelihood, and we'll then relax the equidispersion assumption with a negative-binomial version of the same.
+
+### Poisson.
+
+If we say our outcome variable `count` varies across $i$ children and $j$ measurement occasions, we analyze the data with the Poisson multilevel model following the equation
+
+$$
+\begin{align*}
+\text{count}_{ij} & \sim \operatorname{Poisson}(\lambda_{ij}) \\
+\log(\lambda_{ij}) & = b_{0i} + b_{1i} \text{session01}_{ij} + b_{2i} \text{B}_{ij} + b_{3i} \text{session01}_{ij}\text{B}_{ij} + b_{4i} \text{C}_{ij} + b_{5i} \text{session01}_{ij}\text{C}_{ij} \\
+b_{0i} & = \beta_0 + u_{0i} \\
+b_{1i} & = \beta_1 + u_{1i} \\
+b_{2i} & = \beta_2 + u_{2i} \\
+b_{3i} & = \beta_3 + u_{3i} \\
+b_{4i} & = \beta_4 + u_{4i} \\
+b_{5i} & = \beta_5 + u_{5i} \\
+\begin{bmatrix} u_{0i} \\ \vdots \\ u_{5i} \end{bmatrix} & = \operatorname{Normal}( \mathbf 0, \mathbf S \mathbf R \mathbf S ),
+\end{align*}
+$$
+
+where the time variable `session01` and the two dummy variables `b` and `c` are all time-varying covariates, as indicated by their $i$ and $j$ subscripts. The reference category is `a`. The six parameters $b_{0i}$ through $b_{5i}$ all vary across children, as indicated by their $i$ subscripts. Each of those $b$ parameters is decomposed in to a population mean $\beta_0, \dots , \beta_5$ and the child-specific deviation around that mean $u_{0i}, \dots , u_{5i}$. Those six $u_i$ deviation parameters are modeled as multivariate normal with a mean vector of 0's and a $6 \times 6$ variance/covariance matrix. As per **brms** convention, we decompose the variance/covariance matrix into a diagonal matrix for the standard deviations $\mathbf S$ and a correlation matrix $\mathbf R$.
+
+As to priors, we might want to choose a broad prior for the A-phase intercept $\beta_0$, with a mean centered near low behavioral counts. Given the children in this study were selected for their poor math performance, we might center the prior on 10 digits. Though we typically use the Normal distribution for $\beta$ parameters, keep in mind Poisson models typically use the log link. Thus a Normal prior on the log space will equate to a lognormal prior on the count space. If we were to use $\operatorname{Normal}(\log 10, 1)$ on the log scale, here's what the corresponding lognormal distribution would be on the count scale.
+
+```{r, fig.width = 4, fig.height = 2.5}
+# log(10) is about 2.302585
+prior(lognormal(2.302585, 1)) %>% 
+  parse_dist() %>%
+
+  ggplot(aes(y = 0, dist = .dist, args = .args)) +
+  stat_halfeye(.width = c(.9, .99)) +
+  scale_x_continuous("count", breaks = c(0, 10, 52, 131)) +
+  scale_y_discrete(NULL, breaks = NULL, expand = expansion(add = 0.06)) +
+  labs(title = "That sweet lognormal(log 10, 1)") +
+  coord_cartesian(xlim = c(0, 131))
+```
+
+The median is marked off by the dot and the 99% and 90% intervals are depicted by the thinner an thicker horizontal lines at the base. Such a prior expects baseline counts to be low, but allows for a pleasant surprise if the children end up performing well. Here's how one might compute the exact inner 90% and 99% ranges.
+
+```{r}
+# what is the 99% interval for this lognormal?
+qlnorm(c(0.005, 0.995), meanlog = log(10), sdlog = 1)
+
+# what is the 90% interval for this lognormal?
+qlnorm(c(0.05, 0.95), meanlog = log(10), sdlog = 1)
+```
+
+For the remaining $\beta$ parameters, we might rely on the good old weakly-regularizing $\operatorname{Normal}(0, 1)$. A researcher who was confident there would be only small linear trends in performance over time might use something like the $\operatorname{Normal}(0, 0.5)$ or even the $\operatorname{Normal}(0, 0.1)$ prior for $\beta_1$, $\beta_3$, and $\beta_5$. 
+
+When unsure about how to set the priors for your level-2 $\sigma$ parameters, McElreath's $\operatorname{Exponential}(1)$ prior is a good place to start when modeling count data. We have used this approach before and it will work reasonably well here. As a refresher, here's what that prior looks like.
+
+```{r, fig.width = 4, fig.height = 2.5}
+prior(exponential(1)) %>% 
+  parse_dist() %>% 
+  
+  ggplot(aes(y = 0, dist = .dist, args = .args)) +
+  stat_halfeye(point_interval = mean_qi, .width = c(.9, .99)) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  labs(title = "Behold exponential(1)!",
+       x = "Prior space") +
+  coord_cartesian(xlim = c(0, 5.2))
+```
+
+With $\operatorname{Exponential}(1)$, the mean and standard deviation are both 1. The inner 99% interval is about 0.005 to 5.3 and the inner 90% interval is about 0.05 to 3.0.
+
+```{r}
+# what is the 99% interval for this exponential?
+qexp(p = c(.005, .995), rate = 1)
+
+# what is the 90% interval for this exponential?
+qexp(p = c(.050, .950), rate = 1)
+```
+
+However, with such a modest $N = 4$ participants, we might want a prior that nudges the posterior a little away from the zero left boundary. The gamma distribution might be a good alternative, and it turns the exponential distribution can be seen as a special case of the gamma distribution. If we say some variable $y$ is distributed $\operatorname{Gamma}(1, \lambda)$ (in the shape–rate parametrization), then we can also say $Y$ follows the exponential distribution with a rate parameter $\lambda$. For example, we can use this to see $\operatorname{Gamma}(1, 1)$ is the same as $\operatorname{Exponential}(1)$.
+
+```{r, fig.width = 4.5, fig.height = 3}
+c(prior(exponential(1)),
+  prior(gamma(1, 1))) %>% 
+  parse_dist() %>% 
+  
+  ggplot(aes(y = prior, dist = .dist, args = .args)) +
+  stat_halfeye(point_interval = mean_qi, .width = c(.9, .99)) +
+  scale_y_discrete(NULL, expand = expansion(add = 0.1)) +
+  labs(title = "Sometimes gamma looks exponential.",
+       x = "Prior space") +
+  coord_cartesian(xlim = c(0, 5.2))
+```
+
+What if we wanted a gamma distribution with the same mean at 1, but with a smaller standard deviation? Since the gamma shape and rate parameters $(\alpha$ and $\beta)$ aren't the most intuitive, we can use a convenience function from Kruschke's [text](https://sites.google.com/site/doingbayesiandataanalysis/?pli=1) to compute the $\alpha$ and $\beta$ parameters for a given mean and standard deviation. Here we'll call that function `gamma_a_b_from_mean_sd()`.
+
+```{r}
+gamma_a_b_from_mean_sd <- function(mean, sd) {
+  if (mean <= 0) stop("mean must be > 0")
+  if (sd   <= 0) stop("sd must be > 0")
+  shape <- mean^2 / sd^2
+  rate  <- mean / sd^2
+  
+  return(tibble(shape = shape, rate = rate))
+}
+```
+
+Now use `gamma_a_b_from_mean_sd()` to make several gamma distributions, all of which have a mean of 1 and vary by their standard deviations.
+
+```{r, fig.width = 6, fig.height = 3.5}
+tibble(sd = 1:6 / 5) %>% 
+  mutate(gamma = map(sd, gamma_a_b_from_mean_sd, mean = 1)) %>% 
+  unnest(gamma) %>% 
+  expand(nesting(sd, shape, rate),
+         x = seq(from = 0.01, to = 5.5, by = 0.01)) %>% 
+  mutate(d = dgamma(x = x, shape = shape, rate = rate)) %>% 
+  
+  ggplot(aes(x = x, y = d)) +
+  geom_vline(xintercept = c(1), color = "white") +
+  geom_area() +
+  scale_y_continuous(NULL, breaks = NULL) +
+  labs(title = "All these gamma's have a mean of 1, but vary by their SD's.",
+       x = "domain") +
+  coord_cartesian(xlim = c(0, 5.2),
+                  ylim = c(0, 2)) +
+  facet_wrap(~ sd, labeller = label_both)
+```
+
+For the sake of practice, let's use a gamma prior with a mean of 1 and standard deviation of 0.8, which will nudge the $\sigma$ posteriors away from the zero boundary. Here we use the `gamma_a_b_from_mean_sd()` function to compute the $\alpha$ and $\beta$ parameters for that prior.
+
+```{r}
+gamma_a_b_from_mean_sd(mean = 1, sd = 0.8)
+```
+
+For simplicity, we will use $\operatorname{Gamma}(1.5625, 1.5625)$ for all $\sigma$ parameters. As to the correlation matrix $(\mathbf R)$, even the $\operatorname{LKJ}(1)$ will be moderately regularizing for a $6 \times 6$ matrix. Thus, we might express the full prior distribution as
+
+$$
+\begin{align*}
+\beta_0 & \sim \operatorname{Normal}(\log 10, 1) \\
+\beta_1, \dots, \beta_5  & \sim \operatorname{Normal}(0, 1) \\
+\sigma_0, \dots, \sigma_5 & \sim \operatorname{Gamma}(1.5625, 1.5625) \\
+\mathbf R & \sim \operatorname{LKJ}(1).
+\end{align*}
+$$
+
+Here's how to fit the model with `brm()`.
+
+```{r, eval = F, echo = F}
+# adapt_delta = .8, max_treedepth = 10; 4 divergent transitions
+# adapt_delta = .85, max_treedepth = 10; 6 divergent transitions
+# adapt_delta = .9, max_treedepth = 10; 2 divergent transitions
+```
+
+```{r fit1}
+fit1 <- brm(
+  data = resetar2008,
+  family = poisson,
+  count ~ 0 + Intercept + session01 + phase + session01:phase + ((1 + session01) * phase | id),
+  prior = c(prior(normal(log(10), 1), class = b, coef = Intercept),
+            prior(normal(0, 1), class = b),
+            prior(gamma(1.5625, 1.5625), class = sd),
+            prior(lkj(1), class = cor)),
+  cores = 4, seed = 1,
+  control = list(adapt_delta = .95),
+  file = "fits/fit1.resetar2008"
+  )
+```
+
+Check the parameter summary.
+
+```{r}
+summary(fit1)
+```
+
+### Negative binomial.
+
+Poisson models are great for unbounded count data, but they carry the strong eqidispersion assumption, which constrains the conditional mean and the variance to equality. If we suspect our data have extra variability beyond those expected by the mean value, we might model them as negative binomial, which adds a $\phi$ parameter. A conventional approach is to simply estimate $\phi$ without attaching a conditional model. Here we'll go beyond convention and allow $\phi$ to vary across the $i$ children with the model
+
+$$
+\begin{align*}
+\text{count}_{ij} & \sim \operatorname{NegativeBinomial}(\mu_{ij}, \phi_i) \\
+\log(\mu_{ij}) & = b_{0i} + b_{1i} \text{session01}_{ij} + b_{2i} \text{B}_{ij} + b_{3i} \text{session01}_{ij}\text{B}_{ij} + b_{4i} \text{C}_{ij} + b_{5i} \text{session01}_{ij}\text{C}_{ij} \\
+\log(\phi_i) & = e_{0i} \\
+b_{0i} & = \beta_0 + u_{0i} \\
+b_{1i} & = \beta_1 + u_{1i} \\
+b_{2i} & = \beta_2 + u_{2i} \\
+b_{3i} & = \beta_3 + u_{3i} \\
+b_{4i} & = \beta_4 + u_{4i} \\
+b_{5i} & = \beta_5 + u_{5i} \\
+e_{0i} & = \eta_0 + v_{0i} \\
+\begin{bmatrix} u_{0i} \\ \vdots \\ v_{0i} \end{bmatrix} & = \operatorname{Normal}( \mathbf 0, \mathbf S \mathbf R \mathbf S ),
+\end{align*}
+$$
+
+where we use the log link to ensure the values for $\phi_i$ stay above zero. The new $e_{0i}$ parameter is the log dispersion, which varies across the $j$ children. We decompose $e_{0i}$ into a population mean $\eta_0$ and child-specific deviation from the mean $v_{0i}$. Along with $b_{0i}, \dots, b_{5i}$, we model $v_{0i}$ as multivariate normal with a mean vector of zeros, a $7 \times 7$ a diagonal matrix for the standard deviations $\mathbf S$, and a $7 \times 7$ correlation matrix $\mathbf R$. Otherwise, the negative-binomial version of the model is the essentially the same as the Poisson version, above. The only other noteworthy change is we now refer to the mean as $\mu$ instead of $\lambda$.
+
+The priors remain largely the same as before. The main issue is how to contend with the new parameters related to $\phi$. As is typical for parameters on the log scale, we will use a normal prior for $\eta_0$. If we consider $\operatorname{Normal}(\log(20), 0.5)$, that would correspond to a log normal distribution on the exponentiated $\phi$ space which looks like so:
+
+```{r, fig.width = 4, fig.height = 2.75}
+# log(20) is about 2.995732
+prior(lognormal(2.995732, 0.5)) %>% 
+  parse_dist() %>%
+
+  ggplot(aes(y = 0, dist = .dist, args = .args)) +
+  stat_halfeye(.width = c(.9, .99), p_limits = c(0, .9996)) +
+  scale_y_discrete(NULL, breaks = NULL, expand = expansion(add = 0.06)) +
+  labs(title = "Exponentiated normal(log 20, 0.5) is the same\nas lognormal(log 20, 0.5).",
+       x = expression(italic(p)(exp~eta[0]))) +
+  coord_cartesian(xlim = c(0, 100))
+```
+
+```{r, eval = F, echo = F}
+# the brms default for eta_0 is student_t(3, 0, 2.5)
+# that would be very vague on the exponentiated phi scale
+
+tibble(t = rt(n = 1e5, df = 3) * 2.5) %>% 
+  mutate(e = exp(t)) %>% 
+  # mean_qi(e, .width = c(.9, .99)) %>% 
+  filter(e < 1100) %>%
+  
+  ggplot(aes(x = e)) +
+  geom_histogram(binwidth = 10)
+```
+
+The $\operatorname{Normal}(\log 20, 0.5)$ prior puts most of the prior mass in the double-digit range. It has a 99% range of about 5.5 to 72.5 and a 90% range of about 8.8 to 45.5. 
+
+```{r}
+# what is the 99% interval for this lognormal?
+qlnorm(c(0.005, 0.995), meanlog = log(20), sdlog = 0.5)
+
+# what is the 90% interval for this lognormal?
+qlnorm(c(0.050, 0.950), meanlog = log(20), sdlog = 0.5)
+```
+
+Such a prior will all for small to moderate-sized $\phi$ values--corresponding to a lot more variability than expected by the Poison--, but will also allow for moderately-large values for $\phi$--corresponding to variability very similar to those expected by the Poisson. For simplicity, we will continue with the $\operatorname{Gamma}(1.5625, 1.5625)$ for our new deviation parameter $v_{0i}$, which will allow for small to moderate sized differences in $e_{0i}$ among our four children.
+
+Before we fit the model, we should acknowledge that one could expand this model to include more predictors for $\log(\phi_{ij})$. A full version of the $\log(\phi_{ij})$ model might mirror the model for $\log(\mu_{ij})$.
+
+Here's how to fit the model with `brm()`.
+
+```{r, eval = F, echo = F}
+# adapt_delta = .8, max_treedepth = 10; 4 divergent transitions
+# adapt_delta = .85, max_treedepth = 10; 1 divergent transitions
+```
+
+```{r fit2}
+fit2 <- brm(
+  data = resetar2008,
+  family = negbinomial,
+  bf(count ~ 0 + Intercept + session01 + phase + session01:phase + ((1 + session01) * phase |i| id),
+     shape ~ 1 + (1 |i| id)),
+  prior = c(prior(normal(0, 1), class = b),
+            prior(normal(log(10), 1), class = b, coef = Intercept),
+            prior(normal(log(20), 0.5), class = Intercept, dpar = shape),
+            # gamma_a_b_from_mean_sd(mean = 1, sd = 0.8)
+            prior(gamma(1.5625, 1.5625), class = sd),
+            prior(gamma(1.5625, 1.5625), class = sd, dpar = shape),
+            prior(lkj(1), class = cor)),
+  cores = 4, seed = 1,
+  control = list(adapt_delta = .9),
+  file = "fits/fit2.resetar2008"
+  )
+```
+
+Check the parameter summary.
+
+```{r}
+summary(fit2)
+```
+
+The new `shape_Intercept` line in the `Population-Level Effects` section of the output is our summary for $\eta_0$. We might exponentiate to put it back into the natural $\phi$ scale. 
+
+```{r}
+fixef(fit2)["shape_Intercept", -2] %>% exp()
+```
+
+The width of the 95% intervals suggests a lot of uncertainty in the population mean, which shouldn't be terribly surprising with an $N = 4$ data set. But the posterior is centered around 13, which is a fairly low value, and indicates there is indeed more variability in the data than expected from a simple Poisson process. We can use `coef()` to pull the $e_{0i}$ summaries.
+
+```{r}
+coef(fit2)$id[, -2, "shape_Intercept"] %>% exp()
+```
+
+Based on the summaries, Kailey's and Emma's data were the most overdispersed. The large and uncertain posterior for Kaleb suggests his data were close to a Poisson process.
+
+```{r, eval = F, echo = F}
+# adapt_delta = .8, max_treedepth = 10; 63 divergent transitions
+# adapt_delta = .9, max_treedepth = 10; 37 divergent transitions; 1 transitions after warmup
+# adapt_delta = .94, max_treedepth = 11; 12 divergent transitions; 818 transitions after warmup
+# adapt_delta = .94, max_treedepth = 12; 10 divergent transitions
+# adapt_delta = .94, max_treedepth = 13; 21 divergent transitions
+
+# adapt_delta = .95, max_treedepth = 10; 2 divergent transitions; 2030 transitions after warmup
+# adapt_delta = .95, max_treedepth = 11; 4 divergent transitions; 999 transitions after warmup
+# adapt_delta = .95, max_treedepth = 12; 4 divergent transitions; 999 transitions after warmup
+# adapt_delta = .95, max_treedepth = 13; 4 divergent transitions
+# adapt_delta = .96, max_treedepth = 13; 2 divergent transitions; 960 transitions after warmup
+# adapt_delta = .96, max_treedepth = 14; 1 divergent transitions; 934 transitions after warmup
+# adapt_delta = .96, max_treedepth = 15; 2 divergent transitions; 954 transitions after warmup
+
+# adapt_delta = .99, max_treedepth = 11; 1 transitions after warmup; 3 chains where the estimated Bayesian Fraction of Missing Information was low
+# adapt_delta = .99, max_treedepth = 12; 2 transitions after warmup; 3 chains where the estimated Bayesian Fraction of Missing Information was low
+# adapt_delta = .99, max_treedepth = 13; 1 transitions after warmup; 3 chains where the estimated Bayesian # adapt_delta = .99, max_treedepth = 14; 3 chains where the estimated Bayesian Fraction of Missing Information was low
+
+fit1 <- brm(
+  data = resetar2008,
+  family = poisson,
+  count ~ 0 + (Intercept + session0) * phase + ((1 + session0) * phase | id),
+  prior = c(prior(normal(0, 0.2), class = b),
+            prior(normal(log(10), 1), class = b, coef = Intercept),
+            prior(normal(0, 1), class = b, coef = "Intercept:phaseb"),
+            prior(normal(0, 1), class = b, coef = "Intercept:phasec"),
+            prior(exponential(1), class = sd),
+            prior(exponential(5), class = sd, coef = "session0", group = id),
+            prior(exponential(5), class = sd, coef = "session0:phaseb", group = id),
+            prior(exponential(5), class = sd, coef = "session0:phasec", group = id),
+            prior(lkj(1), class = cor)),
+  cores = 4, seed = 1,
+  control = list(adapt_delta = .99,
+                 max_treedepth = 14)
+  )
+```
+
+## Plots
+
+### Population-level plots.
+
+One question one might want to ask of the models is: *What do the population-level trajectories look like for the three conditions?* To answer, we first need a tibble with a sequence of `session01` values across each level of `phase`. To help with the plot to come, we'll add in a few other variables.
+
+```{r}
+nd <- resetar2008 %>% 
+  distinct(phase, condition) %>% 
+  expand(nesting(phase, condition),
+         session01 = seq(from = 0, to = 1, length.out = 100)) %>% 
+  mutate(session0 = session01 * 17) %>% 
+  mutate(session = session0 + 1)
+
+# what is this?
+glimpse(nd)
+```
+
+Now we can compute the `fitted()` draws from the two models. Note how we set `re_formula = NA` to return only population-level results.
+
+```{r}
+f1 <- fitted(fit1, newdata = nd, re_formula = NA) %>% 
+  data.frame() %>% 
+  bind_cols(nd)
+
+f2 <- fitted(fit2, newdata = nd, re_formula = NA) %>% 
+  data.frame() %>% 
+  bind_cols(nd)
+```
+
+Now we wrangle and plot.
+
+```{r, fig.width = 7, fig.height = 4}
+bind_rows(f1, f2) %>% 
+  mutate(likelihood = rep(c("Poisson", "Negative binomial"), each = n() / 2) %>% 
+           factor(., levels = c("Poisson", "Negative binomial"))) %>% 
+  
+  ggplot(aes(x = session)) +
+  geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5, fill = condition),
+              alpha = 1/3) +
+  geom_line(aes(y = Estimate, color = condition)) +
+  scale_shape_manual(NULL, values = c(18, 15, 17)) +
+  scale_fill_brewer(NULL, palette = "Dark2") +
+  scale_color_brewer(NULL, palette = "Dark2") +
+  scale_x_continuous(breaks = c(1, 1:3 * 6)) +
+  labs(title = "Population-level trajectories, by behavioral contingency and likelihood",
+       y = "count") +
+  facet_wrap( ~ likelihood)
+```
+
+Across both likelihoods, the population-level trajectories appear uncertain. One my be tempted to conclude that because they are all overlapping, there are no meaningful differences among the conditions. However, than kind of comparison can be misleading because it ignores the correlation structure among the parameters. To formally compare the population trajectories, we need the corresponding contrast distributions. Though we can do this with a `fitted()`-based workflow, the handy `add_epred_draws()` function will save us a lot of code. First we compute the fitted values with `add_epred_draws()` for each model, and save the results as `e1` and `e2`.
+
+```{r}
+e1 <- nd %>% 
+  add_epred_draws(fit1, re_formula = NA)
+
+e2 <- nd %>% 
+  add_epred_draws(fit2, re_formula = NA)
+```
+
+Now we combine the two objects, wrangle, and plot the contrast distributions.
+
+```{r, fig.width = 6, fig.height = 7}
+contrast <- c("Teacher selected - No reward", "MSWO selected - No reward", "MSWO selected - Teacher selected")
+
+bind_rows(e1, e2) %>% 
+  ungroup() %>% 
+  select(condition, session, .draw, .epred) %>% 
+  mutate(likelihood = rep(c("Poisson", "Negative binomial"), each = n() / 2) %>% 
+           factor(., levels = c("Poisson", "Negative binomial"))) %>% 
+  compare_levels(.epred, by = condition, draw_indices = c(".draw", "session", "likelihood")) %>% 
+  mutate(condition = factor(condition, levels = contrast)) %>% 
+  group_by(likelihood, session, condition) %>% 
+  mean_qi(.epred) %>% 
+  
+  ggplot(aes(x = session)) +
+  geom_ribbon(aes(ymin = .lower, ymax = .upper),
+              alpha = 1/3) +
+  geom_line(aes(y = .epred)) +
+  geom_hline(yintercept = 0, color = "grey92", linetype = 2) +
+  scale_color_brewer(NULL, palette = "Dark2") +
+  scale_x_continuous(breaks = c(1, 1:3 * 6)) +
+  coord_cartesian(ylim = c(-80, 80)) +
+  labs(title = "Population-level trajectory contrasts, by likelihood",
+       y = "unstandardized mean difference") +
+  facet_grid(condition ~ likelihood)
+```
+
+The contrast distributions are still rather uncertain, but this plot provides stronger evidence for meaningful differences between the two contingent conditions and the no-reward condition, particularly towards the latter sessions.
+
+### Child-level plots.
+
+Before we compute the child-level plots, we'll first need to update the `nd` data grid. Then we can pump those values into `fitted()`.
+
+```{r}
+nd <- resetar2008 %>% 
+  group_by(id) %>% 
+  summarise(min = min(session01),
+            max = max(session01)) %>% 
+  mutate(session01 = map2(min, max, seq, length.out = 100)) %>% 
+  unnest(session01) %>% 
+  expand(nesting(id, session01),
+         phase = letters[1:3]) %>% 
+  mutate(session0 = session01 * 17) %>% 
+  mutate(session = session0 + 1) %>% 
+  left_join(resetar2008 %>% distinct(phase, condition),
+            by = "phase") 
+
+f1 <- fitted(fit1, newdata = nd) %>% 
+  data.frame() %>% 
+  bind_cols(nd)
+
+f2 <- fitted(fit2, newdata = nd) %>% 
+  data.frame() %>% 
+  bind_cols(nd)
+```
+
+Now we plot the child-level trajectories.
+
+```{r, fig.width = 8, fig.height = 6}
+bind_rows(f1, f2) %>% 
+  mutate(likelihood = rep(c("Poisson", "Negative-binomial"), each = n() / 2) %>% 
+           factor(., levels = c("Poisson", "Negative-binomial"))) %>% 
+  
+  ggplot(aes(x = session)) +
+  geom_ribbon(aes(ymin = Q2.5, ymax = Q97.5, fill = condition),
+              alpha = 1/3) +
+  geom_line(aes(y = Estimate, color = condition)) +
+  geom_point(data = resetar2008,
+             aes(y = count, color = condition, shape = condition)) +
+  scale_shape_manual(NULL, values = c(18, 15, 17)) +
+  scale_fill_brewer(NULL, palette = "Dark2") +
+  scale_color_brewer(NULL, palette = "Dark2") +
+  scale_x_continuous(breaks = c(1, 1:3 * 8)) +
+  labs(title = "Child-level trajectories, by behavioral contingency and likelihood",
+       subtitle = "The original data are in the different-shaped dots.",
+       y = "count") +
+  facet_grid(id ~ likelihood)
+```
+
+
+Now the contrast distributions. For the sake of space, we'll just focus on the NB contrasts.
+
+```{r}
+e2 <- nd %>% 
+  add_epred_draws(fit2)
+```
+
+Now we wrangle and plot!
+
+```{r, fig.width = 8, fig.height = 5.5}
+e2 %>% 
+  ungroup() %>% 
+  select(id, condition, session, .draw, .epred) %>% 
+  compare_levels(.epred, by = condition, draw_indices = c(".draw", "session", "id")) %>% 
+  mutate(condition = factor(condition, levels = contrast)) %>% 
+  group_by(id, session, condition) %>% 
+  mean_qi(.epred) %>% 
+  
+  ggplot(aes(x = session)) +
+  geom_ribbon(aes(ymin = .lower, ymax = .upper),
+              alpha = 1/3) +
+  geom_line(aes(y = .epred)) +
+  geom_hline(yintercept = 0, color = "grey92", linetype = 2) +
+  scale_x_continuous(breaks = c(1, 1:3 * 8)) +
+  coord_cartesian(ylim = c(-35, 35)) +
+  labs(title = "Child-level trajectory contrasts (NB model only)",
+       y = "unstandardized mean difference") +
+  facet_grid(id ~ condition)
+```
+
+### How much did the $\sigma$ posteriors update the priors?
+
+We spent a lot of time fretting over setting the gamma priors for the $\sigma$ parameters. Given our modest $N = 4$ design, it might be interesting to compare the $\sigma$ posteriors with their priors. Here we'll do so with some faceted plots.
+
+```{r, fig.width = 7, fig.height = 5, warning = F}
+sigmas <- str_c("sigma[", c("Intercept", "session01", "b", "c", "session01:b", "session01:c", "shape_Intercept"), "]")
+
+as_draws_df(fit1) %>% 
+  select(starts_with("sd_")) %>% 
+  mutate(likelihood = "Poisson") %>% 
+  pivot_longer(-likelihood) %>% 
+  bind_rows(
+    as_draws_df(fit2) %>% 
+      select(starts_with("sd_")) %>% 
+      mutate(likelihood = "Negative binomial") %>% 
+      pivot_longer(-likelihood) 
+  ) %>% 
+  mutate(name = str_remove(name, "sd_id__")) %>% 
+  mutate(name = str_remove(name, "phase")) %>% 
+  mutate(name = str_c("sigma[", name, "]")) %>% 
+  mutate(name       = factor(name, levels = sigmas),
+         likelihood = factor(likelihood, levels = c("Poisson", "Negative binomial"))) %>% 
+  
+  ggplot(aes(x = value, y = ..density..)) +
+  geom_area(data = tibble(value = seq(0, 5, by = 0.01),
+                          density = dgamma(value, 1.5625, 1.5625)),
+            aes(y = density),
+            fill = "black") +
+  geom_histogram(aes(fill = likelihood),
+                 boundary = 0, binwidth = 0.1, 
+                 position = "identity", alpha = 2/3) +
+  scale_fill_manual(NULL, values = c("dodgerblue", "red")) +
+  scale_x_continuous(NULL, expand = expansion(add = c(0, 0.2))) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  labs(title = "How much did the posterior update relative to the prior?",
+       subtitle = "The posteriors are semitransparent colored histograms. The gamma(1.56, 1.56) priors are in black.") +
+  coord_cartesian(xlim = c(0, 4)) +
+  facet_wrap(~ name, labeller = label_parsed) +
+  theme(legend.position = c(0.85, 0.15))
+```
+
+Even with just 4 children, the $\sigma$ posteriors for the $\mu$ models updated from their priors. The $\sigma$ posterior for the negative-binomial $\phi$ model, however, strayed little from its prior. Perhaps that prior was expertly chosen, or perhaps we just need more data before we can expect to do a good job modeling the overdispersion.
+
+## Session information
+
+```{r}
+sessionInfo()
+```
+
