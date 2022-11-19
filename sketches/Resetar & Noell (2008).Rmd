@@ -27,7 +27,11 @@ theme_set(
 
 ## Can we better identify reinforcers?
 
-Resetar & Noell (2008; https://doi.org/10.1901/jaba.2008.41-447) used an $N = 4$ an ABC alternating treatments design to compare "the effectiveness of a multiple-stimulus-without-replacement (MSWO) preference assessment and teacher preference ranking in identifying reinforcers for use in a general education setting with typically developing elementary-school children" (p. 447).
+Resetar & Noell (2008; https://doi.org/10.1901/jaba.2008.41-447) used an $N = 4$ an ABC alternating treatments design to compare "the effectiveness of a multiple-stimulus-without-replacement (MSWO) preference assessment and teacher preference ranking in identifying reinforcers for use in a general education setting with typically developing elementary-school children" (p. 447). The children in the study were all in the first or second grade who were identified by their teacher as doing poorly in math.
+
+These data are noteworthy in that Shadish and colleagues (2013; https://doi.org/10.1037/a0032964) showcased how one might use the frequentist GLMM to analyze them (pp. 394–396). Here we'll take a complimentary Bayesian approach.
+
+Load the data.
 
 ```{r}
 # load the data
@@ -37,7 +41,11 @@ load(file = "data (digitized)/resetar2008.rda")
 glimpse(resetar2008)
 ```
 
+The generic subject numbers are in the `sn` column and the participant pseudonyms are in the `id` column. Assessmend occasions are in the `session` column, and the `session0` column contains the same information, but starts at `0` rather than `1`. The generic letters for the three experimental phases are in the `phase` column and their descriptive names are saved as a factor in the `condition` column. The primary dependent variable is the number of digits correct during a 2-minute math assessment, which is saved in the `count` column. These data are not the original data as analyzed by Resetar and Noell, but are close approximations which have digitized based on their Figure 1 (p. 450).
+
 ## EDA
+
+Compute the basic descriptive statistics by child and experimental condition.
 
 ```{r, message = F}
 resetar2008 %>% 
@@ -83,7 +91,7 @@ From the paper, we read: "The dependent measure was the number of digits correct
 
 ### Dummies.
 
-We already have time expressed in several ways in the data. Here's a way to make dummy variables for the different levels of `phase`.
+Here we make dummy variables for the different levels of `phase`, which will help clarify the statistical formulas to come.
 
 ```{r}
 resetar2008 <- resetar2008 %>% 
@@ -148,7 +156,7 @@ where the time variable `session01` and the two dummy variables `b` and `c` are 
 
 As to priors, we might want to choose a broad prior for the A-phase intercept $\beta_0$, with a mean centered near low behavioral counts. Given the children in this study were selected for their poor math performance, we might center the prior on 10 digits. Though we typically use the Normal distribution for $\beta$ parameters, keep in mind Poisson models typically use the log link. Thus a Normal prior on the log space will equate to a lognormal prior on the count space. If we were to use $\operatorname{Normal}(\log 10, 1)$ on the log scale, here's what the corresponding lognormal distribution would be on the count scale.
 
-```{r, fig.width = 4, fig.height = 2.5}
+```{r, fig.width = 4, fig.height = 2.5, warning = F}
 # log(10) is about 2.302585
 prior(lognormal(2.302585, 1)) %>% 
   parse_dist() %>%
@@ -171,7 +179,7 @@ qlnorm(c(0.005, 0.995), meanlog = log(10), sdlog = 1)
 qlnorm(c(0.05, 0.95), meanlog = log(10), sdlog = 1)
 ```
 
-For the remaining $\beta$ parameters, we might rely on the good old weakly-regularizing $\operatorname{Normal}(0, 1)$. A researcher who was confident there would be only small linear trends in performance over time might use something like the $\operatorname{Normal}(0, 0.5)$ or even the $\operatorname{Normal}(0, 0.1)$ prior for $\beta_1$, $\beta_3$, and $\beta_5$. 
+For the remaining $\beta$ parameters, we might rely on the good old weakly-regularizing $\operatorname{Normal}(0, 1)$. A researcher who was confident there would be only small linear trends in performance over time might use something like the $\operatorname{Normal}(0, 0.5)$ or even the $\operatorname{Normal}(0, 0.1)$ prior for $\beta_1$, $\beta_3$, and $\beta_5$.
 
 When unsure about how to set the priors for your level-2 $\sigma$ parameters, McElreath's $\operatorname{Exponential}(1)$ prior is a good place to start when modeling count data. We have used this approach before and it will work reasonably well here. As a refresher, here's what that prior looks like.
 
@@ -382,13 +390,15 @@ fit2 <- brm(
   )
 ```
 
+Note how the `|i|` syntax in the model formula allows the new $v_{0i}$ deviations to covary with the $u_{i}$ deviations. Without that syntax, they would have been modeled as orthogonal.
+
 Check the parameter summary.
 
 ```{r}
 summary(fit2)
 ```
 
-The new `shape_Intercept` line in the `Population-Level Effects` section of the output is our summary for $\eta_0$. We might exponentiate to put it back into the natural $\phi$ scale. 
+The new `shape_Intercept` line in the `Population-Level Effects` section of the output is our summary for $\eta_0$. We might exponentiate to put it back into the natural $\phi$ scale.
 
 ```{r}
 fixef(fit2)["shape_Intercept", -2] %>% exp()
@@ -441,6 +451,8 @@ fit1 <- brm(
 ```
 
 ## Plots
+
+Most of our model interpretation will come by way of a series of plots.
 
 ### Population-level plots.
 

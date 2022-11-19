@@ -1,7 +1,7 @@
 Resetar & Noell (2008)
 ================
 A Solomon Kurz
-2022-11-18
+2022-11-19
 
 Load our primary packages.
 
@@ -25,7 +25,16 @@ an $N = 4$ an ABC alternating treatments design to compare “the
 effectiveness of a multiple-stimulus-without-replacement (MSWO)
 preference assessment and teacher preference ranking in identifying
 reinforcers for use in a general education setting with typically
-developing elementary-school children” (p. 447).
+developing elementary-school children” (p. 447). The children in the
+study were all in the first or second grade who were identified by their
+teacher as doing poorly in math.
+
+These data are noteworthy in that Shadish and colleagues (2013;
+<https://doi.org/10.1037/a0032964>) showcased how one might use the
+frequentist GLMM to analyze them (pp. 394–396). Here we’ll take a
+complimentary Bayesian approach.
+
+Load the data.
 
 ``` r
 # load the data
@@ -45,7 +54,22 @@ glimpse(resetar2008)
     ## $ condition <fct> No reward, Teacher selected, MSWO selected, No reward, Teacher selected, MSWO selected, No…
     ## $ count     <dbl> 27, 28, 38, 41, 37, 29, 16, 15, 26, 16, 31, 25, 17, 26, 28, 0, 14, 36, 23, 23, 17, 0, 20, …
 
+The generic subject numbers are in the `sn` column and the participant
+pseudonyms are in the `id` column. Assessmend occasions are in the
+`session` column, and the `session0` column contains the same
+information, but starts at `0` rather than `1`. The generic letters for
+the three experimental phases are in the `phase` column and their
+descriptive names are saved as a factor in the `condition` column. The
+primary dependent variable is the number of digits correct during a
+2-minute math assessment, which is saved in the `count` column. These
+data are not the original data as analyzed by Resetar and Noell, but are
+close approximations which have digitized based on their Figure 1
+(p. 450).
+
 ## EDA
+
+Compute the basic descriptive statistics by child and experimental
+condition.
 
 ``` r
 resetar2008 %>% 
@@ -122,8 +146,8 @@ unbounded counts.
 
 ### Dummies.
 
-We already have time expressed in several ways in the data. Here’s a way
-to make dummy variables for the different levels of `phase`.
+Here we make dummy variables for the different levels of `phase`, which
+will help clarify the statistical formulas to come.
 
 ``` r
 resetar2008 <- resetar2008 %>% 
@@ -257,9 +281,6 @@ prior(lognormal(2.302585, 1)) %>%
   labs(title = "That sweet lognormal(log 10, 1)") +
   coord_cartesian(xlim = c(0, 131))
 ```
-
-    ## Warning: Using the `size` aesthietic with geom_segment was deprecated in ggplot2 3.4.0.
-    ## ℹ Please use the `linewidth` aesthetic instead.
 
 <img src="Resetar---Noell--2008-_files/figure-gfm/unnamed-chunk-11-1.png" width="384" />
 
@@ -609,6 +630,10 @@ fit2 <- brm(
   )
 ```
 
+Note how the `|i|` syntax in the model formula allows the new $v_{0i}$
+deviations to covary with the $u_{i}$ deviations. Without that syntax,
+they would have been modeled as orthogonal.
+
 Check the parameter summary.
 
 ``` r
@@ -702,6 +727,8 @@ overdispersed. The large and uncertain posterior for Kaleb suggests his
 data were close to a Poisson process.
 
 ## Plots
+
+Most of our model interpretation will come by way of a series of plots.
 
 ### Population-level plots.
 
