@@ -1,0 +1,211 @@
+---
+title: "mason2014"
+author: "A Solomon Kurz"
+date: "`r format(Sys.Date())`"
+output: github_document
+---
+
+```{r, echo = F}
+knitr::opts_chunk$set(fig.retina = 2.5)
+options(width = 110)
+```
+
+The purpose of this file is to make a data set resembling those in Mason et al (2014; https://doi.org/10.1016/j.rasd.2013.12.014). In the `Digitize Mason et al (2014).Rmd` file, we digitized the data which Mason and colleagues displayed in their Figure 2 (p. 340) and saved the results in a series of `.csv` files. Here we'll collect those files and wrangle the data into a useful format.
+
+Load the **tidyverse**.
+
+```{r, warning = F, message = F}
+library(tidyverse)
+```
+
+As a first step, we load collect the data from the four `.csv` files into a single data frame.
+
+```{r}
+d <- tibble(sn = 1:3) %>% 
+  mutate(file = str_c("Mason et al (2014)/count0", sn, "_juicr_extracted_points.csv")) %>% 
+  mutate(data = map(file, read_csv, show_col_types = FALSE)) %>% 
+  unnest(data)
+
+# what is this?
+glimpse(d)
+```
+
+A few of the columns are of interest:
+
+* `sn` contains the generic participants identifiers, ranging from `1` to `3`.
+* `x.calibrated` contains the digitized session numbers from the x-axis of Figure 2. This will need to be rounded to integer values.
+* `y.calibrated` contains the digitized behavioral counts from the y-axis of Figure 2. This will also need to be rounded to integer values.
+* `group` contains generic grouping names for the three experimental conditions. This will need to be converted to more sensible non-default names.
+
+Here we wrangle the data into a more useful format and save the results as `mason2014`.
+
+```{r}
+mason2014 <- d %>% 
+  # wrangle the columns of interest and drop the unnecessary ones
+  transmute(sn      = sn,
+            session = round(x.calibrated, digits = 0),
+            count   = round(y.calibrated, digits = 0),
+            group   = str_remove(group, "Grp")) %>% 
+  # make a version of session that starts with zero
+  mutate(session0 = session - 1) %>%
+  # we need to reverse the order of the sn values
+  mutate(sn = 4 - sn) %>% 
+  # sort the data by sn and session
+  arrange(sn, session)  %>% 
+  # assign the pseudonyms as displayed in Figure 1
+  mutate(id = case_when(
+    sn == 1 ~ "Sam",
+    sn == 2 ~ "Ed",
+    sn == 3 ~ "Brian") %>% 
+      fct_reorder(., sn)) %>% 
+  # convert the generic groupings into behavioral phases
+  mutate(phase = case_when(
+    group == "orange" ~ "a",
+    group == "cherry" ~ "b")
+    ) %>% 
+  # reorder the columns
+  # select(sn, id, session, session0, phase, count)
+  select(sn, id, session, phase, count)
+```
+
+Take a look at the data.
+
+```{r}
+glimpse(mason2014)
+```
+
+We can look at the data with a version of Figure 2 from the original article.
+
+```{r}
+lines <- mason2014 %>% 
+  distinct(sn, id) %>% 
+  mutate(xintercept = c(8.5, 13, 23.5))
+
+mason2014 %>% 
+  ggplot(aes(x = session, y = count, color = phase)) +
+  geom_vline(data = lines,
+             aes(xintercept = xintercept),
+             color = "white") +
+  geom_point(size = 2) +
+  geom_line() +
+  xlim(1, NA) +
+  ylim(0, 60) +
+  facet_wrap(~ id, ncol = 1) +
+  theme(panel.grid = element_blank())
+```
+
+Now save the results in an external file.
+
+```{r, eval = F}
+save(mason2014, file = "mason2014.rda")
+```
+
+## Session information
+
+```{r}
+sessionInfo()
+```
+
+
+
+
+
+```{r}
+d <- mason2014 %>% 
+  mutate(session0 = session - 1) %>% 
+  mutate(session01 = session0 / max(session0),
+         b = ifelse(phase == "b", 1, 0))
+```
+
+```{r}
+library(lme4)
+library(marginaleffects)
+```
+
+```{r}
+fit1 <- glmer(
+  data = d, 
+  family = poisson,
+  count ~ 1 + session01 + phase + session01:phase + (1 + session01 + phase + session01:phase | id)
+)
+
+summary(fit1)
+```
+
+```{r}
+fit2 <- glmer.nb(
+  data = d, 
+  count ~ 1 + session01 + phase + session01:phase + (1 + session01 + phase + session01:phase | id)
+)
+
+summary(fit2)
+```
+
+
+```{r}
+predictions(fit1) %>% 
+  ggplot(aes(x = session01, y = predicted, group = phase)) +
+  geom_point(data = d,
+             aes(y = count)) +
+  geom_line() +
+  facet_wrap(~ id)
+
+predictions(fit2) %>% 
+  ggplot(aes(x = session01, y = predicted, group = phase)) +
+  geom_point(data = d,
+             aes(y = count)) +
+  geom_line() +
+  facet_wrap(~ id)
+```
+
+```{r}
+d %>% 
+ filter(phase == "a") %>% 
+  group_by(id) %>% 
+  filter(session == max(session)) %>% 
+  ungroup() %>% 
+  summarise(mean_session = mean(session))
+```
+
+```{r}
+max(d$session)
+max(d$session0)
+```
+
+
+```{r}
+nd <- tibble(session = 1:47) %>% 
+  mutate(session0 = session - 1) %>% 
+  mutate(session01 = session0 / max(session0)) %>% 
+  mutate(phase = ifelse(session <= 14, "a", "b"),
+         id = NA)
+
+predictions(fit1,
+            newdata = nd,
+            include_random = FALSE) %>% 
+  
+  ggplot(aes(x = session, y = predicted, 
+             ymin = conf.low, ymax = conf.high,
+             group = phase)) +
+  geom_ribbon(alpha = 1/3) +
+  geom_line() +
+  coord_cartesian(ylim = c(0, 60))
+
+predictions(fit2,
+            newdata = nd,
+            include_random = FALSE) %>% 
+  
+  ggplot(aes(x = session, y = predicted, 
+             ymin = conf.low, ymax = conf.high,
+             group = phase)) +
+  geom_ribbon(alpha = 1/3) +
+  geom_line() +
+  coord_cartesian(ylim = c(0, 60))
+```
+
+
+
+
+
+
+
