@@ -446,8 +446,7 @@ p1 <- as_draws_df(fit0) %>%
   geom_vline(xintercept = mean(sarafoglou2023$deviation_count),
              linetype = 2, color = "blue") +
   scale_x_continuous(expression(E(italic(y))), limits = c(0, NA)) +
-  scale_y_continuous(NULL, breaks = NULL) +
-  theme(panel.grid = element_blank())
+  scale_y_continuous(NULL, breaks = NULL)
 
 # variance
 p2 <- as_draws_df(fit0) %>% 
@@ -461,8 +460,7 @@ p2 <- as_draws_df(fit0) %>%
   geom_vline(xintercept = var(sarafoglou2023$deviation_count),
              linetype = 2, color = "blue") +
   scale_x_continuous(expression(Var(italic(y))), limits = c(0, 1.3)) +
-  scale_y_continuous(NULL, breaks = NULL) +
-  theme(panel.grid = element_blank())
+  scale_y_continuous(NULL, breaks = NULL)
 
 
 # proportion 0
@@ -476,8 +474,7 @@ p3 <- as_draws_df(fit0) %>%
   geom_vline(xintercept = mean(sarafoglou2023$deviation_count == 0),
              linetype = 2, color = "blue") +
   scale_x_continuous(expression(Pr(italic(y)==0)), limits = c(0, 1)) +
-  scale_y_continuous(NULL, breaks = NULL) +
-  theme(panel.grid = element_blank())
+  scale_y_continuous(NULL, breaks = NULL)
 
 # combine and display
 p1 + p2 + p3 +
@@ -1040,8 +1037,7 @@ bind_rows(
        y = "count") +
   theme(legend.background = element_blank(),
         legend.key.size = unit(0.13, 'in'),
-        legend.position = c(.85, .85),
-        panel.grid = element_blank()) +
+        legend.position = c(.85, .85)) +
   facet_wrap(~ group)
 ```
 
@@ -1123,8 +1119,7 @@ tau_ate %>%
   scale_x_continuous(expand = expansion(mult = 0.3)) +
   labs(x = expression(tau[ATE]),
        y = NULL) +
-  theme(axis.text.y = element_text(hjust = 0),
-        panel.grid = element_blank())
+  theme(axis.text.y = element_text(hjust = 0))
 ```
 
 ![](Sarafoglou-et-al--2023-_files/figure-commonmark/unnamed-chunk-28-1.png)
@@ -1322,8 +1317,7 @@ v %>%
   labs(title = expression(Group~variances~computed~with~lambda(1-pi)(1+pi*lambda)),
        x = expression(tau[Var]),
        y = NULL) +
-  theme(axis.text.y = element_text(hjust = 0),
-        panel.grid = element_blank())
+  theme(axis.text.y = element_text(hjust = 0))
 ```
 
 ![](Sarafoglou-et-al--2023-_files/figure-commonmark/unnamed-chunk-33-1.png)
@@ -1410,8 +1404,7 @@ z %>%
   labs(title = expression(Group~proportions~computed~with~pi+(1-pi)*exp(-lambda)),
        x = expression(tau[Pr(italic(Y)==0)]),
        y = NULL) +
-  theme(axis.text.y = element_text(hjust = 0),
-        panel.grid = element_blank())
+  theme(axis.text.y = element_text(hjust = 0))
 ```
 
 ![](Sarafoglou-et-al--2023-_files/figure-commonmark/unnamed-chunk-36-1.png)
