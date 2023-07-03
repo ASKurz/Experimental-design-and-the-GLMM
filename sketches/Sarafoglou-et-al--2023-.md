@@ -58,48 +58,48 @@ glimpse(sarafoglou2023)
 
     ## Rows: 120
     ## Columns: 42
-    ## $ id                   <dbl> 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 19, …
-    ## $ condition            <chr> "blinding", "preregistration", "blinding", "blind…
-    ## $ work                 <dbl> 46, NA, 70, 17, 9, 100, 9, 12, 20, 13, 35, 48, 50…
-    ## $ effort               <dbl> 9, NA, 11, 9, 7, 12, 7, 9, 7, 8, 11, 11, 11, 10, …
-    ## $ frustration          <dbl> 4, NA, 6, 9, 5, 5, 2, 8, 5, 8, 12, 10, 9, 6, 5, 8…
-    ## $ time_anticipated     <dbl> 8, NA, 7, 5, 6, 7, 6, 6, 6, 8, 5, 8, 6, 7, 8, 6, …
-    ## $ deviation_count      <dbl> 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0…
-    ## $ HoursS1              <dbl> 40, NA, 30, 12, 2, 20, 2, 4, 10, 7, 30, 12, 30, 5…
-    ## $ HoursS2              <dbl> 6, 30, 40, 5, 7, 80, 7, 8, 10, 6, 5, 36, 20, 5, 5…
-    ## $ EffortS1             <dbl> 5, NA, 5, 4, 2, 6, 3, 4, 3, 4, 6, 5, 6, 5, 3, 6, …
-    ## $ EffortS2             <dbl> 4, 7, 6, 5, 5, 6, 4, 5, 4, 4, 5, 6, 5, 5, 5, 3, 4…
-    ## $ FrustrationS1        <dbl> 2, NA, 3, 5, 1, 1, 1, 5, 2, 1, 5, 6, 5, 3, 3, 4, …
-    ## $ FrustrationS2        <dbl> 2, 5, 3, 4, 4, 4, 1, 3, 3, 7, 7, 4, 4, 3, 2, 4, 5…
-    ## $ TimeAnticipatedS1    <dbl> 5, NA, 4, 2, 3, 3, 3, 3, 3, 3, 2, 4, 4, 3, 4, 3, …
-    ## $ TimeAnticipatedS2    <dbl> 3, 5, 3, 3, 3, 4, 3, 3, 3, 5, 3, 4, 2, 4, 4, 3, 3…
-    ## $ DeviateHypotheses    <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
-    ## $ DeviateVariables     <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
-    ## $ DeviateDV            <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
-    ## $ DeviateExclusions    <dbl> 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0…
-    ## $ DeviateModel         <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
-    ## $ DeviateDirection     <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
-    ## $ DeviateTest          <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
-    ## $ DeviateIV            <dbl> 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
-    ## $ DeviateWhy           <chr> NA, NA, NA, NA, NA, "We included further data tra…
-    ## $ NumberOfPeople       <dbl> 5, 1, 6, 1, 2, 3, 2, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1…
-    ## $ Domain               <chr> "Psychology (Other)", "Cognition", "Religion and …
-    ## $ Positions            <chr> "Doctoral student, Assistant professor, Associate…
-    ## $ TheoreticalKnowledge <dbl> 2, 3, 4, 5, 5, 3, 4, 2, 1, 2, 1, 1, 5, 3, 4, 2, 2…
-    ## $ MethodsKnowledge     <dbl> 4, 5, 4, 5, 5, 4, 4, 3, 3, 3, 3, 4, 4, 4, 5, 4, 4…
-    ## $ Standardized_ES_1    <dbl> 0.130, 0.084, 0.307, NA, 0.090, 0.130, 0.078, 0.0…
-    ## $ lower_CI_1           <dbl> 0.111, 0.065, 0.115, NA, 0.060, 0.103, 0.076, 0.0…
-    ## $ upper_CI_1           <dbl> 0.149, 0.103, 0.509, NA, 0.120, 0.156, 0.082, 0.0…
-    ## $ MARP_ES_type_1       <chr> "beta", "beta", "beta", NA, "beta", "beta", "beta…
-    ## $ Standardized_ES_2    <dbl> 0.016, NA, 0.050, NA, 0.030, 0.130, 0.027, 0.020,…
-    ## $ lower_CI_2           <dbl> -0.002, NA, -0.018, NA, 0.000, 0.103, 0.026, 0.00…
-    ## $ upper_CI_2           <dbl> 0.035, NA, 0.119, NA, 0.050, 0.156, 0.028, 0.039,…
-    ## $ MARP_ES_type_2       <chr> "beta", NA, "beta", NA, "beta", "beta", "beta", "…
-    ## $ EstimationRQ1        <dbl> 2, 5, 6, 5, 7, 4, 6, 5, 5, 4, 5, 4, 5, 7, 6, 4, 2…
-    ## $ EstimationRQ2        <dbl> 5, 7, 7, 3, 6, 4, 5, 4, 6, 6, 5, 5, 5, 6, 6, 5, 6…
-    ## $ AnswerRQ1            <dbl> 4, 6, 7, 1, 4, 6, 6, 5, 7, 4, 5, 5, 6, 5, 6, 6, 6…
-    ## $ AnswerRQ2            <dbl> 4, NA, 3, NA, 2, 4, 5, 4, 6, 4, 4, 4, 2, 5, 6, 2,…
-    ## $ blinding             <dbl> 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0…
+    ## $ id                   <dbl> 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 19, 20, 21, 23, 24, 25, 26, 28, 29…
+    ## $ condition            <chr> "blinding", "preregistration", "blinding", "blinding", "preregistration", "prer…
+    ## $ work                 <dbl> 46, NA, 70, 17, 9, 100, 9, 12, 20, 13, 35, 48, 50, 10, 10, 28, 20, 20, 13, 19, …
+    ## $ effort               <dbl> 9, NA, 11, 9, 7, 12, 7, 9, 7, 8, 11, 11, 11, 10, 8, 9, 10, 7, 12, 11, 11, 6, 12…
+    ## $ frustration          <dbl> 4, NA, 6, 9, 5, 5, 2, 8, 5, 8, 12, 10, 9, 6, 5, 8, 10, 4, 8, 8, 10, 2, 10, 11, …
+    ## $ time_anticipated     <dbl> 8, NA, 7, 5, 6, 7, 6, 6, 6, 8, 5, 8, 6, 7, 8, 6, 6, 6, 7, 7, 8, 6, 6, 6, 9, 9, …
+    ## $ deviation_count      <dbl> 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 3, 2, 0…
+    ## $ HoursS1              <dbl> 40, NA, 30, 12, 2, 20, 2, 4, 10, 7, 30, 12, 30, 5, 5, 12, 12, 16, 5, 7, 28, 4, …
+    ## $ HoursS2              <dbl> 6, 30, 40, 5, 7, 80, 7, 8, 10, 6, 5, 36, 20, 5, 5, 16, 8, 4, 8, 12, 6, 4, 10, 8…
+    ## $ EffortS1             <dbl> 5, NA, 5, 4, 2, 6, 3, 4, 3, 4, 6, 5, 6, 5, 3, 6, 6, 4, 6, 6, 6, 3, 6, 5, 5, 5, …
+    ## $ EffortS2             <dbl> 4, 7, 6, 5, 5, 6, 4, 5, 4, 4, 5, 6, 5, 5, 5, 3, 4, 3, 6, 5, 5, 3, 6, 4, 6, 4, 6…
+    ## $ FrustrationS1        <dbl> 2, NA, 3, 5, 1, 1, 1, 5, 2, 1, 5, 6, 5, 3, 3, 4, 5, 2, 4, 4, 5, 1, 5, 6, 5, 5, …
+    ## $ FrustrationS2        <dbl> 2, 5, 3, 4, 4, 4, 1, 3, 3, 7, 7, 4, 4, 3, 2, 4, 5, 2, 4, 4, 5, 1, 5, 5, 6, 4, 3…
+    ## $ TimeAnticipatedS1    <dbl> 5, NA, 4, 2, 3, 3, 3, 3, 3, 3, 2, 4, 4, 3, 4, 3, 3, 4, 3, 3, 4, 3, 3, 3, 4, 5, …
+    ## $ TimeAnticipatedS2    <dbl> 3, 5, 3, 3, 3, 4, 3, 3, 3, 5, 3, 4, 2, 4, 4, 3, 3, 2, 4, 4, 4, 3, 3, 3, 5, 4, 3…
+    ## $ DeviateHypotheses    <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+    ## $ DeviateVariables     <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0…
+    ## $ DeviateDV            <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0…
+    ## $ DeviateExclusions    <dbl> 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0…
+    ## $ DeviateModel         <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0…
+    ## $ DeviateDirection     <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+    ## $ DeviateTest          <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0…
+    ## $ DeviateIV            <dbl> 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0…
+    ## $ DeviateWhy           <chr> NA, NA, NA, NA, NA, "We included further data transformations and model specifi…
+    ## $ NumberOfPeople       <dbl> 5, 1, 6, 1, 2, 3, 2, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 1, 1, 7, 4, 4, 1, 1, 1, 2, 4…
+    ## $ Domain               <chr> "Psychology (Other)", "Cognition", "Religion and Culture", "Religion and Cultur…
+    ## $ Positions            <chr> "Doctoral student, Assistant professor, Associate professor", "Associate profes…
+    ## $ TheoreticalKnowledge <dbl> 2, 3, 4, 5, 5, 3, 4, 2, 1, 2, 1, 1, 5, 3, 4, 2, 2, 3, 3, 4, 5, 2, 1, 1, 4, 2, 3…
+    ## $ MethodsKnowledge     <dbl> 4, 5, 4, 5, 5, 4, 4, 3, 3, 3, 3, 4, 4, 4, 5, 4, 4, 4, 4, 4, 5, 4, 2, 2, 4, 5, 3…
+    ## $ Standardized_ES_1    <dbl> 0.130, 0.084, 0.307, NA, 0.090, 0.130, 0.078, 0.065, 0.120, 0.128, NA, 0.101, 0…
+    ## $ lower_CI_1           <dbl> 0.111, 0.065, 0.115, NA, 0.060, 0.103, 0.076, 0.047, 0.099, 0.109, NA, 0.076, 0…
+    ## $ upper_CI_1           <dbl> 0.149, 0.103, 0.509, NA, 0.120, 0.156, 0.082, 0.084, 0.141, 0.147, NA, 0.126, 0…
+    ## $ MARP_ES_type_1       <chr> "beta", "beta", "beta", NA, "beta", "beta", "beta", "beta", "beta", "beta", "pr…
+    ## $ Standardized_ES_2    <dbl> 0.016, NA, 0.050, NA, 0.030, 0.130, 0.027, 0.020, 0.041, 0.021, NA, 0.037, 0.00…
+    ## $ lower_CI_2           <dbl> -0.002, NA, -0.018, NA, 0.000, 0.103, 0.026, 0.001, 0.022, 0.003, NA, 0.012, 0.…
+    ## $ upper_CI_2           <dbl> 0.035, NA, 0.119, NA, 0.050, 0.156, 0.028, 0.039, 0.060, 0.039, NA, 0.061, 0.00…
+    ## $ MARP_ES_type_2       <chr> "beta", NA, "beta", NA, "beta", "beta", "beta", "beta", "beta", "beta", "propor…
+    ## $ EstimationRQ1        <dbl> 2, 5, 6, 5, 7, 4, 6, 5, 5, 4, 5, 4, 5, 7, 6, 4, 2, 5, 4, 5, 7, 6, 4, 3, 7, 5, 5…
+    ## $ EstimationRQ2        <dbl> 5, 7, 7, 3, 6, 4, 5, 4, 6, 6, 5, 5, 5, 6, 6, 5, 6, 4, 5, 5, 3, 4, 6, 7, 6, 3, 5…
+    ## $ AnswerRQ1            <dbl> 4, 6, 7, 1, 4, 6, 6, 5, 7, 4, 5, 5, 6, 5, 6, 6, 6, 6, 6, 6, 4, 7, 4, 5, 7, 5, 4…
+    ## $ AnswerRQ2            <dbl> 4, NA, 3, NA, 2, 4, 5, 4, 6, 4, 4, 4, 2, 5, 6, 2, 5, 6, 5, 6, 5, 2, 5, 3, 6, 3,…
+    ## $ blinding             <dbl> 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0…
 
 In the `sarafoglou2023` data, the number of deviations is recorded in
 the `deviation_count` column, and the experimental groups are
@@ -116,7 +116,7 @@ sarafoglou2023 %>%
         legend.position = c(.80, .85))
 ```
 
-![](Sarafoglou-et-al--2023-_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+<img src="Sarafoglou-et-al--2023-_files/figure-gfm/unnamed-chunk-3-1.png" width="384" />
 
 I’m not the hugest fan of paired bar plots like this. Here’s a dumbbell
 plot alternative.
@@ -135,7 +135,7 @@ sarafoglou2023 %>%
         legend.position = c(.80, .85))
 ```
 
-![](Sarafoglou-et-al--2023-_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+<img src="Sarafoglou-et-al--2023-_files/figure-gfm/unnamed-chunk-4-1.png" width="384" />
 
 The `sarafoglou2023` data set also contains a handful of baseline
 covariates we might use to help increase the precision of the analyses.
@@ -148,7 +148,7 @@ sarafoglou2023 %>%
   geom_jitter(width = 0.2, height = 0.2)
 ```
 
-![](Sarafoglou-et-al--2023-_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+<img src="Sarafoglou-et-al--2023-_files/figure-gfm/unnamed-chunk-5-1.png" width="384" />
 
 ``` r
 sarafoglou2023 %>% 
@@ -156,7 +156,7 @@ sarafoglou2023 %>%
   geom_jitter(width = 0.2, height = 0.2)
 ```
 
-![](Sarafoglou-et-al--2023-_files/figure-gfm/unnamed-chunk-4-2.png)<!-- -->
+<img src="Sarafoglou-et-al--2023-_files/figure-gfm/unnamed-chunk-5-2.png" width="384" />
 
 Here we’ll make and save standardized versions of `TheoreticalKnowledge`
 and `MethodsKnowledge`, which will help with the models down the line.
@@ -263,7 +263,7 @@ c(prior(beta(1, 1)),      # brms default
   scale_y_discrete(NULL, expand = expansion(add = 0.1))
 ```
 
-![](Sarafoglou-et-al--2023-_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+<img src="Sarafoglou-et-al--2023-_files/figure-gfm/unnamed-chunk-7-1.png" width="384" />
 
 In case you didn’t know, the mean of the beta distribution is
 $\alpha / (\alpha + \beta)$, and the degree of *concentration* (aka
@@ -352,7 +352,7 @@ prior(lognormal(-0.2228555, 0.9444565)) %>%
   coord_cartesian(xlim = c(0, 9))
 ```
 
-![](Sarafoglou-et-al--2023-_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+<img src="Sarafoglou-et-al--2023-_files/figure-gfm/unnamed-chunk-11-1.png" width="480" />
 
 Thus the $\text{Normal}(-0.2228555, 0.9444565)$ prior for $\beta_0$,
 which is on the log scale, implies a lognormal distribution with a mean
@@ -415,7 +415,7 @@ pp_check(fit0, type = "bars",  ndraws = 500) +
                   ylim = c(0, NA))
 ```
 
-![](Sarafoglou-et-al--2023-_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+<img src="Sarafoglou-et-al--2023-_files/figure-gfm/unnamed-chunk-14-1.png" width="384" />
 
 This looks like a success. Our simple ZIP model does a fine job
 simulating data resembling the sample data. To get more comfortable with
@@ -483,7 +483,7 @@ p1 + p2 + p3 +
                   subtitle = "The dashed blue lines mark the sample statistics.")
 ```
 
-![](Sarafoglou-et-al--2023-_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+<img src="Sarafoglou-et-al--2023-_files/figure-gfm/unnamed-chunk-15-1.png" width="768" />
 
 In the sections to come, you’ll see how these exercises pay off when we
 want to make substantive inferences about the experimental conditions.
@@ -548,7 +548,7 @@ prior(lognormal(-0.5893275, 1.085659)) %>%
   coord_cartesian(xlim = c(0, 9))
 ```
 
-![](Sarafoglou-et-al--2023-_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+<img src="Sarafoglou-et-al--2023-_files/figure-gfm/unnamed-chunk-17-1.png" width="480" />
 
 As to the $\beta_1$ prior, $\text{Normal}(0, 0.5)$ is a generic
 weakly-regularizing distribution meant to rule out group differences
@@ -627,7 +627,7 @@ tibble(`normal(0, 1.25)`   = rnorm(n = n, mean = 0,    sd = 1.25),     # Solomon
   scale_y_discrete(NULL, expand = expansion(add = 0.1))
 ```
 
-![](Sarafoglou-et-al--2023-_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+<img src="Sarafoglou-et-al--2023-_files/figure-gfm/unnamed-chunk-18-1.png" width="384" />
 
 When transformed back onto the probability space, my default
 $\text{Normal}(0, 1.25)$ prior for $\gamma_0$ is centered at 0.5, but
@@ -766,15 +766,9 @@ $$
 \end{align*}
 $$
 
-where the $\lambda$ parameter now has an $i$ subscript indicating it can
-vary as a function of predictor variables. Because we are now using a
-conventional Poisson model, $\lambda$ is once again the population mean
-of the `deviation_count` variable itself, but modeled on the log scale
-per convention. The new $\beta_1$ parameter is the difference in the
-analysis blinding condition, relative to the preregistration condition,
-on the log scale.
-
-BLAH
+where the two new coefficients $\beta_2$ and $\beta_3$ are for the
+standardized versions of our two baseline covariates,
+tz`and`mz`. Both covariates receive the regularizing $\text{Normal}(0, 0.5)$, and the priors for all other parameters are the same as those in the ANOVA version of the model. We will follow the same basic convention for the ZIP ANCOVA and the distributional ZIP ANCOVA. Both will be the same as their ANOVA counterparts, but they will include the new parameters for the two baseline covariates, along with regularizing priors. Here's how to fit the models with`brm()\`.
 
 ``` r
 # Poisson ANCOVA
@@ -1042,7 +1036,7 @@ bind_rows(
   facet_wrap(~ group)
 ```
 
-![](Sarafoglou-et-al--2023-_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
+<img src="Sarafoglou-et-al--2023-_files/figure-gfm/unnamed-chunk-26-1.png" width="768" />
 
 As the models were all similar by their information criterion estimates,
 they are similar in their posterior-predictive checks, too. To my eye,
@@ -1123,7 +1117,7 @@ tau_ate %>%
   theme(axis.text.y = element_text(hjust = 0))
 ```
 
-![](Sarafoglou-et-al--2023-_files/figure-gfm/unnamed-chunk-28-1.png)<!-- -->
+<img src="Sarafoglou-et-al--2023-_files/figure-gfm/unnamed-chunk-29-1.png" width="672" />
 
 Overall, they’re all very similar.
 
@@ -1164,10 +1158,10 @@ glimpse(nd)
 
     ## Rows: 240
     ## Columns: 4
-    ## $ id       <dbl> 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12,…
-    ## $ tz       <dbl> -0.5255202, -0.5255202, 0.2530283, 0.2530283, 1.0315768, 1.03…
-    ## $ mz       <dbl> -0.04864922, -0.04864922, 1.41082727, 1.41082727, -0.04864922…
-    ## $ blinding <int> 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0…
+    ## $ id       <dbl> 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 16, 16, 1…
+    ## $ tz       <dbl> -0.5255202, -0.5255202, 0.2530283, 0.2530283, 1.0315768, 1.0315768, 1.8101253, 1.8101253, 1…
+    ## $ mz       <dbl> -0.04864922, -0.04864922, 1.41082727, 1.41082727, -0.04864922, -0.04864922, 1.41082727, 1.4…
+    ## $ blinding <int> 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0…
 
 Each case in the data now has two rows in the `nd` predictor grid, one
 for each level of `blinding`. Now we feed the `nd` data into the
@@ -1235,12 +1229,12 @@ glimpse(lambda_pi)
 
     ## Rows: 5,760,000
     ## Columns: 6
-    ## $ fit      <chr> "fit1", "fit1", "fit1", "fit1", "fit1", "fit1", "fit1", "fit1…
-    ## $ id       <dbl> 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3…
-    ## $ blinding <int> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
-    ## $ .draw    <int> 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18…
-    ## $ lambda   <dbl> 0.4874169, 0.4482759, 0.5538688, 0.5363352, 0.5504218, 0.5422…
-    ## $ pi       <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+    ## $ fit      <chr> "fit1", "fit1", "fit1", "fit1", "fit1", "fit1", "fit1", "fit1", "fit1", "fit1", "fit1", "fi…
+    ## $ id       <dbl> 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3…
+    ## $ blinding <int> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+    ## $ .draw    <int> 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, …
+    ## $ lambda   <dbl> 0.4874169, 0.4482759, 0.5538688, 0.5363352, 0.5504218, 0.5422705, 0.4988083, 0.6433305, 0.5…
+    ## $ pi       <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
 
 With the rather long `lambda_pi` data frame, we can make group summaries
 for the counterfactual differences in variance, by each model. Here we
@@ -1321,7 +1315,7 @@ v %>%
   theme(axis.text.y = element_text(hjust = 0))
 ```
 
-![](Sarafoglou-et-al--2023-_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
+<img src="Sarafoglou-et-al--2023-_files/figure-gfm/unnamed-chunk-34-1.png" width="672" />
 
 The Poisson models are very confident about the variance differences.
 The ZIP model are less so.
@@ -1408,7 +1402,7 @@ z %>%
   theme(axis.text.y = element_text(hjust = 0))
 ```
 
-![](Sarafoglou-et-al--2023-_files/figure-gfm/unnamed-chunk-36-1.png)<!-- -->
+<img src="Sarafoglou-et-al--2023-_files/figure-gfm/unnamed-chunk-37-1.png" width="672" />
 
 Interestingly, this time the simple ZIP models differ from the other
 kinds of models. In all cases, it appears we should expect more zero’s
@@ -1499,50 +1493,33 @@ sessionInfo()
     ## [1] stats     graphics  grDevices utils     datasets  methods   base     
     ## 
     ## other attached packages:
-    ##  [1] marginaleffects_0.12.0 patchwork_1.1.2        tidybayes_3.0.4       
-    ##  [4] brms_2.19.0            Rcpp_1.0.10            lubridate_1.9.2       
-    ##  [7] forcats_1.0.0          stringr_1.5.0          dplyr_1.1.2           
-    ## [10] purrr_1.0.1            readr_2.1.4            tidyr_1.3.0           
+    ##  [1] marginaleffects_0.12.0 patchwork_1.1.2        tidybayes_3.0.4        brms_2.19.0           
+    ##  [5] Rcpp_1.0.10            lubridate_1.9.2        forcats_1.0.0          stringr_1.5.0         
+    ##  [9] dplyr_1.1.2            purrr_1.0.1            readr_2.1.4            tidyr_1.3.0           
     ## [13] tibble_3.2.1           ggplot2_3.4.2          tidyverse_2.0.0       
     ## 
     ## loaded via a namespace (and not attached):
-    ##   [1] tensorA_0.36.2       rstudioapi_0.14      magrittr_2.0.3      
-    ##   [4] TH.data_1.1-2        estimability_1.4.1   farver_2.1.1        
-    ##   [7] nloptr_2.0.3         rmarkdown_2.22       vctrs_0.6.3         
-    ##  [10] minqa_1.2.5          base64enc_0.1-3      htmltools_0.5.5     
-    ##  [13] distributional_0.3.2 StanHeaders_2.26.27  htmlwidgets_1.6.2   
-    ##  [16] plyr_1.8.8           sandwich_3.0-2       emmeans_1.8.6       
-    ##  [19] zoo_1.8-12           igraph_1.4.3         mime_0.12           
-    ##  [22] lifecycle_1.0.3      pkgconfig_2.0.3      colourpicker_1.2.0  
-    ##  [25] Matrix_1.5-4         R6_2.5.1             fastmap_1.1.1       
-    ##  [28] collapse_1.9.6       shiny_1.7.4          digest_0.6.31       
-    ##  [31] numDeriv_2016.8-1.1  colorspace_2.1-0     ps_1.7.5            
-    ##  [34] crosstalk_1.2.0      projpred_2.6.0       labeling_0.4.2      
-    ##  [37] fansi_1.0.4          timechange_0.2.0     abind_1.4-5         
-    ##  [40] mgcv_1.8-42          compiler_4.3.0       bit64_4.0.5         
-    ##  [43] withr_2.5.0          backports_1.4.1      inline_0.3.19       
-    ##  [46] shinystan_2.6.0      gamm4_0.2-6          pkgbuild_1.4.1      
-    ##  [49] highr_0.10           MASS_7.3-58.4        gtools_3.9.4        
-    ##  [52] loo_2.6.0            tools_4.3.0          httpuv_1.6.11       
-    ##  [55] threejs_0.3.3        glue_1.6.2           callr_3.7.3         
-    ##  [58] nlme_3.1-162         promises_1.2.0.1     grid_4.3.0          
-    ##  [61] checkmate_2.2.0      reshape2_1.4.4       generics_0.1.3      
-    ##  [64] gtable_0.3.3         tzdb_0.4.0           data.table_1.14.8   
-    ##  [67] hms_1.1.3            utf8_1.2.3           pillar_1.9.0        
-    ##  [70] ggdist_3.3.0         markdown_1.7         vroom_1.6.3         
-    ##  [73] posterior_1.4.1      later_1.3.1          splines_4.3.0       
-    ##  [76] lattice_0.21-8       survival_3.5-5       bit_4.0.5           
-    ##  [79] tidyselect_1.2.0     miniUI_0.1.1.1       knitr_1.43          
-    ##  [82] arrayhelpers_1.1-0   gridExtra_2.3        stats4_4.3.0        
-    ##  [85] xfun_0.39            bridgesampling_1.1-2 matrixStats_1.0.0   
-    ##  [88] DT_0.28              rstan_2.21.8         stringi_1.7.12      
-    ##  [91] yaml_2.3.7           boot_1.3-28.1        evaluate_0.21       
-    ##  [94] codetools_0.2-19     cli_3.6.1            RcppParallel_5.1.7  
-    ##  [97] shinythemes_1.2.0    xtable_1.8-4         munsell_0.5.0       
-    ## [100] processx_3.8.1       coda_0.19-4          svUnit_1.0.6        
-    ## [103] parallel_4.3.0       rstantools_2.3.1     ellipsis_0.3.2      
-    ## [106] prettyunits_1.1.1    dygraphs_1.1.1.6     bayesplot_1.10.0    
-    ## [109] Brobdingnag_1.2-9    lme4_1.1-33          viridisLite_0.4.2   
-    ## [112] mvtnorm_1.2-2        scales_1.2.1         xts_0.13.1          
-    ## [115] insight_0.19.2       crayon_1.5.2         rlang_1.1.1         
-    ## [118] multcomp_1.4-24      shinyjs_2.1.0
+    ##   [1] tensorA_0.36.2       rstudioapi_0.14      magrittr_2.0.3       TH.data_1.1-2        estimability_1.4.1  
+    ##   [6] farver_2.1.1         nloptr_2.0.3         rmarkdown_2.22       vctrs_0.6.3          minqa_1.2.5         
+    ##  [11] base64enc_0.1-3      htmltools_0.5.5      distributional_0.3.2 StanHeaders_2.26.27  htmlwidgets_1.6.2   
+    ##  [16] plyr_1.8.8           sandwich_3.0-2       emmeans_1.8.6        zoo_1.8-12           igraph_1.4.3        
+    ##  [21] mime_0.12            lifecycle_1.0.3      pkgconfig_2.0.3      colourpicker_1.2.0   Matrix_1.5-4        
+    ##  [26] R6_2.5.1             fastmap_1.1.1        collapse_1.9.6       shiny_1.7.4          digest_0.6.31       
+    ##  [31] numDeriv_2016.8-1.1  colorspace_2.1-0     ps_1.7.5             crosstalk_1.2.0      projpred_2.6.0      
+    ##  [36] labeling_0.4.2       fansi_1.0.4          timechange_0.2.0     abind_1.4-5          mgcv_1.8-42         
+    ##  [41] compiler_4.3.0       bit64_4.0.5          withr_2.5.0          backports_1.4.1      inline_0.3.19       
+    ##  [46] shinystan_2.6.0      gamm4_0.2-6          pkgbuild_1.4.1       highr_0.10           MASS_7.3-58.4       
+    ##  [51] gtools_3.9.4         loo_2.6.0            tools_4.3.0          httpuv_1.6.11        threejs_0.3.3       
+    ##  [56] glue_1.6.2           callr_3.7.3          nlme_3.1-162         promises_1.2.0.1     grid_4.3.0          
+    ##  [61] checkmate_2.2.0      reshape2_1.4.4       generics_0.1.3       gtable_0.3.3         tzdb_0.4.0          
+    ##  [66] data.table_1.14.8    hms_1.1.3            utf8_1.2.3           pillar_1.9.0         ggdist_3.3.0        
+    ##  [71] markdown_1.7         vroom_1.6.3          posterior_1.4.1      later_1.3.1          splines_4.3.0       
+    ##  [76] lattice_0.21-8       survival_3.5-5       bit_4.0.5            tidyselect_1.2.0     miniUI_0.1.1.1      
+    ##  [81] knitr_1.43           arrayhelpers_1.1-0   gridExtra_2.3        stats4_4.3.0         xfun_0.39           
+    ##  [86] bridgesampling_1.1-2 matrixStats_1.0.0    DT_0.28              rstan_2.21.8         stringi_1.7.12      
+    ##  [91] yaml_2.3.7           boot_1.3-28.1        evaluate_0.21        codetools_0.2-19     cli_3.6.1           
+    ##  [96] RcppParallel_5.1.7   shinythemes_1.2.0    xtable_1.8-4         munsell_0.5.0        processx_3.8.1      
+    ## [101] coda_0.19-4          svUnit_1.0.6         parallel_4.3.0       rstantools_2.3.1     ellipsis_0.3.2      
+    ## [106] prettyunits_1.1.1    dygraphs_1.1.1.6     bayesplot_1.10.0     Brobdingnag_1.2-9    lme4_1.1-33         
+    ## [111] viridisLite_0.4.2    mvtnorm_1.2-2        scales_1.2.1         xts_0.13.1           insight_0.19.2      
+    ## [116] crayon_1.5.2         rlang_1.1.1          multcomp_1.4-24      shinyjs_2.1.0

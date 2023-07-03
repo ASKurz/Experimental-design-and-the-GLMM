@@ -6,6 +6,11 @@ date: "`r format(Sys.Date())`"
 output: github_document
 ---
 
+```{r, echo = F}
+knitr::opts_chunk$set(fig.retina = 2.5)
+options(width = 110)
+```
+
 Sarafoglou et al (2023; [https://doi.org/10.1177/25152459221128319](https://doi.org/10.1177/25152459221128319)) used a 2-group design ($n$ = 61 and $n$ = 59). Their preregistration lives at [https://osf.io/2cdht](https://osf.io/2cdht). The team preregistered 4 specific hypothesis, and their fourth hypothesis (called "Hypothesis 4" in the paper) originally read:
 
 > Analysis teams in the preregistration condition should (1) deviate more often from their planned analysis than analysis teams in the blinding condition and (2) when they deviate from their analysis plan, analysis teams in the preregistration condition should deviate on more items than analysis teams in the blinding condition. We will test this hypothesis against the null hypothesis that both groups (1) deviate the same number of times from their analysis plan and (2) when they deviate from their analysis plan they do so for the same number of items..
@@ -463,9 +468,7 @@ $$
 \end{align*}
 $$
 
-where the $\lambda$ parameter now has an $i$ subscript indicating it can vary as a function of predictor variables. Because we are now using a conventional Poisson model, $\lambda$ is once again the population mean of the `deviation_count` variable itself, but modeled on the log scale per convention. The new $\beta_1$ parameter is the difference in the analysis blinding condition, relative to the preregistration condition, on the log scale.
-
-BLAH
+where the two new coefficients $\beta_2$ and $\beta_3$ are for the standardized versions of our two baseline covariates, tz` and `mz`. Both covariates receive the regularizing $\text{Normal}(0, 0.5)$, and the priors for all other parameters are the same as those in the ANOVA version of the model. We will follow the same basic convention for the ZIP ANCOVA and the distributional ZIP ANCOVA. Both will be the same as their ANOVA counterparts, but they will include the new parameters for the two baseline covariates, along with regularizing priors. Here's how to fit the models with `brm()`.
 
 ```{r fit4}
 # Poisson ANCOVA
