@@ -1458,7 +1458,9 @@ $$
 
 $$
 \mathbb{Var}(y_i)_\text{HP} = \left [ (\mu + \mu^2)\frac{1 - \pi}{1 - \exp(-\mu)}  \right ] - \left [ \mu \frac{1 - \pi}{1 - \exp(-\mu)} \right ]^2
-$$ $$
+$$
+
+$$
 \mathbb{Var}(y_i)_\text{HNB} = \mu (1 - \pi) \left [1 - \left ( \frac{\phi}{\mu + \phi} \right )^\phi \right ]^{-1} \left \{ \frac{\phi + \mu (\phi + 1)}{\phi} - \mu (1 - \pi) \left [1 - \left ( \frac{\phi}{\mu + \phi} \right )^\phi \right ]^{-1}  \right \},
 $$
 
