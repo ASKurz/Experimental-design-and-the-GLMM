@@ -3,7 +3,7 @@ title: "Sarafoglou et al (2023)"
 subtitle: "Posttest-only control group design"
 author: "A Solomon Kurz"
 date: "`r format(Sys.Date())`"
-format: html
+format: gfm
 editor: visual
 ---
 
