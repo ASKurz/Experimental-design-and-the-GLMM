@@ -1279,7 +1279,7 @@ print(v)
 
 Now these summaries are the causal effects for the differences in
 variances for `deviation_count`, expressed as
-$\text{\mathbb{E}}\left[\mathbb{Var}(y_i^1) - \mathbb{Var}(y_i^0) \mid \mathbf C_i \right]$.
+$\mathbb{E}\left[\mathbb{Var}(y_i^1) - \mathbb{Var}(y_i^0) \mid \mathbf C_i \right]$.
 You’ll note that because they are both conventional Poisson models, the
 results for `fit1` and `fit4` are identical, here, to those from the
 last section where we considered $\hat \tau_\text{ATE}$ because, with
@@ -1436,10 +1436,22 @@ variance. You can compute the means for each model with the following
 formulas:
 
 $$
+\mathbb {E}(y_i)_\text{ZINB} = \mu (1 - \pi)
+$$
+
+$$
+\mathbb {E}(y_i)_\text{HP} = \mu\frac{1 - \pi}{1 - \exp(-\mu)}
+$$
+
+$$
+\mathbb {E}(y_i)_\text{HNB} = \mu (1 - \pi) \left [1 - \left ( \frac{\phi}{\mu + \phi} \right )^\phi \right ]^{-1},
+$$
+
+$$
 \begin{align*}
-\mathbb E(y_i)_\text{ZINB} & = \mu (1 - \pi) \\
-\mathbb E(y_i)_\text{HP}   & = \mu\frac{1 - \pi}{1 - \exp(-\mu)} \\
-\mathbb E(y_i)_\text{HNB} & = \mu (1 - \pi) \left [1 - \left ( \frac{\phi}{\mu + \phi} \right )^\phi \right ]^{-1},
+\mathbb {E}(y_i)_\text{ZINB} & = \mu (1 - \pi) \\
+\mathbb {E}(y_i)_\text{HP}   & = \mu\frac{1 - \pi}{1 - \exp(-\mu)} \\
+\mathbb {E}(y_i)_\text{HNB} & = \mu (1 - \pi) \left [1 - \left ( \frac{\phi}{\mu + \phi} \right )^\phi \right ]^{-1},
 \end{align*}
 $$
 
