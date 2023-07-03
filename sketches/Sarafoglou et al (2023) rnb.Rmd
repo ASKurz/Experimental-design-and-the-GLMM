@@ -932,33 +932,28 @@ The ZIP model a fine strategy to have at your disposal when you have a lot of ze
 Do note that similar to the ZIP, the parameters in these three alternative models have complex relations with the population mean and variance. You can compute the means for each model with the following formulas:
 
 $$
-\mathbb {E}(y_i)_\text{ZINB} = \mu (1 - \pi)
+\mathbb{E}(y_i)_\text{ZINB} = \mu (1 - \pi)
 $$
 
 $$
-\mathbb {E}(y_i)_\text{HP} = \mu\frac{1 - \pi}{1 - \exp(-\mu)}
+\mathbb{E}(y_i)_\text{HP} = \mu\frac{1 - \pi}{1 - \exp(-\mu)}
 $$
 
 $$
-\mathbb {E}(y_i)_\text{HNB} = \mu (1 - \pi) \left [1 - \left ( \frac{\phi}{\mu + \phi} \right )^\phi \right ]^{-1},
-$$
-
-$$
-\begin{align*}
-\mathbb {E}(y_i)_\text{ZINB} & = \mu (1 - \pi) \\
-\mathbb {E}(y_i)_\text{HP}   & = \mu\frac{1 - \pi}{1 - \exp(-\mu)} \\
-\mathbb {E}(y_i)_\text{HNB} & = \mu (1 - \pi) \left [1 - \left ( \frac{\phi}{\mu + \phi} \right )^\phi \right ]^{-1},
-\end{align*}
+\mathbb{E}(y_i)_\text{HNB} = \mu (1 - \pi) \left [1 - \left ( \frac{\phi}{\mu + \phi} \right )^\phi \right ]^{-1},
 $$
 
 where $\pi$ is the zero-inflation parameter for the ZINB, but stands for the total proportion of zero's in the HP and HNB models, and the $\phi$ parameter is the typical **brms** precision parameter for the negative binomial likelihood. You can compute the variances with the formulas:
 
 $$
-\begin{align*}
-\mathbb{Var}(y_i)_\text{ZINB} & = \mu (1 - \pi) (1 + (\pi + 1/\phi)\mu) \\
-\mathbb{Var}(y_i)_\text{HP}   & = \left [ (\mu + \mu^2)\frac{1 - \pi}{1 - \exp(-\mu)}  \right ] - \left [ \mu \frac{1 - \pi}{1 - \exp(-\mu)} \right ]^2 \\
-\mathbb{Var}(y_i)_\text{HNB}  & = \mu (1 - \pi) \left [1 - \left ( \frac{\phi}{\mu + \phi} \right )^\phi \right ]^{-1} \left \{ \frac{\phi + \mu (\phi + 1)}{\phi} - \mu (1 - \pi) \left [1 - \left ( \frac{\phi}{\mu + \phi} \right )^\phi \right ]^{-1}  \right \},
-\end{align*}
+\mathbb{Var}(y_i)_\text{ZINB} = \mu (1 - \pi) (1 + (\pi + 1/\phi)\mu)
+$$
+
+$$
+\mathbb{Var}(y_i)_\text{HP} = \left [ (\mu + \mu^2)\frac{1 - \pi}{1 - \exp(-\mu)}  \right ] - \left [ \mu \frac{1 - \pi}{1 - \exp(-\mu)} \right ]^2
+$$
+$$
+\mathbb{Var}(y_i)_\text{HNB} = \mu (1 - \pi) \left [1 - \left ( \frac{\phi}{\mu + \phi} \right )^\phi \right ]^{-1} \left \{ \frac{\phi + \mu (\phi + 1)}{\phi} - \mu (1 - \pi) \left [1 - \left ( \frac{\phi}{\mu + \phi} \right )^\phi \right ]^{-1}  \right \},
 $$
 
 which are admittedly baffling at first glance. This all just takes practice. If you're curious, you can find these formulas scattered in the literature, such as in part in Feng (2021; [https://doi.org/10.1186/s40488-021-00121-4](https://doi.org/10.1186/s40488-021-00121-4)), Zou et al (2021; [https://doi.org/10.3390/e23091206](https://doi.org/10.3390/e23091206)) and the dissertation by Bhaktha (2018; [link here](https://etd.ohiolink.edu/apexprod/rws_etd/send_file/send?accession=osu1543573678017356&disposition=inline)), or more completely, but in a somewhat different format, in the text by Zuur et al (2009; [*Mixed Effects Models and Extensions in Ecology with R*](https://link.springer.com/book/10.1007/978-0-387-87458-6)).

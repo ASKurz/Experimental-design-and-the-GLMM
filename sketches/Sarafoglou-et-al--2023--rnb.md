@@ -1436,23 +1436,15 @@ variance. You can compute the means for each model with the following
 formulas:
 
 $$
-\mathbb {E}(y_i)_\text{ZINB} = \mu (1 - \pi)
+\mathbb{E}(y_i)_\text{ZINB} = \mu (1 - \pi)
 $$
 
 $$
-\mathbb {E}(y_i)_\text{HP} = \mu\frac{1 - \pi}{1 - \exp(-\mu)}
+\mathbb{E}(y_i)_\text{HP} = \mu\frac{1 - \pi}{1 - \exp(-\mu)}
 $$
 
 $$
-\mathbb {E}(y_i)_\text{HNB} = \mu (1 - \pi) \left [1 - \left ( \frac{\phi}{\mu + \phi} \right )^\phi \right ]^{-1},
-$$
-
-$$
-\begin{align*}
-\mathbb {E}(y_i)_\text{ZINB} & = \mu (1 - \pi) \\
-\mathbb {E}(y_i)_\text{HP}   & = \mu\frac{1 - \pi}{1 - \exp(-\mu)} \\
-\mathbb {E}(y_i)_\text{HNB} & = \mu (1 - \pi) \left [1 - \left ( \frac{\phi}{\mu + \phi} \right )^\phi \right ]^{-1},
-\end{align*}
+\mathbb{E}(y_i)_\text{HNB} = \mu (1 - \pi) \left [1 - \left ( \frac{\phi}{\mu + \phi} \right )^\phi \right ]^{-1},
 $$
 
 where $\pi$ is the zero-inflation parameter for the ZINB, but stands for
@@ -1461,11 +1453,13 @@ parameter is the typical **brms** precision parameter for the negative
 binomial likelihood. You can compute the variances with the formulas:
 
 $$
-\begin{align*}
-\mathbb{Var}(y_i)_\text{ZINB} & = \mu (1 - \pi) (1 + (\pi + 1/\phi)\mu) \\
-\mathbb{Var}(y_i)_\text{HP}   & = \left [ (\mu + \mu^2)\frac{1 - \pi}{1 - \exp(-\mu)}  \right ] - \left [ \mu \frac{1 - \pi}{1 - \exp(-\mu)} \right ]^2 \\
-\mathbb{Var}(y_i)_\text{HNB}  & = \mu (1 - \pi) \left [1 - \left ( \frac{\phi}{\mu + \phi} \right )^\phi \right ]^{-1} \left \{ \frac{\phi + \mu (\phi + 1)}{\phi} - \mu (1 - \pi) \left [1 - \left ( \frac{\phi}{\mu + \phi} \right )^\phi \right ]^{-1}  \right \},
-\end{align*}
+\mathbb{Var}(y_i)_\text{ZINB} = \mu (1 - \pi) (1 + (\pi + 1/\phi)\mu)
+$$
+
+$$
+\mathbb{Var}(y_i)_\text{HP} = \left [ (\mu + \mu^2)\frac{1 - \pi}{1 - \exp(-\mu)}  \right ] - \left [ \mu \frac{1 - \pi}{1 - \exp(-\mu)} \right ]^2
+$$ $$
+\mathbb{Var}(y_i)_\text{HNB} = \mu (1 - \pi) \left [1 - \left ( \frac{\phi}{\mu + \phi} \right )^\phi \right ]^{-1} \left \{ \frac{\phi + \mu (\phi + 1)}{\phi} - \mu (1 - \pi) \left [1 - \left ( \frac{\phi}{\mu + \phi} \right )^\phi \right ]^{-1}  \right \},
 $$
 
 which are admittedly baffling at first glance. This all just takes
