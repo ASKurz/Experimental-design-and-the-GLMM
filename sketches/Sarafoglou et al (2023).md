@@ -195,10 +195,10 @@ Our unconditional ZIP model will follow the form
 
 $$
 \begin{align}
-\text{deviation count}_i & \sim \operatorname{ZIP}(\lambda, \pi) \\
+\text{deviation count}_i & \sim \text{ZIP}(\lambda, \pi) \\
 \log(\lambda) & = \beta_0 \\
-\beta_0 & \sim \operatorname{Normal}(-0.2228555, 0.9444565) \\
-\pi & \sim \operatorname{Beta}(1, 4),
+\beta_0 & \sim \text{Normal}(-0.2228555, 0.9444565) \\
+\pi & \sim \text{Beta}(1, 4),
 \end{align}
 $$
 
@@ -247,9 +247,9 @@ unhelpful, too. But Sarafoglou colleagues were confident enough
 `deviation_count` would have extra zero’s to justify planning on a ZIP
 model in their preregistration, we want a prior to assume some
 proportion greater than zero. The `brms()` default prior for this model
-is $\operatorname{Beta}(1, 1)$, which is flat. My proposed
-$\operatorname{Beta}(1, 4)$ prior has a mean of 0.2, and a wide spread
-around that mean. Here are those two priors in a plot.
+is $\text{Beta}(1, 1)$, which is flat. My proposed $\text{Beta}(1, 4)$
+prior has a mean of 0.2, and a wide spread around that mean. Here are
+those two priors in a plot.
 
 ``` r
 c(prior(beta(1, 1)),      # brms default
@@ -267,9 +267,9 @@ c(prior(beta(1, 1)),      # brms default
 In case you didn’t know, the mean of the beta distribution is
 $\alpha / (\alpha + \beta)$, and the degree of *concentration* (aka
 *sample size*) around that mean can be expressed as $\alpha + \beta$.
-Thus, an alternative $\operatorname{Beta}(10, 40)$ prior would have the
-same prior mean if 0.2, but with much greater concentration around that
-mean. Try it out in another plot like the one above and see.
+Thus, an alternative $\text{Beta}(10, 40)$ prior would have the same
+prior mean if 0.2, but with much greater concentration around that mean.
+Try it out in another plot like the one above and see.
 
 Now we have settled on a prior for $\pi$, we’re almost ready to discuss
 $\lambda$. Modelers used to the ZIP might be able to think in terms of
@@ -336,10 +336,9 @@ mu; sigma
 
     [1] 0.9444565
 
-Thus if we set
-$\beta_0 \sim \operatorname{Normal}(-0.2228555, 0.9444565)$, this is
-what the corresponding lognormal distribution on the count metric looks
-like.
+Thus if we set $\beta_0 \sim \text{Normal}(-0.2228555, 0.9444565)$, this
+is what the corresponding lognormal distribution on the count metric
+looks like.
 
 ``` r
 prior(lognormal(-0.2228555, 0.9444565)) %>% 
@@ -354,12 +353,12 @@ prior(lognormal(-0.2228555, 0.9444565)) %>%
 
 ![](Sarafoglou-et-al--2023-_files/figure-commonmark/unnamed-chunk-10-1.png)
 
-Thus the $\operatorname{Normal}(-0.2228555, 0.9444565)$ prior for
-$\beta_0$, which is on the log scale, implies a lognormal distribution
-with a mean of 1.25 and standard deviation of 1.5 after exponentiation
-back to the count scale. Such a distribution has an interquartile range
-of about 0.4 to 1.5, and a 95% range of about 0 to 5. For my money, this
-is about what I’m looking for for $\lambda$.
+Thus the $\text{Normal}(-0.2228555, 0.9444565)$ prior for $\beta_0$,
+which is on the log scale, implies a lognormal distribution with a mean
+of 1.25 and standard deviation of 1.5 after exponentiation back to the
+count scale. Such a distribution has an interquartile range of about 0.4
+to 1.5, and a 95% range of about 0 to 5. For my money, this is about
+what I’m looking for for $\lambda$.
 
 We’re finally ready to our unconditional ZIP model. The only other new
 coding bit to note is how to indicate the likelihood function by setting
@@ -497,10 +496,10 @@ For the Poisson ANOVA, I propose the model
 
 $$
 \begin{align*}
-\text{deviation count}_i & \sim \operatorname{Poisson}(\lambda_i) \\
+\text{deviation count}_i & \sim \text{Poisson}(\lambda_i) \\
 \log(\lambda_i) & = \beta_0 + \beta_1 \text{blinding}_i \\
-\beta_0 & \sim \operatorname{Normal}(-0.5893275, 1.085659) \\
-\beta_1 & \sim \operatorname{Normal}(0, 0.5),
+\beta_0 & \sim \text{Normal}(-0.5893275, 1.085659) \\
+\beta_1 & \sim \text{Normal}(0, 0.5),
 \end{align*}
 $$
 
@@ -536,9 +535,9 @@ mu; sigma
 
     [1] 1.085659
 
-Thus if we set
-$\beta_0 \sim \operatorname{Normal}(-0.5893275, 1.085659)$, this is what
-the corresponding lognormal distribution on the count metric looks like.
+Thus if we set $\beta_0 \sim \text{Normal}(-0.5893275, 1.085659)$, this
+is what the corresponding lognormal distribution on the count metric
+looks like.
 
 ``` r
 prior(lognormal(-0.5893275, 1.085659)) %>% 
@@ -553,7 +552,7 @@ prior(lognormal(-0.5893275, 1.085659)) %>%
 
 ![](Sarafoglou-et-al--2023-_files/figure-commonmark/unnamed-chunk-16-1.png)
 
-As to the $\beta_1$ prior, $\operatorname{Normal}(0, 0.5)$ is a generic
+As to the $\beta_1$ prior, $\text{Normal}(0, 0.5)$ is a generic
 weakly-regularizing distribution meant to rule out group differences
 much more than plus or minus 1 on the log scale.
 
@@ -561,30 +560,29 @@ The ZIP ANOVA of the model is of the form
 
 $$
 \begin{align*}
-\text{deviation count}_i & \sim \operatorname{ZIP}(\lambda_i, \pi) \\
+\text{deviation count}_i & \sim \text{ZIP}(\lambda_i, \pi) \\
 \log(\lambda_i) & = \beta_0 + \beta_1 \text{blinding}_i \\
-\beta_0 & \sim \operatorname{Normal}(-0.2228555, 0.9444565) \\
-\beta_1 & \sim \operatorname{Normal}(0, 0.5) \\
-\pi & \sim \operatorname{Beta}(1, 4),
+\beta_0 & \sim \text{Normal}(-0.2228555, 0.9444565) \\
+\beta_1 & \sim \text{Normal}(0, 0.5) \\
+\pi & \sim \text{Beta}(1, 4),
 \end{align*}
 $$
 
 where we have retained the same priors for $\beta_0$ and $\pi$ from the
 earlier unconditional ZIP model, and we have added the same
-$\operatorname{Normal}(0, 0.5)$ prior for $\beta_1$ as in the Poisson
-ANOVA.
+$\text{Normal}(0, 0.5)$ prior for $\beta_1$ as in the Poisson ANOVA.
 
 We will also fit a distributional ZIP ANOVA model of the form
 
 $$
 \begin{align*}
-\text{deviation count}_i & \sim \operatorname{ZIP}(\lambda_i, \pi_i) \\
+\text{deviation count}_i & \sim \text{ZIP}(\lambda_i, \pi_i) \\
 \log(\lambda_i) & = \beta_0 + \beta_1 \text{blinding}_i \\
-\operatorname{logit}(\pi_i) & = \gamma_0 + \gamma_1 \text{blinding}_i  \\
-\beta_0 & \sim \operatorname{Normal}(-0.2228555, 0.9444565) \\
-\beta_1 & \sim \operatorname{Normal}(0, 0.5) \\
-\gamma_0 & \sim \operatorname{Normal}(-1.7, 1.1) \\
-\gamma_1 & \sim \operatorname{Normal}(0, 1),
+\text{logit}(\pi_i) & = \gamma_0 + \gamma_1 \text{blinding}_i  \\
+\beta_0 & \sim \text{Normal}(-0.2228555, 0.9444565) \\
+\beta_1 & \sim \text{Normal}(0, 0.5) \\
+\gamma_0 & \sim \text{Normal}(-1.7, 1.1) \\
+\gamma_1 & \sim \text{Normal}(0, 1),
 \end{align*}
 $$
 
@@ -596,19 +594,18 @@ from those for the $\lambda_i$ model, we use $\beta$ coefficients for
 the latter, and $\gamma$ coefficients for the former.
 
 When I set priors for the intercept of a typical logistic regression
-model, I like $\operatorname{Normal}(0, 1.25)$ as a weakly-regularizing
-default, which is why we might consider it for $\gamma_0$ in a
-distributional ZIP model. However, our unconditional ZIP model used a
-$\operatorname{Gamma}(1, 4)$ prior for $\pi$ on the identity scale,
-which was designed to reflect our admittedly vague theory that lower
-probabilities were more plausible than higher probabilities, with a
-prior mean at 0.2. I am not aware of an exact way to convert
-beta-distributed priors on the identity scale to normal-distributed
-priors on the log-odds scale. But after some iterating, the
-$\operatorname{Normal}(-1.7, 1.1)$ looks like a good candidate. Here is
-a simulation of draws from the $\operatorname{Normal}(0, 1.25)$ and
-$\operatorname{Normal}(-1.7, 1.1)$ priors, transformed back onto the
-probability scale with the inverse logit link.
+model, I like $\text{Normal}(0, 1.25)$ as a weakly-regularizing default,
+which is why we might consider it for $\gamma_0$ in a distributional ZIP
+model. However, our unconditional ZIP model used a $\text{Gamma}(1, 4)$
+prior for $\pi$ on the identity scale, which was designed to reflect our
+admittedly vague theory that lower probabilities were more plausible
+than higher probabilities, with a prior mean at 0.2. I am not aware of
+an exact way to convert beta-distributed priors on the identity scale to
+normal-distributed priors on the log-odds scale. But after some
+iterating, the $\text{Normal}(-1.7, 1.1)$ looks like a good candidate.
+Here is a simulation of draws from the $\text{Normal}(0, 1.25)$ and
+$\text{Normal}(-1.7, 1.1)$ priors, transformed back onto the probability
+scale with the inverse logit link.
 
 ``` r
 # how many draws do you want?
@@ -635,13 +632,13 @@ tibble(`normal(0, 1.25)`   = rnorm(n = n, mean = 0,    sd = 1.25),     # Solomon
 ![](Sarafoglou-et-al--2023-_files/figure-commonmark/unnamed-chunk-17-1.png)
 
 When transformed back onto the probability space, my default
-$\operatorname{Normal}(0, 1.25)$ prior for $\gamma_0$ is centered at
-0.5, but extends across the full parameter space. However, the
-$\operatorname{Normal}(-1.7, 1.1)$ looks remarkably similar to the
-$\operatorname{Beta}(1, 4)$ prior in terms of gross shape, mean, and
+$\text{Normal}(0, 1.25)$ prior for $\gamma_0$ is centered at 0.5, but
+extends across the full parameter space. However, the
+$\text{Normal}(-1.7, 1.1)$ looks remarkably similar to the
+$\text{Beta}(1, 4)$ prior in terms of gross shape, mean, and
 interquartile and 95% ranges.
 
-The $\operatorname{Normal}(0, 1)$ prior for $\gamma_1$ is my default
+The $\text{Normal}(0, 1)$ prior for $\gamma_1$ is my default
 weakly-regularizing prior for non-intercept $\beta$ coefficients in
 logistic regression models, and I think it’s a good option for
 $\gamma_1$ in the $\pi_i$ submodel of our distributional ZIP ANOVA. It
@@ -764,10 +761,10 @@ For the Poisson ANCOVA, I propose the model
 
 $$
 \begin{align*}
-\text{deviation count}_i & \sim \operatorname{Poisson}(\lambda_i) \\
+\text{deviation count}_i & \sim \text{Poisson}(\lambda_i) \\
 \log(\lambda_i) & = \beta_0 + \beta_1 \text{blinding}_i + \beta_2 \text{tz}_i + \beta_3 \text{mz}_i \\
-\beta_0 & \sim \operatorname{Normal}(-0.5893275, 1.085659) \\
-\beta_1, \dots, \beta_3 & \sim \operatorname{Normal}(0, 0.5),
+\beta_0 & \sim \text{Normal}(-0.5893275, 1.085659) \\
+\beta_1, \dots, \beta_3 & \sim \text{Normal}(0, 0.5),
 \end{align*}
 $$
 
@@ -1286,7 +1283,7 @@ print(v)
 
 Now these summaries are the causal effects for the differences in
 variances for `deviation_count`, expressed as
-$\operatorname{\mathbb{E}}\left[\mathbb{Var}(y_i^1) - \mathbb{Var}(y_i^0) \mid \mathbf C_i \right]$.
+$\text{\mathbb{E}}\left[\mathbb{Var}(y_i^1) - \mathbb{Var}(y_i^0) \mid \mathbf C_i \right]$.
 You’ll note that because they are both conventional Poisson models, the
 results for `fit1` and `fit4` are identical, here, to those from the
 last section where we considered $\hat \tau_\text{ATE}$ because, with
