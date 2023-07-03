@@ -1,0 +1,1076 @@
+---
+title: "Sarafoglou et al (2023)"
+subtitle: "Posttest-only control group design"
+author: "A Solomon Kurz"
+date: "`r format(Sys.Date())`"
+format: html
+editor: visual
+---
+
+Sarafoglou et al (2023; [https://doi.org/10.1177/25152459221128319](https://doi.org/10.1177/25152459221128319)) used a 2-group design ($n$ = 61 and $n$ = 59). Their preregistration lives at [https://osf.io/2cdht](https://osf.io/2cdht). The team preregistered 4 specific hypothesis, and their fourth hypothesis (called "Hypothesis 4" in the paper) originally read:
+
+> Analysis teams in the preregistration condition should (1) deviate more often from their planned analysis than analysis teams in the blinding condition and (2) when they deviate from their analysis plan, analysis teams in the preregistration condition should deviate on more items than analysis teams in the blinding condition. We will test this hypothesis against the null hypothesis that both groups (1) deviate the same number of times from their analysis plan and (2) when they deviate from their analysis plan they do so for the same number of items..
+
+This is a compound hypothesis, and in this sketch we will focus on the first part. We will compare the number of deviations by group.
+
+## Data
+
+Sarafoglou and colleagues made their materials, data, and code available on the OSF at [https://osf.io/gkxqy/files/osfstorage](https://osf.io/gkxqy/files/osfstorage). In this sketch, we will be using their `data_prereg_blinding_unblinded.csv` file, which can be downloaded directly from [https://osf.io/6qyvw](https://osf.io/6qyvw). The file has also been uploaded to this repository, which is how we will upload the data here.
+
+Load the data and the primary **R** packages.
+
+```{r, warning = F, message = F}
+# packages
+library(tidyverse)
+library(brms)
+library(tidybayes)
+library(patchwork)
+library(marginaleffects)
+
+# drop gridlines
+theme_set(
+  theme_gray() +
+    theme(panel.grid = element_blank())
+)
+
+# load the data
+sarafoglou2023 <- read_csv("data/data_prereg_blinding_unblinded.csv") %>% 
+  rename(id = ...1) %>% 
+  mutate(blinding = ifelse(condition == "blinding", 1, 0))
+
+# what is this?
+glimpse(sarafoglou2023)
+```
+
+In the `sarafoglou2023` data, the number of deviations is recorded in the `deviation_count` column, and the experimental groups are differentiated by the `condition` column. To get a sense of the data, here's a descriptive plot recreating the visualization in Figure 4 (p. 10).
+
+```{r, fig.width = 4, fig.height = 2.75}
+sarafoglou2023 %>% 
+  ggplot(aes(x = deviation_count, group = condition, fill = condition)) +
+  geom_bar(position = position_dodge()) +
+  scale_fill_viridis_d(NULL, option = "C", end = .7) +
+  theme(legend.background = element_blank() ,
+        legend.position = c(.80, .85))
+```
+
+I'm not the hugest fan of paired bar plots like this. Here's a dumbbell plot alternative.
+
+```{r, fig.width = 4, fig.height = 2.75}
+sarafoglou2023 %>% 
+  count(condition, deviation_count) %>% 
+  
+  ggplot(aes(x = deviation_count, y = n, group = deviation_count)) +
+  geom_line(color = "white", linewidth = 1) +
+  geom_point(aes(color = condition, shape = condition),
+             size = 6) +
+  scale_color_viridis_d(NULL, option = "C", end = .7) +
+  scale_shape_manual(NULL, values = c(15, 16)) +
+  theme(legend.background = element_blank() ,
+        legend.position = c(.80, .85))
+```
+
+The `sarafoglou2023` data set also contains a handful of baseline covariates we might use to help increase the precision of the analyses. In this sketch, we'll focus on `TheoreticalKnowledge` and `MethodsKnowledge`.
+
+```{r, fig.width = 4, fig.height = 2.75}
+sarafoglou2023 %>% 
+  ggplot(aes(x = TheoreticalKnowledge, y = deviation_count)) +
+  geom_jitter(width = 0.2, height = 0.2)
+
+sarafoglou2023 %>% 
+  ggplot(aes(x = MethodsKnowledge, y = deviation_count)) +
+  geom_jitter(width = 0.2, height = 0.2)
+```
+
+Here we'll make and save standardized versions of `TheoreticalKnowledge` and `MethodsKnowledge`, which will help with the models down the line.
+
+```{r}
+sarafoglou2023 <- sarafoglou2023 %>% 
+  mutate(tz = (TheoreticalKnowledge - mean(TheoreticalKnowledge)) / sd(TheoreticalKnowledge),
+         mz = (MethodsKnowledge - mean(MethodsKnowledge)) / sd(MethodsKnowledge))
+
+# what?
+sarafoglou2023 %>% 
+  select(TheoreticalKnowledge, MethodsKnowledge, tz, mz) %>% 
+  head()
+```
+
+## Models
+
+In this sketch, we'll be fitting 7 models to the data. Three models will follow an ANOVA specification, and another three will be their ANCOVA analogues. But before we go into ANOVA and ANCOVA mode, we'll first warm up with an unconditional ZIP model to familiarize ourselves with the parameters of the ZIP.
+
+### ZIP warmup.
+
+Our unconditional ZIP model will follow the form
+
+$$
+\begin{align}
+\text{deviation count}_i & \sim \operatorname{ZIP}(\lambda, \pi) \\
+\log(\lambda) & = \beta_0 \\
+\beta_0 & \sim \operatorname{Normal}(-0.2228555, 0.9444565) \\
+\pi & \sim \operatorname{Beta}(1, 4),
+\end{align}
+$$
+
+where, because we have no predictor variables in the model, the two parameters $\lambda$ and $\pi$ are constants without $i$ subscripts. As with conventional Poisson models, we use the log link for $\lambda$, which is the `brm()` default. The $\beta_0$ parameter, then, is the intercept for $\lambda$ on the log scale. When you estimate $\pi$ without predictor variables, the `brm()` default is the identity link, which we've retained here. The third and fourth lines in the equation show the priors, which may seem oddly specific. Before we discuss the priors in detail, we should what the $\lambda$ and $\pi$ parameters mean for the ZIP distribution.
+
+The $\lambda$ parameter in a simple Poisson distribution controls both the mean and the variance. However, the ZIP is a mixture of a Poisson count and a proportion of zero's in addition to what you would typically expect from a Poisson count with a given $\lambda$. The $\pi$ parameter, also sometimes called $\theta$ by the Stan team (https://mc-stan.org/docs/stan-users-guide/zero-inflated.html) or $z$ by Bürkner (https://cran.r-project.org/web/packages/brms/vignettes/brms_families.html#zero-inflated-and-hurdle-models), is the proportion of extra zero's/ As a consequence, the mean of the mixture distribution is not simply $\lambda$, but is defined as
+
+$$
+\mathbb E(y_i) = \lambda (1 - \pi),
+$$
+
+and the variance is
+
+$$
+\mathbb{Var}(y_i) = \lambda (1 - \pi) (1 + \pi \lambda).
+$$
+
+Thus, when we set our priors for $\lambda$, we can't just base them on our expected value for our criterion variable. We need to account for the expected value for the proportion of zero's, too. Before we discuss our prior for $\lambda$, then, I think we should first discuss $\pi$.
+
+When I looked through the paper, preregistration and supporting materials from Sarafoglou and colleagues, it was not clear to me how many extra zero's they expected for `deviation_count`. This is a new topic in meta science, and I found the prior research generally unhelpful, too. But Sarafoglou colleagues were confident enough `deviation_count` would have extra zero's to justify planning on a ZIP model in their preregistration, we want a prior to assume some proportion greater than zero. The `brms()` default prior for this model is $\operatorname{Beta}(1, 1)$, which is flat. My proposed $\operatorname{Beta}(1, 4)$ prior has a mean of 0.2, and a wide spread around that mean. Here are those two priors in a plot.
+
+```{r, fig.width = 4, fig.height = 2.75}
+c(prior(beta(1, 1)),      # brms default
+  prior(beta(1, 4))) %>%  # Solomon's alternative 
+  parse_dist() %>% 
+  
+  ggplot(aes(xdist = .dist_obj, y = prior)) + 
+  stat_halfeye(point_interval = mean_qi, .width = c(.5, .95)) +
+  scale_x_continuous(expression(italic(p)(pi)), breaks = 0:5 / 5) +
+  scale_y_discrete(NULL, expand = expansion(add = 0.1))
+```
+
+In case you didn't know, the mean of the beta distribution is  $\alpha / (\alpha + \beta)$, and the degree of *concentration* (aka *sample size*) around that mean can be expressed as $\alpha + \beta$. Thus, an alternative $\operatorname{Beta}(10, 40)$ prior would have the same prior mean if 0.2, but with much greater concentration around that mean. Try it out in another plot like the one above and see.
+
+```{r, eval = F, echo = F}
+c(prior(beta(1, 1)),        # brms default
+  prior(beta(1, 4)),        # Solomon's alternative 
+  prior(beta(10, 40))) %>%  # another alternative 
+  parse_dist() %>% 
+  
+  ggplot(aes(xdist = .dist_obj, y = prior)) + 
+  stat_halfeye(point_interval = mean_qi, .width = c(.5, .95)) +
+  scale_y_discrete(NULL, expand = expansion(add = 0.1))
+```
+
+Now we have settled on a prior for $\pi$, we're almost ready to discuss $\lambda$. Modelers used to the ZIP might be able to think in terms of $\lambda$ directly, but I suspect those newer to the ZIP will find it easier to think in terms of the mean of the criterion variable `deviation_count` as a whole. Much like with $\pi$, the prior literature on this meta-science topic is sparse. Given the authors in this study were already interested in meta-science and they were aware their analyses were going to be scrutinized by others, my guess is they would, on average, deviate infrequently from their analysis plans. For the sake of the example, let's suppose we expected an average value of 1 for `deviation_count`. With a little algebra, we can use the formula for $\mathbb E(y_i)$, above to compute $\lambda$ given fixed values for $\pi$ and $\mathbb E(y_i)$. Here's the computation in code.
+
+```{r}
+m <- 1     # expected mean for deviation_count
+pi <- 0.2  # expected proportion of extra 0's for deviation_count
+
+# compute lambda
+m / (1 - pi)
+```
+
+Thus I propose a prior mean of 1.25 for $\lambda$. However, recall we are using the log link for $\lambda$, which we're calling $\beta_0$ in the model. Also recall we typically use Gaussian or other Student-t priors for $\beta$ coefficients. This means that a normal prior on the log scale is equivalent to a lognormal prior on the actual count scale. Thus when we are thinking about the parameters on the normal prior for $\beta_0$, we should consider what kind of lognormal distribution they imply on the count scale. The lognormal distribution is strange in that its two parameters $\mu$ and $\sigma$ are the mean and standard deviation of the log of the lognormal distribution, which is itself normal. However, if we want to pick the lognormal distribution for a given mean $m$ and standard deviation $s$, we can use the equations
+
+$$
+\begin{align*}
+\mu & = \log\left ( \bar y \Bigg / \sqrt{\frac{s^2}{\bar y^2} + 1} \right), \text{and} \\
+\sigma & = \sqrt{\log \left(\frac{s^2}{\bar y^2} + 1 \right)}.
+\end{align*}
+$$
+
+If we want our mean of 1 and, say, a standard deviation of 1.5, here's what those equations look like in code.
+
+Here's what that looks like in code.
+
+```{r}
+m <- 1.25  # desired mean for the ZIP lambda
+s <- 1.5   # desired SD for the ZIP lambda
+
+# use the equations
+mu    <- log(m / sqrt(s^2 / m^2 + 1))
+sigma <- sqrt(log(s^2 / m^2 + 1))
+
+# what are the lognormal parameter values?
+mu; sigma
+```
+
+Thus if we set $\beta_0 \sim \operatorname{Normal}(-0.2228555, 0.9444565)$, this is what the corresponding lognormal distribution on the count metric looks like.
+
+```{r, fig.width = 5, fig.height = 2.5}
+prior(lognormal(-0.2228555, 0.9444565)) %>% 
+  parse_dist() %>% 
+  
+  ggplot(aes(xdist = .dist_obj, y = prior)) + 
+  stat_halfeye(point_interval = mean_qi, .width = c(.5, .95)) +
+  scale_x_continuous(expression(exp(italic(p)(beta[0]))), breaks = 0:4 * 3) +
+  scale_y_discrete(NULL, breaks = NULL, expand = expansion(add = 0.1)) +
+  coord_cartesian(xlim = c(0, 9))
+```
+
+Thus the $\operatorname{Normal}(-0.2228555, 0.9444565)$ prior for $\beta_0$, which is on the log scale, implies a lognormal distribution with a mean of 1.25 and standard deviation of 1.5 after exponentiation back to the count scale. Such a distribution has an interquartile range of about 0.4 to 1.5, and a 95% range of about 0 to 5. For my money, this is about what I'm looking for for $\lambda$.
+
+```{r, eval = F, echo = F}
+# inner 50% range
+qlnorm(c(.25, .75), -0.2228555, 0.9444565)
+# inner 95% range
+qlnorm(c(.025, .975), -0.2228555, 0.9444565)
+```
+
+We're finally ready to our unconditional ZIP model. The only other new coding bit to note is how to indicate the likelihood function by setting `family = zero_inflated_poisson()`.
+
+```{r fit0}
+# unconditional ZIP
+fit0 <- brm(
+  data = sarafoglou2023,
+  family = zero_inflated_poisson(),
+  deviation_count ~ 1,
+  prior = prior(normal(-0.2228555, 0.9444565), class = Intercept) +
+    prior(beta(1, 4), class = zi),
+  cores = 4, seed = 1,
+  file = "fits/fit0.sarafoglou2023"
+)
+```
+
+Check the model summary.
+
+```{r}
+print(fit0)
+```
+
+The ESS values are a little low, but not concerningly so. Otherwise the parameter summaries look fine. It will probably be easiest to evaluate the model with a posterior-predictive check.
+
+```{r, fig.width = 4, fig.height = 2.75}
+set.seed(1)
+pp_check(fit0, type = "bars",  ndraws = 500) +
+  ggtitle("ZIP (intercepts only)") +
+  coord_cartesian(xlim = c(-0.25, 5),
+                  ylim = c(0, NA))
+```
+
+This looks like a success. Our simple ZIP model does a fine job simulating data resembling the sample data. To get more comfortable with the ZIP model, it may be worth it to practice converting the posterior draws for $\beta_0$ and $\pi$ to the model implied estimates for the population mean and variance for `deviation_count`. Since the ZIP model is sensitive to zero values, we might also be interested in the total proportion of zero values in the distribution, which we can define by the equation
+
+$$
+\Pr(y = 0) = \pi + (1 - \pi)  \exp(-\lambda).
+$$
+
+Here's how to work with the posterior draws from the `as_draws_df()` output to compute the population mean, variance and proportion of 0's, and plot those results against the sample values.
+
+```{r, fig.width = 8, fig.height = 3, warning = F}
+# mean
+p1 <- as_draws_df(fit0) %>% 
+  transmute(lambda = exp(b_Intercept),
+            pi = zi) %>% 
+  mutate(m = lambda * (1 - pi)) %>% 
+  
+  ggplot(aes(x = m)) +
+  stat_halfeye(.width = .95) +
+  # sample mean
+  geom_vline(xintercept = mean(sarafoglou2023$deviation_count),
+             linetype = 2, color = "blue") +
+  scale_x_continuous(expression(E(italic(y))), limits = c(0, NA)) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  theme(panel.grid = element_blank())
+
+# variance
+p2 <- as_draws_df(fit0) %>% 
+  transmute(lambda = exp(b_Intercept),
+            pi = zi) %>% 
+  mutate(v = lambda * (1 - pi) * (1 + pi * lambda)) %>% 
+  
+  ggplot(aes(x = v)) +
+  stat_halfeye(.width = .95) +
+  # sample variance
+  geom_vline(xintercept = var(sarafoglou2023$deviation_count),
+             linetype = 2, color = "blue") +
+  scale_x_continuous(expression(Var(italic(y))), limits = c(0, 1.3)) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  theme(panel.grid = element_blank())
+
+
+# proportion 0
+p3 <- as_draws_df(fit0) %>% 
+  transmute(lambda = exp(b_Intercept),
+            pi = zi) %>% 
+  mutate(p = pi + (1 - pi) * exp(-lambda)) %>% 
+  
+  ggplot(aes(x = p)) +
+  stat_halfeye(.width = .95) +
+  geom_vline(xintercept = mean(sarafoglou2023$deviation_count == 0),
+             linetype = 2, color = "blue") +
+  scale_x_continuous(expression(Pr(italic(y)==0)), limits = c(0, 1)) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  theme(panel.grid = element_blank())
+
+# combine and display
+p1 + p2 + p3 +
+  plot_annotation(title = "How do the ZIP posteriors compare to the sample statistics?",
+                  subtitle = "The dashed blue lines mark the sample statistics.")
+```
+
+In the sections to come, you'll see how these exercises pay off when we want to make substantive inferences about the experimental conditions.
+
+### ANOVA models.
+
+For the Poisson ANOVA, I propose the model
+
+$$
+\begin{align*}
+\text{deviation count}_i & \sim \operatorname{Poisson}(\lambda_i) \\
+\log(\lambda_i) & = \beta_0 + \beta_1 \text{blinding}_i \\
+\beta_0 & \sim \operatorname{Normal}(-0.5893275, 1.085659) \\
+\beta_1 & \sim \operatorname{Normal}(0, 0.5),
+\end{align*}
+$$
+
+where the $\lambda$ parameter now has an $i$ subscript indicating it can vary as a function of predictor variables. Because we are now using a conventional Poisson model, $\lambda$ is once again the population mean of the `deviation_count` variable itself, but modeled on the log scale per convention. The new $\beta_1$ parameter is the difference in the analysis blinding condition, relative to the preregistration condition, on the log scale.
+
+Because the $\lambda$ parameter is now the mean unconditioned on additional zero's, we probably don't want to use the same prior as with the unconditional ZIP model `fit0`. Rather, I propose a more analogous prior would translate to a lognormal distribution for $p(\lambda \mid \text{preregistration})$ with a mean of 1 and a standard deviation of 1.5. Here's how we compute the $\mu$ and $\sigma$ parameters for such a lognormal distribution.
+
+```{r}
+m <- 1    # desired mean for the Poisson lambda
+s <- 1.5  # desired SD for lambda
+
+# use the equations
+mu    <- log(m / sqrt(s^2 / m^2 + 1))
+sigma <- sqrt(log(s^2 / m^2 + 1))
+
+# what are the lognormal parameter values?
+mu; sigma
+```
+
+Thus if we set $\beta_0 \sim \operatorname{Normal}(-0.5893275, 1.085659)$, this is what the corresponding lognormal distribution on the count metric looks like.
+
+```{r, fig.width = 5, fig.height = 2.5}
+prior(lognormal(-0.5893275, 1.085659)) %>% 
+  parse_dist() %>% 
+  
+  ggplot(aes(xdist = .dist_obj, y = prior)) + 
+  stat_halfeye(point_interval = mean_qi, .width = c(.5, .95)) +
+  scale_x_continuous(expression(exp(italic(p)(beta[0]))), breaks = 0:4 * 3) +
+  scale_y_discrete(NULL, breaks = NULL, expand = expansion(add = 0.1)) +
+  coord_cartesian(xlim = c(0, 9))
+```
+
+As to the $\beta_1$ prior, $\operatorname{Normal}(0, 0.5)$ is a generic weakly-regularizing distribution meant to rule out group differences much more than plus or minus 1 on the log scale.
+
+The ZIP ANOVA of the model is of the form
+
+$$
+\begin{align*}
+\text{deviation count}_i & \sim \operatorname{ZIP}(\lambda_i, \pi) \\
+\log(\lambda_i) & = \beta_0 + \beta_1 \text{blinding}_i \\
+\beta_0 & \sim \operatorname{Normal}(-0.2228555, 0.9444565) \\
+\beta_1 & \sim \operatorname{Normal}(0, 0.5) \\
+\pi & \sim \operatorname{Beta}(1, 4),
+\end{align*}
+$$
+
+where we have retained the same priors for $\beta_0$ and $\pi$ from the earlier unconditional ZIP model, and we have added the same $\operatorname{Normal}(0, 0.5)$ prior for $\beta_1$ as in the Poisson ANOVA.
+
+We will also fit a distributional ZIP ANOVA model of the form
+
+$$
+\begin{align*}
+\text{deviation count}_i & \sim \operatorname{ZIP}(\lambda_i, \pi_i) \\
+\log(\lambda_i) & = \beta_0 + \beta_1 \text{blinding}_i \\
+\operatorname{logit}(\pi_i) & = \gamma_0 + \gamma_1 \text{blinding}_i  \\
+\beta_0 & \sim \operatorname{Normal}(-0.2228555, 0.9444565) \\
+\beta_1 & \sim \operatorname{Normal}(0, 0.5) \\
+\gamma_0 & \sim \operatorname{Normal}(-1.7, 1.1) \\
+\gamma_1 & \sim \operatorname{Normal}(0, 1),
+\end{align*}
+$$
+
+where $\pi$ now has an $i$ subscript indicating it can vary as a function of predictor variables. To ensure the $\pi_i$ only makes predictions within the 0-to-1 range, we use the logit link, which is the `brm()` default. To help differentiate the parameters in the $\pi$ model from those for the $\lambda_i$ model, we use $\beta$ coefficients for the latter, and $\gamma$ coefficients for the former.
+
+When I set priors for the intercept of a typical logistic regression model, I like $\operatorname{Normal}(0, 1.25)$ as a weakly-regularizing default, which is why we might consider it for $\gamma_0$ in a distributional ZIP model. However, our unconditional ZIP model used a $\operatorname{Gamma}(1, 4)$ prior for $\pi$ on the identity scale, which was designed to reflect our admittedly vague theory that lower probabilities were more plausible than higher probabilities, with a prior mean at 0.2. I am not aware of an exact way to convert beta-distributed priors on the identity scale to normal-distributed priors on the log-odds scale. But after some iterating, the $\operatorname{Normal}(-1.7, 1.1)$ looks like a good candidate. Here is a simulation of draws from the $\operatorname{Normal}(0, 1.25)$ and $\operatorname{Normal}(-1.7, 1.1)$ priors, transformed back onto the probability scale with the inverse logit link.
+
+```{r, fig.width = 4, fig.height = 2.75}
+# how many draws do you want?
+n <- 1e6
+
+# simulate
+set.seed(1)
+
+tibble(`normal(0, 1.25)`   = rnorm(n = n, mean = 0,    sd = 1.25),     # Solomon's default
+       `normal(-1.7, 1.1)` = rnorm(n = n, mean = -1.7, sd = 1.1)) %>%  # the alternative
+  pivot_longer(everything()) %>% 
+  # transform
+  mutate(pi = plogis(value)) %>% 
+  
+  # plot
+  ggplot(aes(x = pi, y = name)) +
+  stat_histinterval(point_interval = mean_qi, .width = c(.5, .95),
+                    breaks = ggdist::breaks_fixed(width = 0.025),
+                    align = ggdist::align_boundary(at = 0)) +
+  scale_x_continuous(expression(logit^{-1}*(italic(p)(gamma[0]))), breaks = 0:5 / 5) +
+  scale_y_discrete(NULL, expand = expansion(add = 0.1))
+```
+
+When transformed back onto the probability space, my default $\operatorname{Normal}(0, 1.25)$ prior for $\gamma_0$ is centered at 0.5, but extends across the full parameter space. However, the $\operatorname{Normal}(-1.7, 1.1)$ looks remarkably similar to the $\operatorname{Beta}(1, 4)$ prior in terms of gross shape, mean, and interquartile and 95% ranges.
+
+The $\operatorname{Normal}(0, 1)$ prior for $\gamma_1$ is my default weakly-regularizing prior for non-intercept $\beta$ coefficients in logistic regression models, and I think it's a good option for $\gamma_1$ in the $\pi_i$ submodel of our distributional ZIP ANOVA. It will allow for moderately large group differences, but rule out outrageously large differences.
+
+Here's how to fit the ANOVA models with `brm()`.
+
+```{r fit1}
+# Poisson ANOVA
+fit1 <- brm(
+  data = sarafoglou2023,
+  family = poisson(),
+  deviation_count ~ 0 + Intercept + blinding,
+  prior = prior(normal(-0.5893275, 1.085659), class = b, coef = Intercept) +
+    prior(normal(0, 0.5), class = b, coef = blinding),
+  cores = 4, seed = 1,
+  file = "fits/fit1.sarafoglou2023"
+)
+
+# ZI-Poisson ANOVA
+fit2 <- brm(
+  data = sarafoglou2023,
+  family = zero_inflated_poisson(),
+  deviation_count ~ 0 + Intercept + blinding,
+  prior = prior(normal(-0.2228555, 0.9444565), class = b, coef = Intercept) +
+    prior(normal(0, 0.5), class = b, coef = blinding) +
+    prior(beta(1, 4), class = zi),
+  cores = 4, seed = 1,
+  file = "fits/fit2.sarafoglou2023"
+)
+
+# Distributional ZI-Poisson ANOVA
+fit3 <- brm(
+  data = sarafoglou2023,
+  family = zero_inflated_poisson(),
+  bf(deviation_count ~ 0 + Intercept + blinding,
+     zi              ~ 0 + Intercept + blinding),
+  prior = prior(normal(-0.2228555, 0.9444565), class = b, coef = Intercept) +
+    prior(normal(0, 0.5), class = b, coef = blinding) +
+    prior(normal(-1.7, 1.1), class = b, coef = Intercept, dpar = zi) +
+    prior(normal(0, 1), class = b, coef = blinding, dpar = zi),
+  cores = 4, seed = 1,
+  file = "fits/fit3.sarafoglou2023"
+)
+```
+
+Check the model summaries.
+
+```{r}
+print(fit1)
+print(fit2)
+print(fit3)
+```
+
+### ANCOVA models.
+
+For the Poisson ANCOVA, I propose the model
+
+$$
+\begin{align*}
+\text{deviation count}_i & \sim \operatorname{Poisson}(\lambda_i) \\
+\log(\lambda_i) & = \beta_0 + \beta_1 \text{blinding}_i + \beta_2 \text{tz}_i + \beta_3 \text{mz}_i \\
+\beta_0 & \sim \operatorname{Normal}(-0.5893275, 1.085659) \\
+\beta_1, \dots, \beta_3 & \sim \operatorname{Normal}(0, 0.5),
+\end{align*}
+$$
+
+where the $\lambda$ parameter now has an $i$ subscript indicating it can vary as a function of predictor variables. Because we are now using a conventional Poisson model, $\lambda$ is once again the population mean of the `deviation_count` variable itself, but modeled on the log scale per convention. The new $\beta_1$ parameter is the difference in the analysis blinding condition, relative to the preregistration condition, on the log scale.
+
+BLAH
+
+```{r fit4}
+# Poisson ANCOVA
+fit4 <- brm(
+  data = sarafoglou2023,
+  family = poisson(),
+  deviation_count ~ 0 + Intercept + blinding + tz + mz,
+  prior = prior(normal(-0.5893275, 1.085659), class = b, coef = Intercept) +
+    prior(normal(0, 0.5), class = b),
+  cores = 4, seed = 1,
+  file = "fits/fit4.sarafoglou2023"
+)
+
+# ZI-Poisson ANCOVA
+fit5 <- brm(
+  data = sarafoglou2023,
+  family = zero_inflated_poisson(),
+  deviation_count ~ 0 + Intercept + blinding + tz + mz,
+  prior = prior(normal(-0.2228555, 0.9444565), class = b, coef = Intercept) +
+    prior(normal(0, 0.5), class = b) +
+    prior(beta(1, 4), class = zi),
+  cores = 4, seed = 1,
+  file = "fits/fit5.sarafoglou2023"
+)
+
+# Distributional ZI-Poisson ANCOVA
+fit6 <- brm(
+  data = sarafoglou2023,
+  family = zero_inflated_poisson(),
+  bf(deviation_count ~ 0 + Intercept + blinding + tz + mz,
+     zi              ~ 0 + Intercept + blinding + tz + mz),
+  prior = prior(normal(-0.2228555, 0.9444565), class = b, coef = Intercept) +
+    prior(normal(0, 0.5), class = b) +
+    prior(normal(-1.7, 1.1), class = b, coef = Intercept, dpar = zi) +
+    prior(normal(0, 1), class = b, dpar = zi),
+  cores = 4, seed = 1,
+  file = "fits/fit6.sarafoglou2023"
+)
+```
+
+Check the model summaries.
+
+```{r}
+print(fit4)
+print(fit5)
+print(fit6)
+```
+
+### Model comparison: Information criteria.
+
+We might compare the models by their LOO and WAIC estimates. First, we compute and save.
+
+```{r}
+fit1 <- add_criterion(fit1, criterion = c("loo", "waic"))
+fit2 <- add_criterion(fit2, criterion = c("loo", "waic"))
+fit3 <- add_criterion(fit3, criterion = c("loo", "waic"))
+fit4 <- add_criterion(fit4, criterion = c("loo", "waic"))
+fit5 <- add_criterion(fit5, criterion = c("loo", "waic"))
+fit6 <- add_criterion(fit6, criterion = c("loo", "waic"))
+```
+
+Here are the LOO and WAIC compasrisons for the ANOVA models.
+
+```{r}
+loo_compare(fit1, fit2, fit3, criterion = "loo") %>% print(simplify = F)
+loo_compare(fit1, fit2, fit3, criterion = "waic") %>% print(simplify = F)
+```
+
+Next we compare the ANCOVA models.
+
+```{r}
+loo_compare(fit4, fit5, fit6, criterion = "loo") %>% print(simplify = F)
+loo_compare(fit4, fit5, fit6, criterion = "waic") %>% print(simplify = F)
+```
+
+Finally, we compare all ANOVA and ANCOVA models.
+
+```{r}
+loo_compare(fit1, fit2, fit3, fit4, fit5, fit6, criterion = "loo") %>% print(simplify = F)
+loo_compare(fit1, fit2, fit3, fit4, fit5, fit6, criterion = "waic") %>% print(simplify = F)
+```
+
+Within the ANOVA paradigm, the models got incrementally better as they became more complex, but the differences were pretty small. The same pattern emerged among the ANCOVA models. Taken as a whole, the ANCOVA models fared slightly worse than the simpler ANOVA models. If you look closely at the $\beta$ and $\gamma$ coefficients for the baseline covariates in the ANCOVA models, you'll see their magnitudes were generally pretty small, and fairly uncertain, which indicates the `tz` and `mz` variables were poor predictors for the criterion variable.
+
+### Model comparison: Posterior-predictive checks.
+
+Instead of displaying the typical `pp_check()` output for 6 models, we'll first save those outputs as objects.
+
+```{r}
+# ANOVA's
+set.seed(1)
+p1 <- pp_check(fit1, type = "bars_grouped", group = "blinding",  ndraws = 1000)
+set.seed(1)
+p2 <- pp_check(fit2, type = "bars_grouped", group = "blinding",  ndraws = 1000)
+set.seed(1)
+p3 <- pp_check(fit3, type = "bars_grouped", group = "blinding",  ndraws = 1000)
+
+# ANCOVA's
+set.seed(1)
+p4 <- pp_check(fit4, type = "bars_grouped", group = "blinding",  ndraws = 1000)
+set.seed(1)
+p5 <- pp_check(fit5, type = "bars_grouped", group = "blinding",  ndraws = 1000)
+set.seed(1)
+p6 <- pp_check(fit6, type = "bars_grouped", group = "blinding",  ndraws = 1000)
+```
+
+Now we'll combine the data frames from the `px` objects, wrangle, and present a customized pp-check plot.
+
+```{r, fig.width = 8, fig.height = 4.25}
+# combine
+bind_rows(
+  p1$data, p2$data, p3$data, p4$data, p5$data, p6$data
+  ) %>% 
+  # wrangle
+  filter(x < 5) %>% 
+  mutate(y_obs = ifelse(is.na(y_obs), 0, y_obs),
+         fit   = rep(str_c("fit", 1:6), each = n() / 6) %>% 
+           factor(levels = str_c("fit", 1:6),
+                  labels = c("Poisson ANOVA", "ZIP ANOVA", "Distributional ZIP ANOVA",
+                   "Poisson ANCOVA", "ZIP ANCOVA", "Distributional ZIP ANCOVA")),
+         group = ifelse(group == 0, "preregistration", "blinding") %>% 
+           factor(levels = c("preregistration", "blinding"),
+                  labels = c("control", "experimental"))) %>% 
+  
+  # plot
+  ggplot(aes(x = x)) +
+  geom_col(data = . %>% filter(fit == "Poisson ANOVA"),
+           aes(y = y_obs),
+           fill = "grey75") +
+  geom_pointrange(aes(y = m, ymin = l, ymax = h, color = fit),
+                  size = 0.25, linewidth = 0.8,
+                  position = position_dodge(width = 0.9)) +
+  scale_color_viridis_d(NULL, option = "B", end = .6) +
+  scale_x_continuous("dependent variable", limits = c(-0.5, 4.5)) +
+  labs(title = "6-model pp-check",
+       subtitle = "Gray bars in the background show the observed counts.\nColored point intervals in the foreground show the models' posterior-predictive counts.",
+       y = "count") +
+  theme(legend.background = element_blank(),
+        legend.key.size = unit(0.13, 'in'),
+        legend.position = c(.85, .85),
+        panel.grid = element_blank()) +
+  facet_wrap(~ group)
+```
+
+```{r, eval = F, echo = F}
+# alternative version of the plot
+
+# supplementary df
+label <- bind_rows(
+  p1$data, p2$data, p3$data,
+  p4$data, p5$data, p6$data) %>% 
+  filter(x == 4) %>% 
+  mutate(fit = rep(str_c("fit", 1:6), each = n() / 6),
+         group = ifelse(group == 0, "preregistration", "blinding") %>% 
+           factor(levels = c("preregistration", "blinding"),
+                  labels = c("control", "experimental"))) %>% 
+  filter(group == "control") %>% 
+  mutate(label = c("Poisson ANOVA", "ZIP ANOVA", "Distributional ZIP ANOVA",
+                   "Poisson ANCOVA", "ZIP ANCOVA", "Distributional ZIP ANCOVA"))
+
+# what?
+# print(label)
+
+bind_rows(p1$data, p2$data, p3$data,
+          p4$data, p5$data, p6$data) %>% 
+  filter(x < 5) %>% 
+  mutate(fit = rep(str_c("fit", 1:6), each = n() / 6),
+         group = ifelse(group == 0, "preregistration", "blinding") %>% 
+           factor(levels = c("preregistration", "blinding"),
+                  labels = c("control", "experimental"))) %>% 
+  
+  ggplot(aes(x = 4 - x)) +
+  geom_col(data = . %>% filter(fit == "fit1"),
+           aes(y = y_obs),
+           fill = "grey75") +
+  geom_pointrange(aes(y = m, ymin = l, ymax = h, color = fit),
+                  size = 0.25, linewidth = 0.8, 
+                  position = position_dodge(width = -0.9)) +
+  geom_text(data = label,
+            aes(y = 4, label = label, hjust = 0, color = fit), 
+                position = position_dodge(width = -0.9), size = 2.5) +
+  scale_color_viridis_d(NULL, option = "B", end = .6) +
+  scale_x_continuous("dependent variable", breaks = 0:4, labels = 4:0,
+                     limits = c(-0.5, 4.5)) +
+  labs(title = "6-model pp-check",
+       subtitle = "Gray bars in the background show the observed counts.\nColored point intervals in the foreground show the models' posterior-predictive counts.",
+       y = "count") +
+  coord_flip() +
+  theme(panel.grid = element_blank(),
+        legend.position = "none") +
+  facet_wrap(~ group)
+```
+
+As the models were all similar by their information criterion estimates, they are similar in their posterior-predictive checks, too. To my eye, three overall patterns emerged. First, the ZIP models were a little better at capturing the overall distributions than the Poisson models, particularly with respect to the zero inflation. Second, the overall pattern among the ANOVA models was largely replicated by the ANCOVA models. Third, the ANCOVA models showed minimal differences from their ANOVA counterparts, again showing our baseline covariates were of little help in this case.
+
+## Causal estimands
+
+For this data set, we will explore three causal estimands. The first will be the typical average treatment effect (ATE). The second will be the average difference in $\mathbb{Var}(\text{deviation count}_i)$. The final will be the average difference in the proportion of zero's.
+
+### $\tau_\text{ATE}$.
+
+The `avg_comparisons()` function from **marginaleffects** makes it easy to compute the ATE. Here we'll compute the full posterior distributions from each of the 6 models with help from the `posterior_draws()` function, and save the summaries from each in an object called `tau_ate`.
+
+```{r}
+tau_ate <- bind_rows(
+  # compute and combine
+  avg_comparisons(fit1, variables = "blinding") %>% posterior_draws(),
+  avg_comparisons(fit2, variables = "blinding") %>% posterior_draws(),
+  avg_comparisons(fit3, variables = "blinding") %>% posterior_draws(),
+  avg_comparisons(fit4, variables = "blinding") %>% posterior_draws(),
+  avg_comparisons(fit5, variables = "blinding") %>% posterior_draws(),
+  avg_comparisons(fit6, variables = "blinding") %>% posterior_draws()
+  ) %>% 
+  # wrangle
+  mutate(fit = rep(str_c("fit", 1:6), each = n() / 6)) %>% 
+  # summarize
+  group_by(fit) %>% 
+  summarise(mean = mean(draw),
+            sd = sd(draw),
+            ll = quantile(draw, probs = .025),
+            ul = quantile(draw, probs = .975))
+
+# what?
+print(tau_ate)
+```
+
+The `sd` column shows the posterior standard deviation for each $\hat \tau_\text{ATE}$. They are all pretty similar, but the overall pattern appears that they are larger for more complex models, both within ANOVA's and ANCOVA's, and between ANOVA's and ANCOVA's. Here are the results in a coefficient plot.
+
+```{r, fig.width = 7, fig.height = 1.75}
+tau_ate %>% 
+  mutate(fit = factor(fit,
+                      levels = str_c("fit", 1:6),
+                      labels = c("Poisson ANOVA", "ZIP ANOVA", "Distributional ZIP ANOVA",
+                                 "Poisson ANCOVA", "ZIP ANCOVA", "Distributional ZIP ANCOVA"))) %>% 
+  
+  ggplot(aes(x = mean, xmin = ll, xmax = ul, y = fit)) +
+  geom_pointrange() +
+  scale_x_continuous(expand = expansion(mult = 0.3)) +
+  labs(x = expression(tau[ATE]),
+       y = NULL) +
+  theme(axis.text.y = element_text(hjust = 0),
+        panel.grid = element_blank())
+```
+
+Overall, they're all very similar.
+
+### Differences in variance
+
+As we learned before, we can define the variance for the criterion variable of a ZIP model as
+
+$$
+\mathbb{Var}(y_i) = \lambda (1 - \pi) (1 + \pi \lambda).
+$$
+
+If you think of a conventional Poisson model as one for which $\pi = 0$, this formula can apply to Poisson models, too. If you follow the algebra, you'll see the equation then simplifies to $\lambda$:
+
+$$
+\begin{align*}
+\mathbb{Var}(y_i) & = \lambda (1 - \pi) (1 + \pi \lambda) \\
+& = \lambda (1 - 0) (1 + 0 \lambda) \\
+& = \lambda (1) (1) \\
+& = \lambda.
+\end{align*}
+$$
+
+For this section, I think it will be easiest to take an `add_linpred_draws()` based workflow. As a first step, we'll define the predictor grid.
+
+```{r}
+nd <- sarafoglou2023 %>% 
+  select(id, tz, mz) %>% 
+  expand_grid(blinding = 0:1)
+
+# what?
+glimpse(nd)
+```
+
+Each case in the data now has two rows in the `nd` predictor grid, one for each level of `blinding`. Now we feed the `nd` data into the `add_linpred_draws()` function for each of the 6 models, define the `lambda` and `pi` values for each case, wrangle, and save the results in an object called `lambda_pi`.
+
+```{r}
+lambda_pi <- bind_rows(
+  # ANOVA's
+  # fit1
+  nd %>% 
+    add_linpred_draws(fit1) %>% 
+    ungroup() %>% 
+    mutate(lambda = exp(.linpred),
+           pi = 0,
+           fit = "fit1") %>% 
+    select(fit, id, blinding, .draw, lambda, pi),
+  # fit2
+  nd %>% 
+    add_linpred_draws(fit2, dpar = "zi") %>% 
+    ungroup() %>% 
+    mutate(lambda = exp(.linpred),
+           pi = plogis(zi),
+           fit = "fit2") %>% 
+    select(fit, id, blinding, .draw, lambda, pi),  
+  # fit3
+  nd %>% 
+    add_linpred_draws(fit3, dpar = "zi") %>% 
+    ungroup() %>% 
+    mutate(lambda = exp(.linpred),
+           pi = plogis(zi),
+           fit = "fit3") %>% 
+    select(fit, id, blinding, .draw, lambda, pi),
+  # ANCVA's
+  # fit4
+  nd %>% 
+    add_linpred_draws(fit4) %>% 
+    ungroup() %>% 
+    mutate(lambda = exp(.linpred),
+           pi = 0,
+           fit = "fit4") %>% 
+    select(fit, id, blinding, .draw, lambda, pi),
+  # fit5
+  nd %>% 
+    add_linpred_draws(fit5, dpar = "zi") %>% 
+    ungroup() %>% 
+    mutate(lambda = exp(.linpred),
+           pi = plogis(zi),
+           fit = "fit5") %>% 
+    select(fit, id, blinding, .draw, lambda, pi),  
+  # fit6
+  nd %>% 
+    add_linpred_draws(fit6, dpar = "zi") %>% 
+    ungroup() %>% 
+    mutate(lambda = exp(.linpred),
+           pi = plogis(zi),
+           fit = "fit6") %>% 
+    select(fit, id, blinding, .draw, lambda, pi)
+) 
+
+# what?
+glimpse(lambda_pi)
+```
+
+With the rather long `lambda_pi` data frame, we can make group summaries for the counterfactual differences in variance, by each model. Here we save those summary values as `v`, and then display the results.
+
+```{r, message = F}
+v <- lambda_pi %>% 
+  mutate(v = lambda * (1 - pi) * (1 + pi * lambda)) %>% 
+  select(fit, id, blinding, .draw, v) %>% 
+  pivot_wider(names_from = blinding, values_from = v) %>% 
+  mutate(d = `1` - `0`) %>% 
+  # first compute the contrast within each MCMC draw, by fit
+  group_by(fit, .draw) %>% 
+  summarise(d = mean(d)) %>% 
+  select(fit, d) %>% 
+  # now summarize the ATE across the MCMC draws
+  group_by(fit) %>% 
+  summarise(mean = mean(d),
+            sd = sd(d),
+            ll = quantile(d, probs = .025),
+            ul = quantile(d, probs = .975))
+
+# what?
+print(v)
+```
+
+Now these summaries are the causal effects for the differences in variances for `deviation_count`, expressed as $\operatorname{\mathbb{E}}\left[\mathbb{Var}(y_i^1) - \mathbb{Var}(y_i^0) \mid \mathbf C_i \right]$. You'll note that because they are both conventional Poisson models, the results for `fit1` and `fit4` are identical, here, to those from the last section where we considered $\hat \tau_\text{ATE}$ because, with the Poisson, the mean is the same as the variance. For the ZIP models, the results differ.
+
+Here we compute and save the sample difference in variances.
+
+```{r}
+d_v <- sarafoglou2023 %>% 
+  group_by(blinding) %>% 
+  summarise(v = var(deviation_count)) %>% 
+  pivot_wider(names_from = blinding, values_from = v) %>% 
+  mutate(d = `1` - `0`) %>% 
+  pull(d)
+
+# what?
+d_v
+```
+
+Here are the results in a coefficient plot.
+
+```{r, fig.width = 7, fig.height = 2}
+v %>% 
+  mutate(fit = factor(fit,
+                      levels = str_c("fit", 1:6),
+                      labels = c("Poisson ANOVA", "ZIP ANOVA", "Distributional ZIP ANOVA",
+                                 "Poisson ANCOVA", "ZIP ANCOVA", "Distributional ZIP ANCOVA"))) %>% 
+  
+  ggplot(aes(x = mean, xmin = ll, xmax = ul, y = fit)) +
+  geom_vline(xintercept = d_v, linetype = 2) +
+  geom_pointrange() +
+  scale_x_continuous(expand = expansion(mult = 0.3)) +
+  labs(title = expression(Group~variances~computed~with~lambda(1-pi)(1+pi*lambda)),
+       x = expression(tau[Var]),
+       y = NULL) +
+  theme(axis.text.y = element_text(hjust = 0),
+        panel.grid = element_blank())
+```
+
+The Poisson models are very confident about the variance differences. The ZIP model are less so.
+
+### Differences in proportion of zero's
+
+Since we know know Poisson models can be expressed in terms of $\lambda$ and $\pi$, given we set $\pi = 0$, we can also use the following formula to compute the proportion of expected zero's for each model as
+
+$$
+\Pr(y = 0) = \pi + (1 - \pi)  \exp(-\lambda),
+$$
+
+which just simplifies to $\exp(-\lambda)$ for the Poisson models. Starting with the `lambda_pi` data frame from above, here we compute that value for each level of `blinding` across all 6 models, compute the contrasts, summarize, and save the results as `z`. Then we display the `z` summaries.
+
+```{r, message = F}
+z <- lambda_pi %>% 
+  mutate(z = pi + (1 - pi) * exp(-lambda)) %>% 
+  select(fit, id, blinding, .draw, z) %>% 
+  pivot_wider(names_from = blinding, values_from = z) %>% 
+  mutate(d = `1` - `0`) %>% 
+  # first compute the contrast within each MCMC draw, by fit
+  group_by(fit, .draw) %>% 
+  summarise(d = mean(d)) %>% 
+  select(fit, d) %>% 
+  # now summarize the ATE across the MCMC draws
+  group_by(fit) %>% 
+  summarise(mean = mean(d),
+            sd = sd(d),
+            ll = quantile(d, probs = .025),
+            ul = quantile(d, probs = .975))
+
+# what?
+print(z)
+```
+
+Here is the sample difference.
+
+```{r}
+d_z <- sarafoglou2023 %>% 
+  group_by(blinding) %>% 
+  summarise(z = mean(deviation_count == 0)) %>% 
+  pivot_wider(names_from = blinding, values_from = z) %>% 
+  mutate(d = `1` - `0`) %>% 
+  pull(d)
+
+# what?
+d_z
+```
+
+Now here are the summaries in a coefficient plot.
+
+```{r, fig.width = 7, fig.height = 2}
+z %>% 
+  mutate(fit = factor(fit,
+                      levels = str_c("fit", 1:6),
+                      labels = c("Poisson ANOVA", "ZIP ANOVA", "Distributional ZIP ANOVA",
+                                 "Poisson ANCOVA", "ZIP ANCOVA", "Distributional ZIP ANCOVA"))) %>% 
+  
+  ggplot(aes(x = mean, xmin = ll, xmax = ul, y = fit)) +
+  geom_vline(xintercept = d_z, linetype = 2) +
+  geom_pointrange() +
+  scale_x_continuous(limits = c(-0.5, 0.5)) +
+  labs(title = expression(Group~proportions~computed~with~pi+(1-pi)*exp(-lambda)),
+       x = expression(tau[Pr(italic(Y)==0)]),
+       y = NULL) +
+  theme(axis.text.y = element_text(hjust = 0),
+        panel.grid = element_blank())
+```
+
+Interestingly, this time the simple ZIP models differ from the other kinds of models. In all cases, it appears we should expect more zero's for the analysis blinding group, though there's considerable uncertainty about the magnitude of the difference.
+
+## Other extensions
+
+The ZIP model a fine strategy to have at your disposal when you have a lot of zero's in your counts, and it seems like it was a decent fit for the `sarafoglou2023` data. We have even more options. For example, the zero-inflated negative binomial (ZINB) is a great choice if you have both extra zero's and overdispersion. Hurdle models provide an alternative approach when all the non-zero counts are seen as part of a fundamentally different process than all the zero's, and you can fit either hurdle Poisson (HP) or hurdle negative binomial (HNB) models. These options are all available in **brms** by setting `family = zero_inflated_negbinomial()`, `family = hurdle_poisson()` or `family = hurdle_negbinomial()`, and I'd even recommend trying these out on the `sarafoglou2023` data for practice.
+
+Do note that similar to the ZIP, the parameters in these three alternative models have complex relations with the population mean and variance. You can compute the means for each model with the following formulas:
+
+$$
+\begin{align*}
+\mathbb E(y_i)_\text{ZINB} & = \mu (1 - \pi) \\
+\mathbb E(y_i)_\text{HP}   & = \mu\frac{1 - \pi}{1 - \exp(-\mu)} \\
+\mathbb E(y_i)_\text{HNB} & = \mu (1 - \pi) \left [1 - \left ( \frac{\phi}{\mu + \phi} \right )^\phi \right ]^{-1},
+\end{align*}
+$$
+
+where $\pi$ is the zero-inflation parameter for the ZINB, but stands for the total proportion of zero's in the HP and HNB models, and the $\phi$ parameter is the typical **brms** precision parameter for the negative binomial likelihood. You can compute the variances with the formulas:
+
+$$
+\begin{align*}
+\mathbb{Var}(y_i)_\text{ZINB} & = \mu (1 - \pi) (1 + (\pi + 1/\phi)\mu) \\
+\mathbb{Var}(y_i)_\text{HP}   & = \left [ (\mu + \mu^2)\frac{1 - \pi}{1 - \exp(-\mu)}  \right ] - \left [ \mu \frac{1 - \pi}{1 - \exp(-\mu)} \right ]^2 \\
+\mathbb{Var}(y_i)_\text{HNB}  & = \mu (1 - \pi) \left [1 - \left ( \frac{\phi}{\mu + \phi} \right )^\phi \right ]^{-1} \left \{ \frac{\phi + \mu (\phi + 1)}{\phi} - \mu (1 - \pi) \left [1 - \left ( \frac{\phi}{\mu + \phi} \right )^\phi \right ]^{-1}  \right \},
+\end{align*}
+$$
+
+which are admittedly baffling at first glance. This all just takes practice. If you're curious, you can find these formulas scattered in the literature, such as in part in Feng (2021; [https://doi.org/10.1186/s40488-021-00121-4](https://doi.org/10.1186/s40488-021-00121-4)), Zou et al (2021; [https://doi.org/10.3390/e23091206](https://doi.org/10.3390/e23091206)) and the dissertation by Bhaktha (2018; [link here](https://etd.ohiolink.edu/apexprod/rws_etd/send_file/send?accession=osu1543573678017356&disposition=inline)), or more completely, but in a somewhat different format, in the text by Zuur et al (2009; [*Mixed Effects Models and Extensions in Ecology with R*](https://link.springer.com/book/10.1007/978-0-387-87458-6)).
+
+```{r fit7, eval = F, echo = F}
+# unconditional ZINB
+fit7 <- brm(
+  data = sarafoglou2023,
+  family = zero_inflated_negbinomial(),
+  deviation_count ~ 1,
+  prior = prior(normal(-0.2228555, 0.9444565), class = Intercept) +
+    prior(beta(1, 4), class = zi),
+  cores = 4, seed = 1
+)
+
+# unconditional HP
+fit8 <- brm(
+  data = sarafoglou2023,
+  family = hurdle_poisson(),
+  deviation_count ~ 1,
+  cores = 4, seed = 1
+)
+
+# unconditional HNB
+fit9 <- brm(
+  data = sarafoglou2023,
+  family = hurdle_negbinomial(),
+  deviation_count ~ 1,
+  prior = prior(beta(3, 2), class = hu),  # helped the chains
+  cores = 4, seed = 1
+)
+
+# check the chains
+print(fit7, digits = 3)
+print(fit8, digits = 3)
+print(fit9, digits = 3)
+
+## Hand made pp-checks for the mean and variances
+# ZINB 
+as_draws_df(fit7) %>% 
+  transmute(mu = exp(b_Intercept),
+            phi = shape,
+            pi = zi) %>% 
+  transmute(m = mu * (1 - pi)) %>% 
+  
+  ggplot(aes(x = m)) +
+  stat_halfeye() +
+  geom_vline(xintercept = mean(sarafoglou2023$deviation_count), linetype = 2) +
+  coord_cartesian(xlim = c(0, 0.9)) +
+  ggtitle("ZNIB")
+
+as_draws_df(fit7) %>% 
+  transmute(mu = exp(b_Intercept),
+            phi = shape,
+            pi = zi) %>% 
+  transmute(v = mu * (1 - pi) * (1 + (pi + 1 / phi) * mu)) %>% 
+  
+  ggplot(aes(x = v)) +
+  stat_halfeye() +
+  geom_vline(xintercept = var(sarafoglou2023$deviation_count), linetype = 2) +
+  coord_cartesian(xlim = c(0, 2.5)) +
+  ggtitle("ZNIB")
+
+# HP
+as_draws_df(fit8) %>% 
+  transmute(mu = exp(b_Intercept),
+            w = hu) %>% 
+  transmute(m = (1 - w) / (1 - exp(-mu)) * mu) %>% 
+  
+  ggplot(aes(x = m)) +
+  stat_halfeye() +
+  geom_vline(xintercept = mean(sarafoglou2023$deviation_count), linetype = 2) +
+  coord_cartesian(xlim = c(0, 0.9)) +
+  ggtitle("HP")
+
+as_draws_df(fit8) %>% 
+  transmute(mu = exp(b_Intercept),
+            w = hu) %>% 
+  transmute(v = ((mu + mu^2) * (1 - w) / (1 - exp(-mu))) - (mu * (1 - w) / (1 - exp(-mu)) )^2) %>% 
+  
+  ggplot(aes(x = v)) +
+  stat_halfeye() +
+  geom_vline(xintercept = var(sarafoglou2023$deviation_count), linetype = 2) +
+  coord_cartesian(xlim = c(0, 2.5)) +
+  ggtitle("HP")
+
+# HNB
+as_draws_df(fit9) %>% 
+  transmute(mu = exp(b_Intercept),
+            phi = shape,
+            pi = hu) %>% 
+  transmute(m = mu * (1 - pi) * (1 - (phi / (mu + phi))^phi)^(-1)) %>% 
+  
+  ggplot(aes(x = m)) +
+  stat_halfeye() +
+  geom_vline(xintercept = mean(sarafoglou2023$deviation_count), linetype = 2) +
+  coord_cartesian(xlim = c(0, 0.9)) +
+  ggtitle("HNB")
+
+as_draws_df(fit9) %>% 
+  transmute(mu = exp(b_Intercept),
+            phi = shape,
+            pi = hu) %>% 
+  transmute(v = mu * (1 - pi) * (1 - (phi / (mu + phi))^phi)^(-1) * ( (phi + mu * (phi + 1)) / phi -  mu * (1 - pi) * (1 - (phi / (mu + phi))^phi)^(-1)) ) %>% 
+  
+  ggplot(aes(x = v)) +
+  stat_halfeye() +
+  geom_vline(xintercept = var(sarafoglou2023$deviation_count), linetype = 2) +
+  coord_cartesian(xlim = c(0, 2.5)) +
+  ggtitle("HNB")
+```
+
+## Session information
+
+```{r}
+sessionInfo()
+```
+

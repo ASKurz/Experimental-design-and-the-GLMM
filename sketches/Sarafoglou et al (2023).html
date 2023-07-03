@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.353">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="A Solomon Kurz">
+<meta name="dcterms.date" content="2023-07-03">
+
+<title>Sarafoglou et al (2023)</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="Sarafoglou et al (2023)_files/libs/clipboard/clipboard.min.js"></script>
+<script src="Sarafoglou et al (2023)_files/libs/quarto-html/quarto.js"></script>
+<script src="Sarafoglou et al (2023)_files/libs/quarto-html/popper.min.js"></script>
+<script src="Sarafoglou et al (2023)_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="Sarafoglou et al (2023)_files/libs/quarto-html/anchor.min.js"></script>
+<link href="Sarafoglou et al (2023)_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="Sarafoglou et al (2023)_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="Sarafoglou et al (2023)_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="Sarafoglou et al (2023)_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="Sarafoglou et al (2023)_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Sarafoglou et al (2023)</h1>
+<p class="subtitle lead">Posttest-only control group design</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>A Solomon Kurz </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">July 3, 2023</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<p>Sarafoglou et al (2023; <a href="https://doi.org/10.1177/25152459221128319">https://doi.org/10.1177/25152459221128319</a>) used a 2-group design (<span class="math inline">\(n\)</span> = 61 and <span class="math inline">\(n\)</span> = 59). Their preregistration lives at <a href="https://osf.io/2cdht">https://osf.io/2cdht</a>. The team preregistered 4 specific hypothesis, and their fourth hypothesis (called “Hypothesis 4” in the paper) originally read:</p>
+<blockquote class="blockquote">
+<p>Analysis teams in the preregistration condition should (1) deviate more often from their planned analysis than analysis teams in the blinding condition and (2) when they deviate from their analysis plan, analysis teams in the preregistration condition should deviate on more items than analysis teams in the blinding condition. We will test this hypothesis against the null hypothesis that both groups (1) deviate the same number of times from their analysis plan and (2) when they deviate from their analysis plan they do so for the same number of items..</p>
+</blockquote>
+<p>This is a compound hypothesis, and in this sketch we will focus on the first part. We will compare the number of deviations by group.</p>
+<section id="data" class="level2">
+<h2 class="anchored" data-anchor-id="data">Data</h2>
+<p>Sarafoglou and colleagues made their materials, data, and code available on the OSF at <a href="https://osf.io/gkxqy/files/osfstorage">https://osf.io/gkxqy/files/osfstorage</a>. In this sketch, we will be using their <code>data_prereg_blinding_unblinded.csv</code> file, which can be downloaded directly from <a href="https://osf.io/6qyvw">https://osf.io/6qyvw</a>. The file has also been uploaded to this repository, which is how we will upload the data here.</p>
+<p>Load the data and the primary <strong>R</strong> packages.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># packages</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(brms)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidybayes)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(patchwork)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(marginaleffects)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># drop gridlines</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_set</span>(</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_gray</span>() <span class="sc">+</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">panel.grid =</span> <span class="fu">element_blank</span>())</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co"># load the data</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>sarafoglou2023 <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/data_prereg_blinding_unblinded.csv"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">id =</span> ...<span class="dv">1</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">blinding =</span> <span class="fu">ifelse</span>(condition <span class="sc">==</span> <span class="st">"blinding"</span>, <span class="dv">1</span>, <span class="dv">0</span>))</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="co"># what is this?</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(sarafoglou2023)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 120
+Columns: 42
+$ id                   &lt;dbl&gt; 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 19, …
+$ condition            &lt;chr&gt; "blinding", "preregistration", "blinding", "blind…
+$ work                 &lt;dbl&gt; 46, NA, 70, 17, 9, 100, 9, 12, 20, 13, 35, 48, 50…
+$ effort               &lt;dbl&gt; 9, NA, 11, 9, 7, 12, 7, 9, 7, 8, 11, 11, 11, 10, …
+$ frustration          &lt;dbl&gt; 4, NA, 6, 9, 5, 5, 2, 8, 5, 8, 12, 10, 9, 6, 5, 8…
+$ time_anticipated     &lt;dbl&gt; 8, NA, 7, 5, 6, 7, 6, 6, 6, 8, 5, 8, 6, 7, 8, 6, …
+$ deviation_count      &lt;dbl&gt; 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0…
+$ HoursS1              &lt;dbl&gt; 40, NA, 30, 12, 2, 20, 2, 4, 10, 7, 30, 12, 30, 5…
+$ HoursS2              &lt;dbl&gt; 6, 30, 40, 5, 7, 80, 7, 8, 10, 6, 5, 36, 20, 5, 5…
+$ EffortS1             &lt;dbl&gt; 5, NA, 5, 4, 2, 6, 3, 4, 3, 4, 6, 5, 6, 5, 3, 6, …
+$ EffortS2             &lt;dbl&gt; 4, 7, 6, 5, 5, 6, 4, 5, 4, 4, 5, 6, 5, 5, 5, 3, 4…
+$ FrustrationS1        &lt;dbl&gt; 2, NA, 3, 5, 1, 1, 1, 5, 2, 1, 5, 6, 5, 3, 3, 4, …
+$ FrustrationS2        &lt;dbl&gt; 2, 5, 3, 4, 4, 4, 1, 3, 3, 7, 7, 4, 4, 3, 2, 4, 5…
+$ TimeAnticipatedS1    &lt;dbl&gt; 5, NA, 4, 2, 3, 3, 3, 3, 3, 3, 2, 4, 4, 3, 4, 3, …
+$ TimeAnticipatedS2    &lt;dbl&gt; 3, 5, 3, 3, 3, 4, 3, 3, 3, 5, 3, 4, 2, 4, 4, 3, 3…
+$ DeviateHypotheses    &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+$ DeviateVariables     &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+$ DeviateDV            &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+$ DeviateExclusions    &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0…
+$ DeviateModel         &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+$ DeviateDirection     &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+$ DeviateTest          &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+$ DeviateIV            &lt;dbl&gt; 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+$ DeviateWhy           &lt;chr&gt; NA, NA, NA, NA, NA, "We included further data tra…
+$ NumberOfPeople       &lt;dbl&gt; 5, 1, 6, 1, 2, 3, 2, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1…
+$ Domain               &lt;chr&gt; "Psychology (Other)", "Cognition", "Religion and …
+$ Positions            &lt;chr&gt; "Doctoral student, Assistant professor, Associate…
+$ TheoreticalKnowledge &lt;dbl&gt; 2, 3, 4, 5, 5, 3, 4, 2, 1, 2, 1, 1, 5, 3, 4, 2, 2…
+$ MethodsKnowledge     &lt;dbl&gt; 4, 5, 4, 5, 5, 4, 4, 3, 3, 3, 3, 4, 4, 4, 5, 4, 4…
+$ Standardized_ES_1    &lt;dbl&gt; 0.130, 0.084, 0.307, NA, 0.090, 0.130, 0.078, 0.0…
+$ lower_CI_1           &lt;dbl&gt; 0.111, 0.065, 0.115, NA, 0.060, 0.103, 0.076, 0.0…
+$ upper_CI_1           &lt;dbl&gt; 0.149, 0.103, 0.509, NA, 0.120, 0.156, 0.082, 0.0…
+$ MARP_ES_type_1       &lt;chr&gt; "beta", "beta", "beta", NA, "beta", "beta", "beta…
+$ Standardized_ES_2    &lt;dbl&gt; 0.016, NA, 0.050, NA, 0.030, 0.130, 0.027, 0.020,…
+$ lower_CI_2           &lt;dbl&gt; -0.002, NA, -0.018, NA, 0.000, 0.103, 0.026, 0.00…
+$ upper_CI_2           &lt;dbl&gt; 0.035, NA, 0.119, NA, 0.050, 0.156, 0.028, 0.039,…
+$ MARP_ES_type_2       &lt;chr&gt; "beta", NA, "beta", NA, "beta", "beta", "beta", "…
+$ EstimationRQ1        &lt;dbl&gt; 2, 5, 6, 5, 7, 4, 6, 5, 5, 4, 5, 4, 5, 7, 6, 4, 2…
+$ EstimationRQ2        &lt;dbl&gt; 5, 7, 7, 3, 6, 4, 5, 4, 6, 6, 5, 5, 5, 6, 6, 5, 6…
+$ AnswerRQ1            &lt;dbl&gt; 4, 6, 7, 1, 4, 6, 6, 5, 7, 4, 5, 5, 6, 5, 6, 6, 6…
+$ AnswerRQ2            &lt;dbl&gt; 4, NA, 3, NA, 2, 4, 5, 4, 6, 4, 4, 4, 2, 5, 6, 2,…
+$ blinding             &lt;dbl&gt; 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0…</code></pre>
+</div>
+</div>
+<p>In the <code>sarafoglou2023</code> data, the number of deviations is recorded in the <code>deviation_count</code> column, and the experimental groups are differentiated by the <code>condition</code> column. To get a sense of the data, here’s a descriptive plot recreating the visualization in Figure 4 (p.&nbsp;10).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>sarafoglou2023 <span class="sc">%&gt;%</span> </span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> deviation_count, <span class="at">group =</span> condition, <span class="at">fill =</span> condition)) <span class="sc">+</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">position =</span> <span class="fu">position_dodge</span>()) <span class="sc">+</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_viridis_d</span>(<span class="cn">NULL</span>, <span class="at">option =</span> <span class="st">"C"</span>, <span class="at">end =</span> .<span class="dv">7</span>) <span class="sc">+</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.background =</span> <span class="fu">element_blank</span>() ,</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">legend.position =</span> <span class="fu">c</span>(.<span class="dv">80</span>, .<span class="dv">85</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Sarafoglou-et-al--2023-_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid" width="384"></p>
+</div>
+</div>
+<p>I’m not the hugest fan of paired bar plots like this. Here’s a dumbbell plot alternative.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>sarafoglou2023 <span class="sc">%&gt;%</span> </span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(condition, deviation_count) <span class="sc">%&gt;%</span> </span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> deviation_count, <span class="at">y =</span> n, <span class="at">group =</span> deviation_count)) <span class="sc">+</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">color =</span> <span class="st">"white"</span>, <span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">color =</span> condition, <span class="at">shape =</span> condition),</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>             <span class="at">size =</span> <span class="dv">6</span>) <span class="sc">+</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_d</span>(<span class="cn">NULL</span>, <span class="at">option =</span> <span class="st">"C"</span>, <span class="at">end =</span> .<span class="dv">7</span>) <span class="sc">+</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_shape_manual</span>(<span class="cn">NULL</span>, <span class="at">values =</span> <span class="fu">c</span>(<span class="dv">15</span>, <span class="dv">16</span>)) <span class="sc">+</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.background =</span> <span class="fu">element_blank</span>() ,</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>        <span class="at">legend.position =</span> <span class="fu">c</span>(.<span class="dv">80</span>, .<span class="dv">85</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Sarafoglou-et-al--2023-_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="384"></p>
+</div>
+</div>
+<p>The <code>sarafoglou2023</code> data set also contains a handful of baseline covariates we might use to help increase the precision of the analyses. In this sketch, we’ll focus on <code>TheoreticalKnowledge</code> and <code>MethodsKnowledge</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>sarafoglou2023 <span class="sc">%&gt;%</span> </span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> TheoreticalKnowledge, <span class="at">y =</span> deviation_count)) <span class="sc">+</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_jitter</span>(<span class="at">width =</span> <span class="fl">0.2</span>, <span class="at">height =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Sarafoglou-et-al--2023-_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="384"></p>
+</div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>sarafoglou2023 <span class="sc">%&gt;%</span> </span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> MethodsKnowledge, <span class="at">y =</span> deviation_count)) <span class="sc">+</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_jitter</span>(<span class="at">width =</span> <span class="fl">0.2</span>, <span class="at">height =</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Sarafoglou-et-al--2023-_files/figure-html/unnamed-chunk-4-2.png" class="img-fluid" width="384"></p>
+</div>
+</div>
+<p>Here we’ll make and save standardized versions of <code>TheoreticalKnowledge</code> and <code>MethodsKnowledge</code>, which will help with the models down the line.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>sarafoglou2023 <span class="ot">&lt;-</span> sarafoglou2023 <span class="sc">%&gt;%</span> </span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">tz =</span> (TheoreticalKnowledge <span class="sc">-</span> <span class="fu">mean</span>(TheoreticalKnowledge)) <span class="sc">/</span> <span class="fu">sd</span>(TheoreticalKnowledge),</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">mz =</span> (MethodsKnowledge <span class="sc">-</span> <span class="fu">mean</span>(MethodsKnowledge)) <span class="sc">/</span> <span class="fu">sd</span>(MethodsKnowledge))</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="co"># what?</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>sarafoglou2023 <span class="sc">%&gt;%</span> </span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(TheoreticalKnowledge, MethodsKnowledge, tz, mz) <span class="sc">%&gt;%</span> </span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 4
+  TheoreticalKnowledge MethodsKnowledge     tz      mz
+                 &lt;dbl&gt;            &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt;
+1                    2                4 -0.526 -0.0486
+2                    3                5  0.253  1.41  
+3                    4                4  1.03  -0.0486
+4                    5                5  1.81   1.41  
+5                    5                5  1.81   1.41  
+6                    3                4  0.253 -0.0486</code></pre>
+</div>
+</div>
+</section>
+<section id="models" class="level2">
+<h2 class="anchored" data-anchor-id="models">Models</h2>
+<p>In this sketch, we’ll be fitting 7 models to the data. Three models will follow an ANOVA specification, and another three will be their ANCOVA analogues. But before we go into ANOVA and ANCOVA mode, we’ll first warm up with an unconditional ZIP model to familiarize ourselves with the parameters of the ZIP.</p>
+<section id="zip-warmup." class="level3">
+<h3 class="anchored" data-anchor-id="zip-warmup.">ZIP warmup.</h3>
+<p>Our unconditional ZIP model will follow the form</p>
+<p><span class="math display">\[
+\begin{align}
+\text{deviation count}_i &amp; \sim \operatorname{ZIP}(\lambda, \pi) \\
+\log(\lambda) &amp; = \beta_0 \\
+\beta_0 &amp; \sim \operatorname{Normal}(-0.2228555, 0.9444565) \\
+\pi &amp; \sim \operatorname{Beta}(1, 4),
+\end{align}
+\]</span></p>
+<p>where, because we have no predictor variables in the model, the two parameters <span class="math inline">\(\lambda\)</span> and <span class="math inline">\(\pi\)</span> are constants without <span class="math inline">\(i\)</span> subscripts. As with conventional Poisson models, we use the log link for <span class="math inline">\(\lambda\)</span>, which is the <code>brm()</code> default. The <span class="math inline">\(\beta_0\)</span> parameter, then, is the intercept for <span class="math inline">\(\lambda\)</span> on the log scale. When you estimate <span class="math inline">\(\pi\)</span> without predictor variables, the <code>brm()</code> default is the identity link, which we’ve retained here. The third and fourth lines in the equation show the priors, which may seem oddly specific. Before we discuss the priors in detail, we should what the <span class="math inline">\(\lambda\)</span> and <span class="math inline">\(\pi\)</span> parameters mean for the ZIP distribution.</p>
+<p>The <span class="math inline">\(\lambda\)</span> parameter in a simple Poisson distribution controls both the mean and the variance. However, the ZIP is a mixture of a Poisson count and a proportion of zero’s in addition to what you would typically expect from a Poisson count with a given <span class="math inline">\(\lambda\)</span>. The <span class="math inline">\(\pi\)</span> parameter, also sometimes called <span class="math inline">\(\theta\)</span> by the Stan team (https://mc-stan.org/docs/stan-users-guide/zero-inflated.html) or <span class="math inline">\(z\)</span> by Bürkner (https://cran.r-project.org/web/packages/brms/vignettes/brms_families.html#zero-inflated-and-hurdle-models), is the proportion of extra zero’s/ As a consequence, the mean of the mixture distribution is not simply <span class="math inline">\(\lambda\)</span>, but is defined as</p>
+<p><span class="math display">\[
+\mathbb E(y_i) = \lambda (1 - \pi),
+\]</span></p>
+<p>and the variance is</p>
+<p><span class="math display">\[
+\mathbb{Var}(y_i) = \lambda (1 - \pi) (1 + \pi \lambda).
+\]</span></p>
+<p>Thus, when we set our priors for <span class="math inline">\(\lambda\)</span>, we can’t just base them on our expected value for our criterion variable. We need to account for the expected value for the proportion of zero’s, too. Before we discuss our prior for <span class="math inline">\(\lambda\)</span>, then, I think we should first discuss <span class="math inline">\(\pi\)</span>.</p>
+<p>When I looked through the paper, preregistration and supporting materials from Sarafoglou and colleagues, it was not clear to me how many extra zero’s they expected for <code>deviation_count</code>. This is a new topic in meta science, and I found the prior research generally unhelpful, too. But Sarafoglou colleagues were confident enough <code>deviation_count</code> would have extra zero’s to justify planning on a ZIP model in their preregistration, we want a prior to assume some proportion greater than zero. The <code>brms()</code> default prior for this model is <span class="math inline">\(\operatorname{Beta}(1, 1)\)</span>, which is flat. My proposed <span class="math inline">\(\operatorname{Beta}(1, 4)\)</span> prior has a mean of 0.2, and a wide spread around that mean. Here are those two priors in a plot.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">c</span>(<span class="fu">prior</span>(<span class="fu">beta</span>(<span class="dv">1</span>, <span class="dv">1</span>)),      <span class="co"># brms default</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">prior</span>(<span class="fu">beta</span>(<span class="dv">1</span>, <span class="dv">4</span>))) <span class="sc">%&gt;%</span>  <span class="co"># Solomon's alternative </span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">parse_dist</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">xdist =</span> .dist_obj, <span class="at">y =</span> prior)) <span class="sc">+</span> </span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_halfeye</span>(<span class="at">point_interval =</span> mean_qi, <span class="at">.width =</span> <span class="fu">c</span>(.<span class="dv">5</span>, .<span class="dv">95</span>)) <span class="sc">+</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="fu">expression</span>(<span class="fu">italic</span>(p)(pi)), <span class="at">breaks =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">5</span> <span class="sc">/</span> <span class="dv">5</span>) <span class="sc">+</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_discrete</span>(<span class="cn">NULL</span>, <span class="at">expand =</span> <span class="fu">expansion</span>(<span class="at">add =</span> <span class="fl">0.1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Sarafoglou-et-al--2023-_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid" width="384"></p>
+</div>
+</div>
+<p>In case you didn’t know, the mean of the beta distribution is <span class="math inline">\(\alpha / (\alpha + \beta)\)</span>, and the degree of <em>concentration</em> (aka <em>sample size</em>) around that mean can be expressed as <span class="math inline">\(\alpha + \beta\)</span>. Thus, an alternative <span class="math inline">\(\operatorname{Beta}(10, 40)\)</span> prior would have the same prior mean if 0.2, but with much greater concentration around that mean. Try it out in another plot like the one above and see.</p>
+<p>Now we have settled on a prior for <span class="math inline">\(\pi\)</span>, we’re almost ready to discuss <span class="math inline">\(\lambda\)</span>. Modelers used to the ZIP might be able to think in terms of <span class="math inline">\(\lambda\)</span> directly, but I suspect those newer to the ZIP will find it easier to think in terms of the mean of the criterion variable <code>deviation_count</code> as a whole. Much like with <span class="math inline">\(\pi\)</span>, the prior literature on this meta-science topic is sparse. Given the authors in this study were already interested in meta-science and they were aware their analyses were going to be scrutinized by others, my guess is they would, on average, deviate infrequently from their analysis plans. For the sake of the example, let’s suppose we expected an average value of 1 for <code>deviation_count</code>. With a little algebra, we can use the formula for <span class="math inline">\(\mathbb E(y_i)\)</span>, above to compute <span class="math inline">\(\lambda\)</span> given fixed values for <span class="math inline">\(\pi\)</span> and <span class="math inline">\(\mathbb E(y_i)\)</span>. Here’s the computation in code.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="dv">1</span>     <span class="co"># expected mean for deviation_count</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>pi <span class="ot">&lt;-</span> <span class="fl">0.2</span>  <span class="co"># expected proportion of extra 0's for deviation_count</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co"># compute lambda</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>m <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">-</span> pi)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1.25</code></pre>
+</div>
+</div>
+<p>Thus I propose a prior mean of 1.25 for <span class="math inline">\(\lambda\)</span>. However, recall we are using the log link for <span class="math inline">\(\lambda\)</span>, which we’re calling <span class="math inline">\(\beta_0\)</span> in the model. Also recall we typically use Gaussian or other Student-t priors for <span class="math inline">\(\beta\)</span> coefficients. This means that a normal prior on the log scale is equivalent to a lognormal prior on the actual count scale. Thus when we are thinking about the parameters on the normal prior for <span class="math inline">\(\beta_0\)</span>, we should consider what kind of lognormal distribution they imply on the count scale. The lognormal distribution is strange in that its two parameters <span class="math inline">\(\mu\)</span> and <span class="math inline">\(\sigma\)</span> are the mean and standard deviation of the log of the lognormal distribution, which is itself normal. However, if we want to pick the lognormal distribution for a given mean <span class="math inline">\(m\)</span> and standard deviation <span class="math inline">\(s\)</span>, we can use the equations</p>
+<p><span class="math display">\[
+\begin{align*}
+\mu &amp; = \log\left ( \bar y \Bigg / \sqrt{\frac{s^2}{\bar y^2} + 1} \right), \text{and} \\
+\sigma &amp; = \sqrt{\log \left(\frac{s^2}{\bar y^2} + 1 \right)}.
+\end{align*}
+\]</span></p>
+<p>If we want our mean of 1 and, say, a standard deviation of 1.5, here’s what those equations look like in code.</p>
+<p>Here’s what that looks like in code.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fl">1.25</span>  <span class="co"># desired mean for the ZIP lambda</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>s <span class="ot">&lt;-</span> <span class="fl">1.5</span>   <span class="co"># desired SD for the ZIP lambda</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="co"># use the equations</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>mu    <span class="ot">&lt;-</span> <span class="fu">log</span>(m <span class="sc">/</span> <span class="fu">sqrt</span>(s<span class="sc">^</span><span class="dv">2</span> <span class="sc">/</span> m<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> <span class="dv">1</span>))</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>sigma <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="fu">log</span>(s<span class="sc">^</span><span class="dv">2</span> <span class="sc">/</span> m<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> <span class="dv">1</span>))</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="co"># what are the lognormal parameter values?</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>mu; sigma</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] -0.2228555</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.9444565</code></pre>
+</div>
+</div>
+<p>Thus if we set <span class="math inline">\(\beta_0 \sim \operatorname{Normal}(-0.2228555, 0.9444565)\)</span>, this is what the corresponding lognormal distribution on the count metric looks like.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">prior</span>(<span class="fu">lognormal</span>(<span class="sc">-</span><span class="fl">0.2228555</span>, <span class="fl">0.9444565</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">parse_dist</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">xdist =</span> .dist_obj, <span class="at">y =</span> prior)) <span class="sc">+</span> </span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_halfeye</span>(<span class="at">point_interval =</span> mean_qi, <span class="at">.width =</span> <span class="fu">c</span>(.<span class="dv">5</span>, .<span class="dv">95</span>)) <span class="sc">+</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="fu">expression</span>(<span class="fu">exp</span>(<span class="fu">italic</span>(p)(beta[<span class="dv">0</span>]))), <span class="at">breaks =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">4</span> <span class="sc">*</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_discrete</span>(<span class="cn">NULL</span>, <span class="at">breaks =</span> <span class="cn">NULL</span>, <span class="at">expand =</span> <span class="fu">expansion</span>(<span class="at">add =</span> <span class="fl">0.1</span>)) <span class="sc">+</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">xlim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">9</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Sarafoglou-et-al--2023-_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid" width="480"></p>
+</div>
+</div>
+<p>Thus the <span class="math inline">\(\operatorname{Normal}(-0.2228555, 0.9444565)\)</span> prior for <span class="math inline">\(\beta_0\)</span>, which is on the log scale, implies a lognormal distribution with a mean of 1.25 and standard deviation of 1.5 after exponentiation back to the count scale. Such a distribution has an interquartile range of about 0.4 to 1.5, and a 95% range of about 0 to 5. For my money, this is about what I’m looking for for <span class="math inline">\(\lambda\)</span>.</p>
+<p>We’re finally ready to our unconditional ZIP model. The only other new coding bit to note is how to indicate the likelihood function by setting <code>family = zero_inflated_poisson()</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># unconditional ZIP</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>fit0 <span class="ot">&lt;-</span> <span class="fu">brm</span>(</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> sarafoglou2023,</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">family =</span> <span class="fu">zero_inflated_poisson</span>(),</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  deviation_count <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">prior =</span> <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="sc">-</span><span class="fl">0.2228555</span>, <span class="fl">0.9444565</span>), <span class="at">class =</span> Intercept) <span class="sc">+</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">beta</span>(<span class="dv">1</span>, <span class="dv">4</span>), <span class="at">class =</span> zi),</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">cores =</span> <span class="dv">4</span>, <span class="at">seed =</span> <span class="dv">1</span>,</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">"fits/fit0.sarafoglou2023"</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Check the model summary.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(fit0)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> Family: zero_inflated_poisson 
+  Links: mu = log; zi = identity 
+Formula: deviation_count ~ 1 
+   Data: sarafoglou2023 (Number of observations: 120) 
+  Draws: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
+         total post-warmup draws = 4000
+
+Population-Level Effects: 
+          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept    -0.38      0.25    -0.89     0.09 1.01      812     1116
+
+Family Specific Parameters: 
+   Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+zi     0.37      0.14     0.06     0.60 1.00      791      551
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+</div>
+</div>
+<p>The ESS values are a little low, but not concerningly so. Otherwise the parameter summaries look fine. It will probably be easiest to evaluate the model with a posterior-predictive check.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">pp_check</span>(fit0, <span class="at">type =</span> <span class="st">"bars"</span>,  <span class="at">ndraws =</span> <span class="dv">500</span>) <span class="sc">+</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"ZIP (intercepts only)"</span>) <span class="sc">+</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">xlim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="fl">0.25</span>, <span class="dv">5</span>),</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>                  <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="cn">NA</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Sarafoglou-et-al--2023-_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid" width="384"></p>
+</div>
+</div>
+<p>This looks like a success. Our simple ZIP model does a fine job simulating data resembling the sample data. To get more comfortable with the ZIP model, it may be worth it to practice converting the posterior draws for <span class="math inline">\(\beta_0\)</span> and <span class="math inline">\(\pi\)</span> to the model implied estimates for the population mean and variance for <code>deviation_count</code>. Since the ZIP model is sensitive to zero values, we might also be interested in the total proportion of zero values in the distribution, which we can define by the equation</p>
+<p><span class="math display">\[
+\Pr(y = 0) = \pi + (1 - \pi)  \exp(-\lambda).
+\]</span></p>
+<p>Here’s how to work with the posterior draws from the <code>as_draws_df()</code> output to compute the population mean, variance and proportion of 0’s, and plot those results against the sample values.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># mean</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>p1 <span class="ot">&lt;-</span> <span class="fu">as_draws_df</span>(fit0) <span class="sc">%&gt;%</span> </span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(<span class="at">lambda =</span> <span class="fu">exp</span>(b_Intercept),</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>            <span class="at">pi =</span> zi) <span class="sc">%&gt;%</span> </span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">m =</span> lambda <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">-</span> pi)) <span class="sc">%&gt;%</span> </span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> m)) <span class="sc">+</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_halfeye</span>(<span class="at">.width =</span> .<span class="dv">95</span>) <span class="sc">+</span></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># sample mean</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="fu">mean</span>(sarafoglou2023<span class="sc">$</span>deviation_count),</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>             <span class="at">linetype =</span> <span class="dv">2</span>, <span class="at">color =</span> <span class="st">"blue"</span>) <span class="sc">+</span></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="fu">expression</span>(<span class="fu">E</span>(<span class="fu">italic</span>(y))), <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="cn">NA</span>)) <span class="sc">+</span></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="cn">NULL</span>, <span class="at">breaks =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">panel.grid =</span> <span class="fu">element_blank</span>())</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a><span class="co"># variance</span></span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">&lt;-</span> <span class="fu">as_draws_df</span>(fit0) <span class="sc">%&gt;%</span> </span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(<span class="at">lambda =</span> <span class="fu">exp</span>(b_Intercept),</span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>            <span class="at">pi =</span> zi) <span class="sc">%&gt;%</span> </span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">v =</span> lambda <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">-</span> pi) <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">+</span> pi <span class="sc">*</span> lambda)) <span class="sc">%&gt;%</span> </span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> v)) <span class="sc">+</span></span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_halfeye</span>(<span class="at">.width =</span> .<span class="dv">95</span>) <span class="sc">+</span></span>
+<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a>  <span class="co"># sample variance</span></span>
+<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="fu">var</span>(sarafoglou2023<span class="sc">$</span>deviation_count),</span>
+<span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a>             <span class="at">linetype =</span> <span class="dv">2</span>, <span class="at">color =</span> <span class="st">"blue"</span>) <span class="sc">+</span></span>
+<span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="fu">expression</span>(<span class="fu">Var</span>(<span class="fu">italic</span>(y))), <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">1.3</span>)) <span class="sc">+</span></span>
+<span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="cn">NULL</span>, <span class="at">breaks =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">panel.grid =</span> <span class="fu">element_blank</span>())</span>
+<span id="cb20-30"><a href="#cb20-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-31"><a href="#cb20-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-32"><a href="#cb20-32" aria-hidden="true" tabindex="-1"></a><span class="co"># proportion 0</span></span>
+<span id="cb20-33"><a href="#cb20-33" aria-hidden="true" tabindex="-1"></a>p3 <span class="ot">&lt;-</span> <span class="fu">as_draws_df</span>(fit0) <span class="sc">%&gt;%</span> </span>
+<span id="cb20-34"><a href="#cb20-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(<span class="at">lambda =</span> <span class="fu">exp</span>(b_Intercept),</span>
+<span id="cb20-35"><a href="#cb20-35" aria-hidden="true" tabindex="-1"></a>            <span class="at">pi =</span> zi) <span class="sc">%&gt;%</span> </span>
+<span id="cb20-36"><a href="#cb20-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">p =</span> pi <span class="sc">+</span> (<span class="dv">1</span> <span class="sc">-</span> pi) <span class="sc">*</span> <span class="fu">exp</span>(<span class="sc">-</span>lambda)) <span class="sc">%&gt;%</span> </span>
+<span id="cb20-37"><a href="#cb20-37" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb20-38"><a href="#cb20-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> p)) <span class="sc">+</span></span>
+<span id="cb20-39"><a href="#cb20-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_halfeye</span>(<span class="at">.width =</span> .<span class="dv">95</span>) <span class="sc">+</span></span>
+<span id="cb20-40"><a href="#cb20-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="fu">mean</span>(sarafoglou2023<span class="sc">$</span>deviation_count <span class="sc">==</span> <span class="dv">0</span>),</span>
+<span id="cb20-41"><a href="#cb20-41" aria-hidden="true" tabindex="-1"></a>             <span class="at">linetype =</span> <span class="dv">2</span>, <span class="at">color =</span> <span class="st">"blue"</span>) <span class="sc">+</span></span>
+<span id="cb20-42"><a href="#cb20-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="fu">expression</span>(<span class="fu">Pr</span>(<span class="fu">italic</span>(y)<span class="sc">==</span><span class="dv">0</span>)), <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>)) <span class="sc">+</span></span>
+<span id="cb20-43"><a href="#cb20-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="cn">NULL</span>, <span class="at">breaks =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb20-44"><a href="#cb20-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">panel.grid =</span> <span class="fu">element_blank</span>())</span>
+<span id="cb20-45"><a href="#cb20-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-46"><a href="#cb20-46" aria-hidden="true" tabindex="-1"></a><span class="co"># combine and display</span></span>
+<span id="cb20-47"><a href="#cb20-47" aria-hidden="true" tabindex="-1"></a>p1 <span class="sc">+</span> p2 <span class="sc">+</span> p3 <span class="sc">+</span></span>
+<span id="cb20-48"><a href="#cb20-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_annotation</span>(<span class="at">title =</span> <span class="st">"How do the ZIP posteriors compare to the sample statistics?"</span>,</span>
+<span id="cb20-49"><a href="#cb20-49" aria-hidden="true" tabindex="-1"></a>                  <span class="at">subtitle =</span> <span class="st">"The dashed blue lines mark the sample statistics."</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Sarafoglou-et-al--2023-_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid" width="768"></p>
+</div>
+</div>
+<p>In the sections to come, you’ll see how these exercises pay off when we want to make substantive inferences about the experimental conditions.</p>
+</section>
+<section id="anova-models." class="level3">
+<h3 class="anchored" data-anchor-id="anova-models.">ANOVA models.</h3>
+<p>For the Poisson ANOVA, I propose the model</p>
+<p><span class="math display">\[
+\begin{align*}
+\text{deviation count}_i &amp; \sim \operatorname{Poisson}(\lambda_i) \\
+\log(\lambda_i) &amp; = \beta_0 + \beta_1 \text{blinding}_i \\
+\beta_0 &amp; \sim \operatorname{Normal}(-0.5893275, 1.085659) \\
+\beta_1 &amp; \sim \operatorname{Normal}(0, 0.5),
+\end{align*}
+\]</span></p>
+<p>where the <span class="math inline">\(\lambda\)</span> parameter now has an <span class="math inline">\(i\)</span> subscript indicating it can vary as a function of predictor variables. Because we are now using a conventional Poisson model, <span class="math inline">\(\lambda\)</span> is once again the population mean of the <code>deviation_count</code> variable itself, but modeled on the log scale per convention. The new <span class="math inline">\(\beta_1\)</span> parameter is the difference in the analysis blinding condition, relative to the preregistration condition, on the log scale.</p>
+<p>Because the <span class="math inline">\(\lambda\)</span> parameter is now the mean unconditioned on additional zero’s, we probably don’t want to use the same prior as with the unconditional ZIP model <code>fit0</code>. Rather, I propose a more analogous prior would translate to a lognormal distribution for <span class="math inline">\(p(\lambda \mid \text{preregistration})\)</span> with a mean of 1 and a standard deviation of 1.5. Here’s how we compute the <span class="math inline">\(\mu\)</span> and <span class="math inline">\(\sigma\)</span> parameters for such a lognormal distribution.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="dv">1</span>    <span class="co"># desired mean for the Poisson lambda</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>s <span class="ot">&lt;-</span> <span class="fl">1.5</span>  <span class="co"># desired SD for lambda</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="co"># use the equations</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>mu    <span class="ot">&lt;-</span> <span class="fu">log</span>(m <span class="sc">/</span> <span class="fu">sqrt</span>(s<span class="sc">^</span><span class="dv">2</span> <span class="sc">/</span> m<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> <span class="dv">1</span>))</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>sigma <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="fu">log</span>(s<span class="sc">^</span><span class="dv">2</span> <span class="sc">/</span> m<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> <span class="dv">1</span>))</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a><span class="co"># what are the lognormal parameter values?</span></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>mu; sigma</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] -0.5893275</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1.085659</code></pre>
+</div>
+</div>
+<p>Thus if we set <span class="math inline">\(\beta_0 \sim \operatorname{Normal}(-0.5893275, 1.085659)\)</span>, this is what the corresponding lognormal distribution on the count metric looks like.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">prior</span>(<span class="fu">lognormal</span>(<span class="sc">-</span><span class="fl">0.5893275</span>, <span class="fl">1.085659</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">parse_dist</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">xdist =</span> .dist_obj, <span class="at">y =</span> prior)) <span class="sc">+</span> </span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_halfeye</span>(<span class="at">point_interval =</span> mean_qi, <span class="at">.width =</span> <span class="fu">c</span>(.<span class="dv">5</span>, .<span class="dv">95</span>)) <span class="sc">+</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="fu">expression</span>(<span class="fu">exp</span>(<span class="fu">italic</span>(p)(beta[<span class="dv">0</span>]))), <span class="at">breaks =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">4</span> <span class="sc">*</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_discrete</span>(<span class="cn">NULL</span>, <span class="at">breaks =</span> <span class="cn">NULL</span>, <span class="at">expand =</span> <span class="fu">expansion</span>(<span class="at">add =</span> <span class="fl">0.1</span>)) <span class="sc">+</span></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">xlim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">9</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Sarafoglou-et-al--2023-_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid" width="480"></p>
+</div>
+</div>
+<p>As to the <span class="math inline">\(\beta_1\)</span> prior, <span class="math inline">\(\operatorname{Normal}(0, 0.5)\)</span> is a generic weakly-regularizing distribution meant to rule out group differences much more than plus or minus 1 on the log scale.</p>
+<p>The ZIP ANOVA of the model is of the form</p>
+<p><span class="math display">\[
+\begin{align*}
+\text{deviation count}_i &amp; \sim \operatorname{ZIP}(\lambda_i, \pi) \\
+\log(\lambda_i) &amp; = \beta_0 + \beta_1 \text{blinding}_i \\
+\beta_0 &amp; \sim \operatorname{Normal}(-0.2228555, 0.9444565) \\
+\beta_1 &amp; \sim \operatorname{Normal}(0, 0.5) \\
+\pi &amp; \sim \operatorname{Beta}(1, 4),
+\end{align*}
+\]</span></p>
+<p>where we have retained the same priors for <span class="math inline">\(\beta_0\)</span> and <span class="math inline">\(\pi\)</span> from the earlier unconditional ZIP model, and we have added the same <span class="math inline">\(\operatorname{Normal}(0, 0.5)\)</span> prior for <span class="math inline">\(\beta_1\)</span> as in the Poisson ANOVA.</p>
+<p>We will also fit a distributional ZIP ANOVA model of the form</p>
+<p><span class="math display">\[
+\begin{align*}
+\text{deviation count}_i &amp; \sim \operatorname{ZIP}(\lambda_i, \pi_i) \\
+\log(\lambda_i) &amp; = \beta_0 + \beta_1 \text{blinding}_i \\
+\operatorname{logit}(\pi_i) &amp; = \gamma_0 + \gamma_1 \text{blinding}_i  \\
+\beta_0 &amp; \sim \operatorname{Normal}(-0.2228555, 0.9444565) \\
+\beta_1 &amp; \sim \operatorname{Normal}(0, 0.5) \\
+\gamma_0 &amp; \sim \operatorname{Normal}(-1.7, 1.1) \\
+\gamma_1 &amp; \sim \operatorname{Normal}(0, 1),
+\end{align*}
+\]</span></p>
+<p>where <span class="math inline">\(\pi\)</span> now has an <span class="math inline">\(i\)</span> subscript indicating it can vary as a function of predictor variables. To ensure the <span class="math inline">\(\pi_i\)</span> only makes predictions within the 0-to-1 range, we use the logit link, which is the <code>brm()</code> default. To help differentiate the parameters in the <span class="math inline">\(\pi\)</span> model from those for the <span class="math inline">\(\lambda_i\)</span> model, we use <span class="math inline">\(\beta\)</span> coefficients for the latter, and <span class="math inline">\(\gamma\)</span> coefficients for the former.</p>
+<p>When I set priors for the intercept of a typical logistic regression model, I like <span class="math inline">\(\operatorname{Normal}(0, 1.25)\)</span> as a weakly-regularizing default, which is why we might consider it for <span class="math inline">\(\gamma_0\)</span> in a distributional ZIP model. However, our unconditional ZIP model used a <span class="math inline">\(\operatorname{Gamma}(1, 4)\)</span> prior for <span class="math inline">\(\pi\)</span> on the identity scale, which was designed to reflect our admittedly vague theory that lower probabilities were more plausible than higher probabilities, with a prior mean at 0.2. I am not aware of an exact way to convert beta-distributed priors on the identity scale to normal-distributed priors on the log-odds scale. But after some iterating, the <span class="math inline">\(\operatorname{Normal}(-1.7, 1.1)\)</span> looks like a good candidate. Here is a simulation of draws from the <span class="math inline">\(\operatorname{Normal}(0, 1.25)\)</span> and <span class="math inline">\(\operatorname{Normal}(-1.7, 1.1)\)</span> priors, transformed back onto the probability scale with the inverse logit link.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># how many draws do you want?</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="fl">1e6</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a><span class="co"># simulate</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(<span class="st">`</span><span class="at">normal(0, 1.25)</span><span class="st">`</span>   <span class="ot">=</span> <span class="fu">rnorm</span>(<span class="at">n =</span> n, <span class="at">mean =</span> <span class="dv">0</span>,    <span class="at">sd =</span> <span class="fl">1.25</span>),     <span class="co"># Solomon's default</span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>       <span class="st">`</span><span class="at">normal(-1.7, 1.1)</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">rnorm</span>(<span class="at">n =</span> n, <span class="at">mean =</span> <span class="sc">-</span><span class="fl">1.7</span>, <span class="at">sd =</span> <span class="fl">1.1</span>)) <span class="sc">%&gt;%</span>  <span class="co"># the alternative</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="fu">everything</span>()) <span class="sc">%&gt;%</span> </span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># transform</span></span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">pi =</span> <span class="fu">plogis</span>(value)) <span class="sc">%&gt;%</span> </span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># plot</span></span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> pi, <span class="at">y =</span> name)) <span class="sc">+</span></span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_histinterval</span>(<span class="at">point_interval =</span> mean_qi, <span class="at">.width =</span> <span class="fu">c</span>(.<span class="dv">5</span>, .<span class="dv">95</span>),</span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>                    <span class="at">breaks =</span> ggdist<span class="sc">::</span><span class="fu">breaks_fixed</span>(<span class="at">width =</span> <span class="fl">0.025</span>),</span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>                    <span class="at">align =</span> ggdist<span class="sc">::</span><span class="fu">align_boundary</span>(<span class="at">at =</span> <span class="dv">0</span>)) <span class="sc">+</span></span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="fu">expression</span>(logit<span class="sc">^</span>{<span class="sc">-</span><span class="dv">1</span>}<span class="sc">*</span>(<span class="fu">italic</span>(p)(gamma[<span class="dv">0</span>]))), <span class="at">breaks =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">5</span> <span class="sc">/</span> <span class="dv">5</span>) <span class="sc">+</span></span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_discrete</span>(<span class="cn">NULL</span>, <span class="at">expand =</span> <span class="fu">expansion</span>(<span class="at">add =</span> <span class="fl">0.1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Sarafoglou-et-al--2023-_files/figure-html/unnamed-chunk-17-1.png" class="img-fluid" width="384"></p>
+</div>
+</div>
+<p>When transformed back onto the probability space, my default <span class="math inline">\(\operatorname{Normal}(0, 1.25)\)</span> prior for <span class="math inline">\(\gamma_0\)</span> is centered at 0.5, but extends across the full parameter space. However, the <span class="math inline">\(\operatorname{Normal}(-1.7, 1.1)\)</span> looks remarkably similar to the <span class="math inline">\(\operatorname{Beta}(1, 4)\)</span> prior in terms of gross shape, mean, and interquartile and 95% ranges.</p>
+<p>The <span class="math inline">\(\operatorname{Normal}(0, 1)\)</span> prior for <span class="math inline">\(\gamma_1\)</span> is my default weakly-regularizing prior for non-intercept <span class="math inline">\(\beta\)</span> coefficients in logistic regression models, and I think it’s a good option for <span class="math inline">\(\gamma_1\)</span> in the <span class="math inline">\(\pi_i\)</span> submodel of our distributional ZIP ANOVA. It will allow for moderately large group differences, but rule out outrageously large differences.</p>
+<p>Here’s how to fit the ANOVA models with <code>brm()</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Poisson ANOVA</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>fit1 <span class="ot">&lt;-</span> <span class="fu">brm</span>(</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> sarafoglou2023,</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">family =</span> <span class="fu">poisson</span>(),</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>  deviation_count <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> Intercept <span class="sc">+</span> blinding,</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">prior =</span> <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="sc">-</span><span class="fl">0.5893275</span>, <span class="fl">1.085659</span>), <span class="at">class =</span> b, <span class="at">coef =</span> Intercept) <span class="sc">+</span></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="fl">0.5</span>), <span class="at">class =</span> b, <span class="at">coef =</span> blinding),</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">cores =</span> <span class="dv">4</span>, <span class="at">seed =</span> <span class="dv">1</span>,</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">"fits/fit1.sarafoglou2023"</span></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a><span class="co"># ZI-Poisson ANOVA</span></span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>fit2 <span class="ot">&lt;-</span> <span class="fu">brm</span>(</span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> sarafoglou2023,</span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">family =</span> <span class="fu">zero_inflated_poisson</span>(),</span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a>  deviation_count <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> Intercept <span class="sc">+</span> blinding,</span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">prior =</span> <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="sc">-</span><span class="fl">0.2228555</span>, <span class="fl">0.9444565</span>), <span class="at">class =</span> b, <span class="at">coef =</span> Intercept) <span class="sc">+</span></span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="fl">0.5</span>), <span class="at">class =</span> b, <span class="at">coef =</span> blinding) <span class="sc">+</span></span>
+<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">beta</span>(<span class="dv">1</span>, <span class="dv">4</span>), <span class="at">class =</span> zi),</span>
+<span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">cores =</span> <span class="dv">4</span>, <span class="at">seed =</span> <span class="dv">1</span>,</span>
+<span id="cb26-21"><a href="#cb26-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">"fits/fit2.sarafoglou2023"</span></span>
+<span id="cb26-22"><a href="#cb26-22" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb26-23"><a href="#cb26-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-24"><a href="#cb26-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Distributional ZI-Poisson ANOVA</span></span>
+<span id="cb26-25"><a href="#cb26-25" aria-hidden="true" tabindex="-1"></a>fit3 <span class="ot">&lt;-</span> <span class="fu">brm</span>(</span>
+<span id="cb26-26"><a href="#cb26-26" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> sarafoglou2023,</span>
+<span id="cb26-27"><a href="#cb26-27" aria-hidden="true" tabindex="-1"></a>  <span class="at">family =</span> <span class="fu">zero_inflated_poisson</span>(),</span>
+<span id="cb26-28"><a href="#cb26-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bf</span>(deviation_count <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> Intercept <span class="sc">+</span> blinding,</span>
+<span id="cb26-29"><a href="#cb26-29" aria-hidden="true" tabindex="-1"></a>     zi              <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> Intercept <span class="sc">+</span> blinding),</span>
+<span id="cb26-30"><a href="#cb26-30" aria-hidden="true" tabindex="-1"></a>  <span class="at">prior =</span> <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="sc">-</span><span class="fl">0.2228555</span>, <span class="fl">0.9444565</span>), <span class="at">class =</span> b, <span class="at">coef =</span> Intercept) <span class="sc">+</span></span>
+<span id="cb26-31"><a href="#cb26-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="fl">0.5</span>), <span class="at">class =</span> b, <span class="at">coef =</span> blinding) <span class="sc">+</span></span>
+<span id="cb26-32"><a href="#cb26-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="sc">-</span><span class="fl">1.7</span>, <span class="fl">1.1</span>), <span class="at">class =</span> b, <span class="at">coef =</span> Intercept, <span class="at">dpar =</span> zi) <span class="sc">+</span></span>
+<span id="cb26-33"><a href="#cb26-33" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">class =</span> b, <span class="at">coef =</span> blinding, <span class="at">dpar =</span> zi),</span>
+<span id="cb26-34"><a href="#cb26-34" aria-hidden="true" tabindex="-1"></a>  <span class="at">cores =</span> <span class="dv">4</span>, <span class="at">seed =</span> <span class="dv">1</span>,</span>
+<span id="cb26-35"><a href="#cb26-35" aria-hidden="true" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">"fits/fit3.sarafoglou2023"</span></span>
+<span id="cb26-36"><a href="#cb26-36" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Check the model summaries.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(fit1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> Family: poisson 
+  Links: mu = log 
+Formula: deviation_count ~ 0 + Intercept + blinding 
+   Data: sarafoglou2023 (Number of observations: 120) 
+  Draws: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
+         total post-warmup draws = 4000
+
+Population-Level Effects: 
+          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept    -0.64      0.17    -0.98    -0.34 1.00     1647     1809
+blinding     -0.61      0.26    -1.12    -0.10 1.00     1784     1915
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(fit2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> Family: zero_inflated_poisson 
+  Links: mu = log; zi = identity 
+Formula: deviation_count ~ 0 + Intercept + blinding 
+   Data: sarafoglou2023 (Number of observations: 120) 
+  Draws: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
+         total post-warmup draws = 4000
+
+Population-Level Effects: 
+          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept    -0.27      0.24    -0.75     0.19 1.01     1525     1963
+blinding     -0.54      0.28    -1.11    -0.01 1.00     1740     1772
+
+Family Specific Parameters: 
+   Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+zi     0.31      0.14     0.04     0.55 1.01     1481     1154
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(fit3)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> Family: zero_inflated_poisson 
+  Links: mu = log; zi = logit 
+Formula: deviation_count ~ 0 + Intercept + blinding 
+         zi ~ 0 + Intercept + blinding
+   Data: sarafoglou2023 (Number of observations: 120) 
+  Draws: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
+         total post-warmup draws = 4000
+
+Population-Level Effects: 
+             Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept       -0.26      0.22    -0.70     0.17 1.00     1996     2364
+blinding        -0.22      0.35    -0.89     0.48 1.00     1951     2153
+zi_Intercept    -1.01      0.64    -2.51     0.03 1.00     1938     1712
+zi_blinding      1.08      0.74    -0.53     2.36 1.00     2171     1901
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+</div>
+</div>
+</section>
+<section id="ancova-models." class="level3">
+<h3 class="anchored" data-anchor-id="ancova-models.">ANCOVA models.</h3>
+<p>For the Poisson ANCOVA, I propose the model</p>
+<p><span class="math display">\[
+\begin{align*}
+\text{deviation count}_i &amp; \sim \operatorname{Poisson}(\lambda_i) \\
+\log(\lambda_i) &amp; = \beta_0 + \beta_1 \text{blinding}_i + \beta_2 \text{tz}_i + \beta_3 \text{mz}_i \\
+\beta_0 &amp; \sim \operatorname{Normal}(-0.5893275, 1.085659) \\
+\beta_1, \dots, \beta_3 &amp; \sim \operatorname{Normal}(0, 0.5),
+\end{align*}
+\]</span></p>
+<p>where the <span class="math inline">\(\lambda\)</span> parameter now has an <span class="math inline">\(i\)</span> subscript indicating it can vary as a function of predictor variables. Because we are now using a conventional Poisson model, <span class="math inline">\(\lambda\)</span> is once again the population mean of the <code>deviation_count</code> variable itself, but modeled on the log scale per convention. The new <span class="math inline">\(\beta_1\)</span> parameter is the difference in the analysis blinding condition, relative to the preregistration condition, on the log scale.</p>
+<p>BLAH</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Poisson ANCOVA</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>fit4 <span class="ot">&lt;-</span> <span class="fu">brm</span>(</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> sarafoglou2023,</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">family =</span> <span class="fu">poisson</span>(),</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>  deviation_count <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> Intercept <span class="sc">+</span> blinding <span class="sc">+</span> tz <span class="sc">+</span> mz,</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">prior =</span> <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="sc">-</span><span class="fl">0.5893275</span>, <span class="fl">1.085659</span>), <span class="at">class =</span> b, <span class="at">coef =</span> Intercept) <span class="sc">+</span></span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="fl">0.5</span>), <span class="at">class =</span> b),</span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">cores =</span> <span class="dv">4</span>, <span class="at">seed =</span> <span class="dv">1</span>,</span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">"fits/fit4.sarafoglou2023"</span></span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a><span class="co"># ZI-Poisson ANCOVA</span></span>
+<span id="cb33-13"><a href="#cb33-13" aria-hidden="true" tabindex="-1"></a>fit5 <span class="ot">&lt;-</span> <span class="fu">brm</span>(</span>
+<span id="cb33-14"><a href="#cb33-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> sarafoglou2023,</span>
+<span id="cb33-15"><a href="#cb33-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">family =</span> <span class="fu">zero_inflated_poisson</span>(),</span>
+<span id="cb33-16"><a href="#cb33-16" aria-hidden="true" tabindex="-1"></a>  deviation_count <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> Intercept <span class="sc">+</span> blinding <span class="sc">+</span> tz <span class="sc">+</span> mz,</span>
+<span id="cb33-17"><a href="#cb33-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">prior =</span> <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="sc">-</span><span class="fl">0.2228555</span>, <span class="fl">0.9444565</span>), <span class="at">class =</span> b, <span class="at">coef =</span> Intercept) <span class="sc">+</span></span>
+<span id="cb33-18"><a href="#cb33-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="fl">0.5</span>), <span class="at">class =</span> b) <span class="sc">+</span></span>
+<span id="cb33-19"><a href="#cb33-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">beta</span>(<span class="dv">1</span>, <span class="dv">4</span>), <span class="at">class =</span> zi),</span>
+<span id="cb33-20"><a href="#cb33-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">cores =</span> <span class="dv">4</span>, <span class="at">seed =</span> <span class="dv">1</span>,</span>
+<span id="cb33-21"><a href="#cb33-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">"fits/fit5.sarafoglou2023"</span></span>
+<span id="cb33-22"><a href="#cb33-22" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb33-23"><a href="#cb33-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-24"><a href="#cb33-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Distributional ZI-Poisson ANCOVA</span></span>
+<span id="cb33-25"><a href="#cb33-25" aria-hidden="true" tabindex="-1"></a>fit6 <span class="ot">&lt;-</span> <span class="fu">brm</span>(</span>
+<span id="cb33-26"><a href="#cb33-26" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> sarafoglou2023,</span>
+<span id="cb33-27"><a href="#cb33-27" aria-hidden="true" tabindex="-1"></a>  <span class="at">family =</span> <span class="fu">zero_inflated_poisson</span>(),</span>
+<span id="cb33-28"><a href="#cb33-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bf</span>(deviation_count <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> Intercept <span class="sc">+</span> blinding <span class="sc">+</span> tz <span class="sc">+</span> mz,</span>
+<span id="cb33-29"><a href="#cb33-29" aria-hidden="true" tabindex="-1"></a>     zi              <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> Intercept <span class="sc">+</span> blinding <span class="sc">+</span> tz <span class="sc">+</span> mz),</span>
+<span id="cb33-30"><a href="#cb33-30" aria-hidden="true" tabindex="-1"></a>  <span class="at">prior =</span> <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="sc">-</span><span class="fl">0.2228555</span>, <span class="fl">0.9444565</span>), <span class="at">class =</span> b, <span class="at">coef =</span> Intercept) <span class="sc">+</span></span>
+<span id="cb33-31"><a href="#cb33-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="fl">0.5</span>), <span class="at">class =</span> b) <span class="sc">+</span></span>
+<span id="cb33-32"><a href="#cb33-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="sc">-</span><span class="fl">1.7</span>, <span class="fl">1.1</span>), <span class="at">class =</span> b, <span class="at">coef =</span> Intercept, <span class="at">dpar =</span> zi) <span class="sc">+</span></span>
+<span id="cb33-33"><a href="#cb33-33" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">class =</span> b, <span class="at">dpar =</span> zi),</span>
+<span id="cb33-34"><a href="#cb33-34" aria-hidden="true" tabindex="-1"></a>  <span class="at">cores =</span> <span class="dv">4</span>, <span class="at">seed =</span> <span class="dv">1</span>,</span>
+<span id="cb33-35"><a href="#cb33-35" aria-hidden="true" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">"fits/fit6.sarafoglou2023"</span></span>
+<span id="cb33-36"><a href="#cb33-36" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Check the model summaries.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(fit4)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> Family: poisson 
+  Links: mu = log 
+Formula: deviation_count ~ 0 + Intercept + blinding + tz + mz 
+   Data: sarafoglou2023 (Number of observations: 120) 
+  Draws: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
+         total post-warmup draws = 4000
+
+Population-Level Effects: 
+          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept    -0.66      0.17    -1.00    -0.35 1.00     3297     3277
+blinding     -0.62      0.26    -1.12    -0.12 1.00     3262     2588
+tz           -0.03      0.15    -0.32     0.25 1.00     3938     2776
+mz           -0.03      0.15    -0.33     0.27 1.00     3637     2708
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(fit5)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> Family: zero_inflated_poisson 
+  Links: mu = log; zi = identity 
+Formula: deviation_count ~ 0 + Intercept + blinding + tz + mz 
+   Data: sarafoglou2023 (Number of observations: 120) 
+  Draws: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
+         total post-warmup draws = 4000
+
+Population-Level Effects: 
+          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept    -0.27      0.25    -0.76     0.19 1.00     2213     2592
+blinding     -0.53      0.28    -1.07     0.03 1.00     2832     2562
+tz           -0.01      0.16    -0.32     0.32 1.00     3482     2890
+mz           -0.02      0.17    -0.34     0.31 1.00     3355     2855
+
+Family Specific Parameters: 
+   Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+zi     0.33      0.14     0.05     0.57 1.00     2027     1488
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(fit6)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> Family: zero_inflated_poisson 
+  Links: mu = log; zi = logit 
+Formula: deviation_count ~ 0 + Intercept + blinding + tz + mz 
+         zi ~ 0 + Intercept + blinding + tz + mz
+   Data: sarafoglou2023 (Number of observations: 120) 
+  Draws: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
+         total post-warmup draws = 4000
+
+Population-Level Effects: 
+             Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept       -0.30      0.22    -0.72     0.12 1.00     2430     2759
+blinding        -0.26      0.38    -0.98     0.49 1.00     2139     2211
+tz              -0.02      0.24    -0.48     0.44 1.00     1874     2508
+mz               0.15      0.23    -0.33     0.60 1.00     2305     2511
+zi_Intercept    -1.38      0.74    -3.08    -0.18 1.00     2075     2127
+zi_blinding      1.05      0.87    -0.86     2.62 1.00     2078     2115
+zi_tz           -0.00      0.70    -1.45     1.38 1.00     1797     2227
+zi_mz            0.61      0.65    -0.75     1.81 1.00     2011     2250
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+</div>
+</div>
+</section>
+<section id="model-comparison-information-criteria." class="level3">
+<h3 class="anchored" data-anchor-id="model-comparison-information-criteria.">Model comparison: Information criteria.</h3>
+<p>We might compare the models by their LOO and WAIC estimates. First, we compute and save.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>fit1 <span class="ot">&lt;-</span> <span class="fu">add_criterion</span>(fit1, <span class="at">criterion =</span> <span class="fu">c</span>(<span class="st">"loo"</span>, <span class="st">"waic"</span>))</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>fit2 <span class="ot">&lt;-</span> <span class="fu">add_criterion</span>(fit2, <span class="at">criterion =</span> <span class="fu">c</span>(<span class="st">"loo"</span>, <span class="st">"waic"</span>))</span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>fit3 <span class="ot">&lt;-</span> <span class="fu">add_criterion</span>(fit3, <span class="at">criterion =</span> <span class="fu">c</span>(<span class="st">"loo"</span>, <span class="st">"waic"</span>))</span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>fit4 <span class="ot">&lt;-</span> <span class="fu">add_criterion</span>(fit4, <span class="at">criterion =</span> <span class="fu">c</span>(<span class="st">"loo"</span>, <span class="st">"waic"</span>))</span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>fit5 <span class="ot">&lt;-</span> <span class="fu">add_criterion</span>(fit5, <span class="at">criterion =</span> <span class="fu">c</span>(<span class="st">"loo"</span>, <span class="st">"waic"</span>))</span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>fit6 <span class="ot">&lt;-</span> <span class="fu">add_criterion</span>(fit6, <span class="at">criterion =</span> <span class="fu">c</span>(<span class="st">"loo"</span>, <span class="st">"waic"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Here are the LOO and WAIC compasrisons for the ANOVA models.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">loo_compare</span>(fit1, fit2, fit3, <span class="at">criterion =</span> <span class="st">"loo"</span>) <span class="sc">%&gt;%</span> <span class="fu">print</span>(<span class="at">simplify =</span> F)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>     elpd_diff se_diff elpd_loo se_elpd_loo p_loo  se_p_loo looic  se_looic
+fit3    0.0       0.0  -102.0     10.6         3.1    0.7    204.1   21.1  
+fit2   -1.2       1.1  -103.3     10.7         2.9    0.7    206.6   21.5  
+fit1   -3.0       2.4  -105.1     11.4         2.5    0.6    210.2   22.8  </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">loo_compare</span>(fit1, fit2, fit3, <span class="at">criterion =</span> <span class="st">"waic"</span>) <span class="sc">%&gt;%</span> <span class="fu">print</span>(<span class="at">simplify =</span> F)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>     elpd_diff se_diff elpd_waic se_elpd_waic p_waic se_p_waic waic   se_waic
+fit3    0.0       0.0  -102.0      10.6          3.1    0.7     204.1   21.1 
+fit2   -1.2       1.1  -103.3      10.7          2.9    0.7     206.6   21.5 
+fit1   -3.0       2.4  -105.1      11.4          2.5    0.6     210.2   22.8 </code></pre>
+</div>
+</div>
+<p>Next we compare the ANCOVA models.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">loo_compare</span>(fit4, fit5, fit6, <span class="at">criterion =</span> <span class="st">"loo"</span>) <span class="sc">%&gt;%</span> <span class="fu">print</span>(<span class="at">simplify =</span> F)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>     elpd_diff se_diff elpd_loo se_elpd_loo p_loo  se_p_loo looic  se_looic
+fit6    0.0       0.0  -104.4     11.2         6.7    1.4    208.8   22.3  
+fit5   -1.0       1.1  -105.4     11.1         5.2    1.3    210.7   22.2  
+fit4   -3.0       2.1  -107.3     11.8         5.1    1.2    214.7   23.7  </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="fu">loo_compare</span>(fit4, fit5, fit6, <span class="at">criterion =</span> <span class="st">"waic"</span>) <span class="sc">%&gt;%</span> <span class="fu">print</span>(<span class="at">simplify =</span> F)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>     elpd_diff se_diff elpd_waic se_elpd_waic p_waic se_p_waic waic   se_waic
+fit6    0.0       0.0  -104.3      11.1          6.6    1.4     208.6   22.3 
+fit5   -1.1       1.1  -105.4      11.1          5.2    1.3     210.7   22.2 
+fit4   -3.0       2.1  -107.3      11.8          5.1    1.2     214.6   23.7 </code></pre>
+</div>
+</div>
+<p>Finally, we compare all ANOVA and ANCOVA models.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="fu">loo_compare</span>(fit1, fit2, fit3, fit4, fit5, fit6, <span class="at">criterion =</span> <span class="st">"loo"</span>) <span class="sc">%&gt;%</span> <span class="fu">print</span>(<span class="at">simplify =</span> F)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>     elpd_diff se_diff elpd_loo se_elpd_loo p_loo  se_p_loo looic  se_looic
+fit3    0.0       0.0  -102.0     10.6         3.1    0.7    204.1   21.1  
+fit2   -1.2       1.1  -103.3     10.7         2.9    0.7    206.6   21.5  
+fit6   -2.3       1.4  -104.4     11.2         6.7    1.4    208.8   22.3  
+fit1   -3.0       2.4  -105.1     11.4         2.5    0.6    210.2   22.8  
+fit5   -3.3       1.3  -105.4     11.1         5.2    1.3    210.7   22.2  
+fit4   -5.3       2.7  -107.3     11.8         5.1    1.2    214.7   23.7  </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="fu">loo_compare</span>(fit1, fit2, fit3, fit4, fit5, fit6, <span class="at">criterion =</span> <span class="st">"waic"</span>) <span class="sc">%&gt;%</span> <span class="fu">print</span>(<span class="at">simplify =</span> F)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>     elpd_diff se_diff elpd_waic se_elpd_waic p_waic se_p_waic waic   se_waic
+fit3    0.0       0.0  -102.0      10.6          3.1    0.7     204.1   21.1 
+fit2   -1.2       1.1  -103.3      10.7          2.9    0.7     206.6   21.5 
+fit6   -2.3       1.3  -104.3      11.1          6.6    1.4     208.6   22.3 
+fit1   -3.0       2.4  -105.1      11.4          2.5    0.6     210.2   22.8 
+fit5   -3.3       1.3  -105.4      11.1          5.2    1.3     210.7   22.2 
+fit4   -5.3       2.7  -107.3      11.8          5.1    1.2     214.6   23.7 </code></pre>
+</div>
+</div>
+<p>Within the ANOVA paradigm, the models got incrementally better as they became more complex, but the differences were pretty small. The same pattern emerged among the ANCOVA models. Taken as a whole, the ANCOVA models fared slightly worse than the simpler ANOVA models. If you look closely at the <span class="math inline">\(\beta\)</span> and <span class="math inline">\(\gamma\)</span> coefficients for the baseline covariates in the ANCOVA models, you’ll see their magnitudes were generally pretty small, and fairly uncertain, which indicates the <code>tz</code> and <code>mz</code> variables were poor predictors for the criterion variable.</p>
+</section>
+<section id="model-comparison-posterior-predictive-checks." class="level3">
+<h3 class="anchored" data-anchor-id="model-comparison-posterior-predictive-checks.">Model comparison: Posterior-predictive checks.</h3>
+<p>Instead of displaying the typical <code>pp_check()</code> output for 6 models, we’ll first save those outputs as objects.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ANOVA's</span></span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>p1 <span class="ot">&lt;-</span> <span class="fu">pp_check</span>(fit1, <span class="at">type =</span> <span class="st">"bars_grouped"</span>, <span class="at">group =</span> <span class="st">"blinding"</span>,  <span class="at">ndraws =</span> <span class="dv">1000</span>)</span>
+<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">&lt;-</span> <span class="fu">pp_check</span>(fit2, <span class="at">type =</span> <span class="st">"bars_grouped"</span>, <span class="at">group =</span> <span class="st">"blinding"</span>,  <span class="at">ndraws =</span> <span class="dv">1000</span>)</span>
+<span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb53-7"><a href="#cb53-7" aria-hidden="true" tabindex="-1"></a>p3 <span class="ot">&lt;-</span> <span class="fu">pp_check</span>(fit3, <span class="at">type =</span> <span class="st">"bars_grouped"</span>, <span class="at">group =</span> <span class="st">"blinding"</span>,  <span class="at">ndraws =</span> <span class="dv">1000</span>)</span>
+<span id="cb53-8"><a href="#cb53-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-9"><a href="#cb53-9" aria-hidden="true" tabindex="-1"></a><span class="co"># ANCOVA's</span></span>
+<span id="cb53-10"><a href="#cb53-10" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb53-11"><a href="#cb53-11" aria-hidden="true" tabindex="-1"></a>p4 <span class="ot">&lt;-</span> <span class="fu">pp_check</span>(fit4, <span class="at">type =</span> <span class="st">"bars_grouped"</span>, <span class="at">group =</span> <span class="st">"blinding"</span>,  <span class="at">ndraws =</span> <span class="dv">1000</span>)</span>
+<span id="cb53-12"><a href="#cb53-12" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb53-13"><a href="#cb53-13" aria-hidden="true" tabindex="-1"></a>p5 <span class="ot">&lt;-</span> <span class="fu">pp_check</span>(fit5, <span class="at">type =</span> <span class="st">"bars_grouped"</span>, <span class="at">group =</span> <span class="st">"blinding"</span>,  <span class="at">ndraws =</span> <span class="dv">1000</span>)</span>
+<span id="cb53-14"><a href="#cb53-14" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb53-15"><a href="#cb53-15" aria-hidden="true" tabindex="-1"></a>p6 <span class="ot">&lt;-</span> <span class="fu">pp_check</span>(fit6, <span class="at">type =</span> <span class="st">"bars_grouped"</span>, <span class="at">group =</span> <span class="st">"blinding"</span>,  <span class="at">ndraws =</span> <span class="dv">1000</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Now we’ll combine the data frames from the <code>px</code> objects, wrangle, and present a customized pp-check plot.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="co"># combine</span></span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(</span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>  p1<span class="sc">$</span>data, p2<span class="sc">$</span>data, p3<span class="sc">$</span>data, p4<span class="sc">$</span>data, p5<span class="sc">$</span>data, p6<span class="sc">$</span>data</span>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># wrangle</span></span>
+<span id="cb54-6"><a href="#cb54-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(x <span class="sc">&lt;</span> <span class="dv">5</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb54-7"><a href="#cb54-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">y_obs =</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(y_obs), <span class="dv">0</span>, y_obs),</span>
+<span id="cb54-8"><a href="#cb54-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">fit   =</span> <span class="fu">rep</span>(<span class="fu">str_c</span>(<span class="st">"fit"</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>), <span class="at">each =</span> <span class="fu">n</span>() <span class="sc">/</span> <span class="dv">6</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb54-9"><a href="#cb54-9" aria-hidden="true" tabindex="-1"></a>           <span class="fu">factor</span>(<span class="at">levels =</span> <span class="fu">str_c</span>(<span class="st">"fit"</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>),</span>
+<span id="cb54-10"><a href="#cb54-10" aria-hidden="true" tabindex="-1"></a>                  <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"Poisson ANOVA"</span>, <span class="st">"ZIP ANOVA"</span>, <span class="st">"Distributional ZIP ANOVA"</span>,</span>
+<span id="cb54-11"><a href="#cb54-11" aria-hidden="true" tabindex="-1"></a>                   <span class="st">"Poisson ANCOVA"</span>, <span class="st">"ZIP ANCOVA"</span>, <span class="st">"Distributional ZIP ANCOVA"</span>)),</span>
+<span id="cb54-12"><a href="#cb54-12" aria-hidden="true" tabindex="-1"></a>         <span class="at">group =</span> <span class="fu">ifelse</span>(group <span class="sc">==</span> <span class="dv">0</span>, <span class="st">"preregistration"</span>, <span class="st">"blinding"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb54-13"><a href="#cb54-13" aria-hidden="true" tabindex="-1"></a>           <span class="fu">factor</span>(<span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"preregistration"</span>, <span class="st">"blinding"</span>),</span>
+<span id="cb54-14"><a href="#cb54-14" aria-hidden="true" tabindex="-1"></a>                  <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"control"</span>, <span class="st">"experimental"</span>))) <span class="sc">%&gt;%</span> </span>
+<span id="cb54-15"><a href="#cb54-15" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb54-16"><a href="#cb54-16" aria-hidden="true" tabindex="-1"></a>  <span class="co"># plot</span></span>
+<span id="cb54-17"><a href="#cb54-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> x)) <span class="sc">+</span></span>
+<span id="cb54-18"><a href="#cb54-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">data =</span> . <span class="sc">%&gt;%</span> <span class="fu">filter</span>(fit <span class="sc">==</span> <span class="st">"Poisson ANOVA"</span>),</span>
+<span id="cb54-19"><a href="#cb54-19" aria-hidden="true" tabindex="-1"></a>           <span class="fu">aes</span>(<span class="at">y =</span> y_obs),</span>
+<span id="cb54-20"><a href="#cb54-20" aria-hidden="true" tabindex="-1"></a>           <span class="at">fill =</span> <span class="st">"grey75"</span>) <span class="sc">+</span></span>
+<span id="cb54-21"><a href="#cb54-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_pointrange</span>(<span class="fu">aes</span>(<span class="at">y =</span> m, <span class="at">ymin =</span> l, <span class="at">ymax =</span> h, <span class="at">color =</span> fit),</span>
+<span id="cb54-22"><a href="#cb54-22" aria-hidden="true" tabindex="-1"></a>                  <span class="at">size =</span> <span class="fl">0.25</span>, <span class="at">linewidth =</span> <span class="fl">0.8</span>,</span>
+<span id="cb54-23"><a href="#cb54-23" aria-hidden="true" tabindex="-1"></a>                  <span class="at">position =</span> <span class="fu">position_dodge</span>(<span class="at">width =</span> <span class="fl">0.9</span>)) <span class="sc">+</span></span>
+<span id="cb54-24"><a href="#cb54-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_d</span>(<span class="cn">NULL</span>, <span class="at">option =</span> <span class="st">"B"</span>, <span class="at">end =</span> .<span class="dv">6</span>) <span class="sc">+</span></span>
+<span id="cb54-25"><a href="#cb54-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="st">"dependent variable"</span>, <span class="at">limits =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="fl">0.5</span>, <span class="fl">4.5</span>)) <span class="sc">+</span></span>
+<span id="cb54-26"><a href="#cb54-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"6-model pp-check"</span>,</span>
+<span id="cb54-27"><a href="#cb54-27" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"Gray bars in the background show the observed counts.</span><span class="sc">\n</span><span class="st">Colored point intervals in the foreground show the models' posterior-predictive counts."</span>,</span>
+<span id="cb54-28"><a href="#cb54-28" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"count"</span>) <span class="sc">+</span></span>
+<span id="cb54-29"><a href="#cb54-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.background =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb54-30"><a href="#cb54-30" aria-hidden="true" tabindex="-1"></a>        <span class="at">legend.key.size =</span> <span class="fu">unit</span>(<span class="fl">0.13</span>, <span class="st">'in'</span>),</span>
+<span id="cb54-31"><a href="#cb54-31" aria-hidden="true" tabindex="-1"></a>        <span class="at">legend.position =</span> <span class="fu">c</span>(.<span class="dv">85</span>, .<span class="dv">85</span>),</span>
+<span id="cb54-32"><a href="#cb54-32" aria-hidden="true" tabindex="-1"></a>        <span class="at">panel.grid =</span> <span class="fu">element_blank</span>()) <span class="sc">+</span></span>
+<span id="cb54-33"><a href="#cb54-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> group)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Sarafoglou-et-al--2023-_files/figure-html/unnamed-chunk-25-1.png" class="img-fluid" width="768"></p>
+</div>
+</div>
+<p>As the models were all similar by their information criterion estimates, they are similar in their posterior-predictive checks, too. To my eye, three overall patterns emerged. First, the ZIP models were a little better at capturing the overall distributions than the Poisson models, particularly with respect to the zero inflation. Second, the overall pattern among the ANOVA models was largely replicated by the ANCOVA models. Third, the ANCOVA models showed minimal differences from their ANOVA counterparts, again showing our baseline covariates were of little help in this case.</p>
+</section>
+</section>
+<section id="causal-estimands" class="level2">
+<h2 class="anchored" data-anchor-id="causal-estimands">Causal estimands</h2>
+<p>For this data set, we will explore three causal estimands. The first will be the typical average treatment effect (ATE). The second will be the average difference in <span class="math inline">\(\mathbb{Var}(\text{deviation count}_i)\)</span>. The final will be the average difference in the proportion of zero’s.</p>
+<section id="tau_textate." class="level3">
+<h3 class="anchored" data-anchor-id="tau_textate."><span class="math inline">\(\tau_\text{ATE}\)</span>.</h3>
+<p>The <code>avg_comparisons()</code> function from <strong>marginaleffects</strong> makes it easy to compute the ATE. Here we’ll compute the full posterior distributions from each of the 6 models with help from the <code>posterior_draws()</code> function, and save the summaries from each in an object called <code>tau_ate</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>tau_ate <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(</span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># compute and combine</span></span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">avg_comparisons</span>(fit1, <span class="at">variables =</span> <span class="st">"blinding"</span>) <span class="sc">%&gt;%</span> <span class="fu">posterior_draws</span>(),</span>
+<span id="cb55-4"><a href="#cb55-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">avg_comparisons</span>(fit2, <span class="at">variables =</span> <span class="st">"blinding"</span>) <span class="sc">%&gt;%</span> <span class="fu">posterior_draws</span>(),</span>
+<span id="cb55-5"><a href="#cb55-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">avg_comparisons</span>(fit3, <span class="at">variables =</span> <span class="st">"blinding"</span>) <span class="sc">%&gt;%</span> <span class="fu">posterior_draws</span>(),</span>
+<span id="cb55-6"><a href="#cb55-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">avg_comparisons</span>(fit4, <span class="at">variables =</span> <span class="st">"blinding"</span>) <span class="sc">%&gt;%</span> <span class="fu">posterior_draws</span>(),</span>
+<span id="cb55-7"><a href="#cb55-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">avg_comparisons</span>(fit5, <span class="at">variables =</span> <span class="st">"blinding"</span>) <span class="sc">%&gt;%</span> <span class="fu">posterior_draws</span>(),</span>
+<span id="cb55-8"><a href="#cb55-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">avg_comparisons</span>(fit6, <span class="at">variables =</span> <span class="st">"blinding"</span>) <span class="sc">%&gt;%</span> <span class="fu">posterior_draws</span>()</span>
+<span id="cb55-9"><a href="#cb55-9" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb55-10"><a href="#cb55-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># wrangle</span></span>
+<span id="cb55-11"><a href="#cb55-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">fit =</span> <span class="fu">rep</span>(<span class="fu">str_c</span>(<span class="st">"fit"</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>), <span class="at">each =</span> <span class="fu">n</span>() <span class="sc">/</span> <span class="dv">6</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb55-12"><a href="#cb55-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># summarize</span></span>
+<span id="cb55-13"><a href="#cb55-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(fit) <span class="sc">%&gt;%</span> </span>
+<span id="cb55-14"><a href="#cb55-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">mean =</span> <span class="fu">mean</span>(draw),</span>
+<span id="cb55-15"><a href="#cb55-15" aria-hidden="true" tabindex="-1"></a>            <span class="at">sd =</span> <span class="fu">sd</span>(draw),</span>
+<span id="cb55-16"><a href="#cb55-16" aria-hidden="true" tabindex="-1"></a>            <span class="at">ll =</span> <span class="fu">quantile</span>(draw, <span class="at">probs =</span> .<span class="dv">025</span>),</span>
+<span id="cb55-17"><a href="#cb55-17" aria-hidden="true" tabindex="-1"></a>            <span class="at">ul =</span> <span class="fu">quantile</span>(draw, <span class="at">probs =</span> .<span class="dv">975</span>))</span>
+<span id="cb55-18"><a href="#cb55-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-19"><a href="#cb55-19" aria-hidden="true" tabindex="-1"></a><span class="co"># what?</span></span>
+<span id="cb55-20"><a href="#cb55-20" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(tau_ate)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 5
+  fit     mean    sd     ll       ul
+  &lt;chr&gt;  &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;    &lt;dbl&gt;
+1 fit1  -0.239 0.103 -0.447 -0.0430 
+2 fit2  -0.215 0.113 -0.444 -0.00464
+3 fit3  -0.271 0.117 -0.505 -0.0426 
+4 fit4  -0.244 0.102 -0.449 -0.0479 
+5 fit5  -0.212 0.116 -0.443  0.0154 
+6 fit6  -0.258 0.120 -0.495 -0.0313 </code></pre>
+</div>
+</div>
+<p>The <code>sd</code> column shows the posterior standard deviation for each <span class="math inline">\(\hat \tau_\text{ATE}\)</span>. They are all pretty similar, but the overall pattern appears that they are larger for more complex models, both within ANOVA’s and ANCOVA’s, and between ANOVA’s and ANCOVA’s. Here are the results in a coefficient plot.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb57"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>tau_ate <span class="sc">%&gt;%</span> </span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">fit =</span> <span class="fu">factor</span>(fit,</span>
+<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>                      <span class="at">levels =</span> <span class="fu">str_c</span>(<span class="st">"fit"</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>),</span>
+<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a>                      <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"Poisson ANOVA"</span>, <span class="st">"ZIP ANOVA"</span>, <span class="st">"Distributional ZIP ANOVA"</span>,</span>
+<span id="cb57-5"><a href="#cb57-5" aria-hidden="true" tabindex="-1"></a>                                 <span class="st">"Poisson ANCOVA"</span>, <span class="st">"ZIP ANCOVA"</span>, <span class="st">"Distributional ZIP ANCOVA"</span>))) <span class="sc">%&gt;%</span> </span>
+<span id="cb57-6"><a href="#cb57-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb57-7"><a href="#cb57-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> mean, <span class="at">xmin =</span> ll, <span class="at">xmax =</span> ul, <span class="at">y =</span> fit)) <span class="sc">+</span></span>
+<span id="cb57-8"><a href="#cb57-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_pointrange</span>() <span class="sc">+</span></span>
+<span id="cb57-9"><a href="#cb57-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">expand =</span> <span class="fu">expansion</span>(<span class="at">mult =</span> <span class="fl">0.3</span>)) <span class="sc">+</span></span>
+<span id="cb57-10"><a href="#cb57-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="fu">expression</span>(tau[ATE]),</span>
+<span id="cb57-11"><a href="#cb57-11" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb57-12"><a href="#cb57-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.y =</span> <span class="fu">element_text</span>(<span class="at">hjust =</span> <span class="dv">0</span>),</span>
+<span id="cb57-13"><a href="#cb57-13" aria-hidden="true" tabindex="-1"></a>        <span class="at">panel.grid =</span> <span class="fu">element_blank</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Sarafoglou-et-al--2023-_files/figure-html/unnamed-chunk-28-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Overall, they’re all very similar.</p>
+</section>
+<section id="differences-in-variance" class="level3">
+<h3 class="anchored" data-anchor-id="differences-in-variance">Differences in variance</h3>
+<p>As we learned before, we can define the variance for the criterion variable of a ZIP model as</p>
+<p><span class="math display">\[
+\mathbb{Var}(y_i) = \lambda (1 - \pi) (1 + \pi \lambda).
+\]</span></p>
+<p>If you think of a conventional Poisson model as one for which <span class="math inline">\(\pi = 0\)</span>, this formula can apply to Poisson models, too. If you follow the algebra, you’ll see the equation then simplifies to <span class="math inline">\(\lambda\)</span>:</p>
+<p><span class="math display">\[
+\begin{align*}
+\mathbb{Var}(y_i) &amp; = \lambda (1 - \pi) (1 + \pi \lambda) \\
+&amp; = \lambda (1 - 0) (1 + 0 \lambda) \\
+&amp; = \lambda (1) (1) \\
+&amp; = \lambda.
+\end{align*}
+\]</span></p>
+<p>For this section, I think it will be easiest to take an <code>add_linpred_draws()</code> based workflow. As a first step, we’ll define the predictor grid.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>nd <span class="ot">&lt;-</span> sarafoglou2023 <span class="sc">%&gt;%</span> </span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(id, tz, mz) <span class="sc">%&gt;%</span> </span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">expand_grid</span>(<span class="at">blinding =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">1</span>)</span>
+<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-5"><a href="#cb58-5" aria-hidden="true" tabindex="-1"></a><span class="co"># what?</span></span>
+<span id="cb58-6"><a href="#cb58-6" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(nd)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 240
+Columns: 4
+$ id       &lt;dbl&gt; 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12,…
+$ tz       &lt;dbl&gt; -0.5255202, -0.5255202, 0.2530283, 0.2530283, 1.0315768, 1.03…
+$ mz       &lt;dbl&gt; -0.04864922, -0.04864922, 1.41082727, 1.41082727, -0.04864922…
+$ blinding &lt;int&gt; 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0…</code></pre>
+</div>
+</div>
+<p>Each case in the data now has two rows in the <code>nd</code> predictor grid, one for each level of <code>blinding</code>. Now we feed the <code>nd</code> data into the <code>add_linpred_draws()</code> function for each of the 6 models, define the <code>lambda</code> and <code>pi</code> values for each case, wrangle, and save the results in an object called <code>lambda_pi</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a>lambda_pi <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(</span>
+<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># ANOVA's</span></span>
+<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># fit1</span></span>
+<span id="cb60-4"><a href="#cb60-4" aria-hidden="true" tabindex="-1"></a>  nd <span class="sc">%&gt;%</span> </span>
+<span id="cb60-5"><a href="#cb60-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_linpred_draws</span>(fit1) <span class="sc">%&gt;%</span> </span>
+<span id="cb60-6"><a href="#cb60-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb60-7"><a href="#cb60-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">lambda =</span> <span class="fu">exp</span>(.linpred),</span>
+<span id="cb60-8"><a href="#cb60-8" aria-hidden="true" tabindex="-1"></a>           <span class="at">pi =</span> <span class="dv">0</span>,</span>
+<span id="cb60-9"><a href="#cb60-9" aria-hidden="true" tabindex="-1"></a>           <span class="at">fit =</span> <span class="st">"fit1"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb60-10"><a href="#cb60-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(fit, id, blinding, .draw, lambda, pi),</span>
+<span id="cb60-11"><a href="#cb60-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># fit2</span></span>
+<span id="cb60-12"><a href="#cb60-12" aria-hidden="true" tabindex="-1"></a>  nd <span class="sc">%&gt;%</span> </span>
+<span id="cb60-13"><a href="#cb60-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_linpred_draws</span>(fit2, <span class="at">dpar =</span> <span class="st">"zi"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb60-14"><a href="#cb60-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb60-15"><a href="#cb60-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">lambda =</span> <span class="fu">exp</span>(.linpred),</span>
+<span id="cb60-16"><a href="#cb60-16" aria-hidden="true" tabindex="-1"></a>           <span class="at">pi =</span> <span class="fu">plogis</span>(zi),</span>
+<span id="cb60-17"><a href="#cb60-17" aria-hidden="true" tabindex="-1"></a>           <span class="at">fit =</span> <span class="st">"fit2"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb60-18"><a href="#cb60-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(fit, id, blinding, .draw, lambda, pi),  </span>
+<span id="cb60-19"><a href="#cb60-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># fit3</span></span>
+<span id="cb60-20"><a href="#cb60-20" aria-hidden="true" tabindex="-1"></a>  nd <span class="sc">%&gt;%</span> </span>
+<span id="cb60-21"><a href="#cb60-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_linpred_draws</span>(fit3, <span class="at">dpar =</span> <span class="st">"zi"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb60-22"><a href="#cb60-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb60-23"><a href="#cb60-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">lambda =</span> <span class="fu">exp</span>(.linpred),</span>
+<span id="cb60-24"><a href="#cb60-24" aria-hidden="true" tabindex="-1"></a>           <span class="at">pi =</span> <span class="fu">plogis</span>(zi),</span>
+<span id="cb60-25"><a href="#cb60-25" aria-hidden="true" tabindex="-1"></a>           <span class="at">fit =</span> <span class="st">"fit3"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb60-26"><a href="#cb60-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(fit, id, blinding, .draw, lambda, pi),</span>
+<span id="cb60-27"><a href="#cb60-27" aria-hidden="true" tabindex="-1"></a>  <span class="co"># ANCVA's</span></span>
+<span id="cb60-28"><a href="#cb60-28" aria-hidden="true" tabindex="-1"></a>  <span class="co"># fit4</span></span>
+<span id="cb60-29"><a href="#cb60-29" aria-hidden="true" tabindex="-1"></a>  nd <span class="sc">%&gt;%</span> </span>
+<span id="cb60-30"><a href="#cb60-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_linpred_draws</span>(fit4) <span class="sc">%&gt;%</span> </span>
+<span id="cb60-31"><a href="#cb60-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb60-32"><a href="#cb60-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">lambda =</span> <span class="fu">exp</span>(.linpred),</span>
+<span id="cb60-33"><a href="#cb60-33" aria-hidden="true" tabindex="-1"></a>           <span class="at">pi =</span> <span class="dv">0</span>,</span>
+<span id="cb60-34"><a href="#cb60-34" aria-hidden="true" tabindex="-1"></a>           <span class="at">fit =</span> <span class="st">"fit4"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb60-35"><a href="#cb60-35" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(fit, id, blinding, .draw, lambda, pi),</span>
+<span id="cb60-36"><a href="#cb60-36" aria-hidden="true" tabindex="-1"></a>  <span class="co"># fit5</span></span>
+<span id="cb60-37"><a href="#cb60-37" aria-hidden="true" tabindex="-1"></a>  nd <span class="sc">%&gt;%</span> </span>
+<span id="cb60-38"><a href="#cb60-38" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_linpred_draws</span>(fit5, <span class="at">dpar =</span> <span class="st">"zi"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb60-39"><a href="#cb60-39" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb60-40"><a href="#cb60-40" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">lambda =</span> <span class="fu">exp</span>(.linpred),</span>
+<span id="cb60-41"><a href="#cb60-41" aria-hidden="true" tabindex="-1"></a>           <span class="at">pi =</span> <span class="fu">plogis</span>(zi),</span>
+<span id="cb60-42"><a href="#cb60-42" aria-hidden="true" tabindex="-1"></a>           <span class="at">fit =</span> <span class="st">"fit5"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb60-43"><a href="#cb60-43" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(fit, id, blinding, .draw, lambda, pi),  </span>
+<span id="cb60-44"><a href="#cb60-44" aria-hidden="true" tabindex="-1"></a>  <span class="co"># fit6</span></span>
+<span id="cb60-45"><a href="#cb60-45" aria-hidden="true" tabindex="-1"></a>  nd <span class="sc">%&gt;%</span> </span>
+<span id="cb60-46"><a href="#cb60-46" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_linpred_draws</span>(fit6, <span class="at">dpar =</span> <span class="st">"zi"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb60-47"><a href="#cb60-47" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb60-48"><a href="#cb60-48" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">lambda =</span> <span class="fu">exp</span>(.linpred),</span>
+<span id="cb60-49"><a href="#cb60-49" aria-hidden="true" tabindex="-1"></a>           <span class="at">pi =</span> <span class="fu">plogis</span>(zi),</span>
+<span id="cb60-50"><a href="#cb60-50" aria-hidden="true" tabindex="-1"></a>           <span class="at">fit =</span> <span class="st">"fit6"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb60-51"><a href="#cb60-51" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(fit, id, blinding, .draw, lambda, pi)</span>
+<span id="cb60-52"><a href="#cb60-52" aria-hidden="true" tabindex="-1"></a>) </span>
+<span id="cb60-53"><a href="#cb60-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb60-54"><a href="#cb60-54" aria-hidden="true" tabindex="-1"></a><span class="co"># what?</span></span>
+<span id="cb60-55"><a href="#cb60-55" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(lambda_pi)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 5,760,000
+Columns: 6
+$ fit      &lt;chr&gt; "fit1", "fit1", "fit1", "fit1", "fit1", "fit1", "fit1", "fit1…
+$ id       &lt;dbl&gt; 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3…
+$ blinding &lt;int&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+$ .draw    &lt;int&gt; 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18…
+$ lambda   &lt;dbl&gt; 0.4874169, 0.4482759, 0.5538688, 0.5363352, 0.5504218, 0.5422…
+$ pi       &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…</code></pre>
+</div>
+</div>
+<p>With the rather long <code>lambda_pi</code> data frame, we can make group summaries for the counterfactual differences in variance, by each model. Here we save those summary values as <code>v</code>, and then display the results.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>v <span class="ot">&lt;-</span> lambda_pi <span class="sc">%&gt;%</span> </span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">v =</span> lambda <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">-</span> pi) <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">+</span> pi <span class="sc">*</span> lambda)) <span class="sc">%&gt;%</span> </span>
+<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(fit, id, blinding, .draw, v) <span class="sc">%&gt;%</span> </span>
+<span id="cb62-4"><a href="#cb62-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> blinding, <span class="at">values_from =</span> v) <span class="sc">%&gt;%</span> </span>
+<span id="cb62-5"><a href="#cb62-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">d =</span> <span class="st">`</span><span class="at">1</span><span class="st">`</span> <span class="sc">-</span> <span class="st">`</span><span class="at">0</span><span class="st">`</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb62-6"><a href="#cb62-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># first compute the contrast within each MCMC draw, by fit</span></span>
+<span id="cb62-7"><a href="#cb62-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(fit, .draw) <span class="sc">%&gt;%</span> </span>
+<span id="cb62-8"><a href="#cb62-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">d =</span> <span class="fu">mean</span>(d)) <span class="sc">%&gt;%</span> </span>
+<span id="cb62-9"><a href="#cb62-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(fit, d) <span class="sc">%&gt;%</span> </span>
+<span id="cb62-10"><a href="#cb62-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># now summarize the ATE across the MCMC draws</span></span>
+<span id="cb62-11"><a href="#cb62-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(fit) <span class="sc">%&gt;%</span> </span>
+<span id="cb62-12"><a href="#cb62-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">mean =</span> <span class="fu">mean</span>(d),</span>
+<span id="cb62-13"><a href="#cb62-13" aria-hidden="true" tabindex="-1"></a>            <span class="at">sd =</span> <span class="fu">sd</span>(d),</span>
+<span id="cb62-14"><a href="#cb62-14" aria-hidden="true" tabindex="-1"></a>            <span class="at">ll =</span> <span class="fu">quantile</span>(d, <span class="at">probs =</span> .<span class="dv">025</span>),</span>
+<span id="cb62-15"><a href="#cb62-15" aria-hidden="true" tabindex="-1"></a>            <span class="at">ul =</span> <span class="fu">quantile</span>(d, <span class="at">probs =</span> .<span class="dv">975</span>))</span>
+<span id="cb62-16"><a href="#cb62-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-17"><a href="#cb62-17" aria-hidden="true" tabindex="-1"></a><span class="co"># what?</span></span>
+<span id="cb62-18"><a href="#cb62-18" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(v)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 5
+  fit     mean    sd     ll       ul
+  &lt;chr&gt;  &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;    &lt;dbl&gt;
+1 fit1  -0.239 0.103 -0.447 -0.0430 
+2 fit2  -0.232 0.135 -0.527 -0.00541
+3 fit3  -0.293 0.179 -0.651  0.0627 
+4 fit4  -0.244 0.102 -0.449 -0.0479 
+5 fit5  -0.241 0.148 -0.571  0.0176 
+6 fit6  -0.303 0.196 -0.703  0.0594 </code></pre>
+</div>
+</div>
+<p>Now these summaries are the causal effects for the differences in variances for <code>deviation_count</code>, expressed as <span class="math inline">\(\operatorname{\mathbb{E}}\left[\mathbb{Var}(y_i^1) - \mathbb{Var}(y_i^0) \mid \mathbf C_i \right]\)</span>. You’ll note that because they are both conventional Poisson models, the results for <code>fit1</code> and <code>fit4</code> are identical, here, to those from the last section where we considered <span class="math inline">\(\hat \tau_\text{ATE}\)</span> because, with the Poisson, the mean is the same as the variance. For the ZIP models, the results differ.</p>
+<p>Here we compute and save the sample difference in variances.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a>d_v <span class="ot">&lt;-</span> sarafoglou2023 <span class="sc">%&gt;%</span> </span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(blinding) <span class="sc">%&gt;%</span> </span>
+<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">v =</span> <span class="fu">var</span>(deviation_count)) <span class="sc">%&gt;%</span> </span>
+<span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> blinding, <span class="at">values_from =</span> v) <span class="sc">%&gt;%</span> </span>
+<span id="cb64-5"><a href="#cb64-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">d =</span> <span class="st">`</span><span class="at">1</span><span class="st">`</span> <span class="sc">-</span> <span class="st">`</span><span class="at">0</span><span class="st">`</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb64-6"><a href="#cb64-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(d)</span>
+<span id="cb64-7"><a href="#cb64-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-8"><a href="#cb64-8" aria-hidden="true" tabindex="-1"></a><span class="co"># what?</span></span>
+<span id="cb64-9"><a href="#cb64-9" aria-hidden="true" tabindex="-1"></a>d_v</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] -0.2477182</code></pre>
+</div>
+</div>
+<p>Here are the results in a coefficient plot.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>v <span class="sc">%&gt;%</span> </span>
+<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">fit =</span> <span class="fu">factor</span>(fit,</span>
+<span id="cb66-3"><a href="#cb66-3" aria-hidden="true" tabindex="-1"></a>                      <span class="at">levels =</span> <span class="fu">str_c</span>(<span class="st">"fit"</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>),</span>
+<span id="cb66-4"><a href="#cb66-4" aria-hidden="true" tabindex="-1"></a>                      <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"Poisson ANOVA"</span>, <span class="st">"ZIP ANOVA"</span>, <span class="st">"Distributional ZIP ANOVA"</span>,</span>
+<span id="cb66-5"><a href="#cb66-5" aria-hidden="true" tabindex="-1"></a>                                 <span class="st">"Poisson ANCOVA"</span>, <span class="st">"ZIP ANCOVA"</span>, <span class="st">"Distributional ZIP ANCOVA"</span>))) <span class="sc">%&gt;%</span> </span>
+<span id="cb66-6"><a href="#cb66-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb66-7"><a href="#cb66-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> mean, <span class="at">xmin =</span> ll, <span class="at">xmax =</span> ul, <span class="at">y =</span> fit)) <span class="sc">+</span></span>
+<span id="cb66-8"><a href="#cb66-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> d_v, <span class="at">linetype =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb66-9"><a href="#cb66-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_pointrange</span>() <span class="sc">+</span></span>
+<span id="cb66-10"><a href="#cb66-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">expand =</span> <span class="fu">expansion</span>(<span class="at">mult =</span> <span class="fl">0.3</span>)) <span class="sc">+</span></span>
+<span id="cb66-11"><a href="#cb66-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="fu">expression</span>(Group<span class="sc">~</span>variances<span class="sc">~</span>computed<span class="sc">~</span>with<span class="sc">~</span><span class="fu">lambda</span>(<span class="dv">1</span><span class="sc">-</span>pi)(<span class="dv">1</span><span class="sc">+</span>pi<span class="sc">*</span>lambda)),</span>
+<span id="cb66-12"><a href="#cb66-12" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="fu">expression</span>(tau[Var]),</span>
+<span id="cb66-13"><a href="#cb66-13" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb66-14"><a href="#cb66-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.y =</span> <span class="fu">element_text</span>(<span class="at">hjust =</span> <span class="dv">0</span>),</span>
+<span id="cb66-15"><a href="#cb66-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">panel.grid =</span> <span class="fu">element_blank</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Sarafoglou-et-al--2023-_files/figure-html/unnamed-chunk-33-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>The Poisson models are very confident about the variance differences. The ZIP model are less so.</p>
+</section>
+<section id="differences-in-proportion-of-zeros" class="level3">
+<h3 class="anchored" data-anchor-id="differences-in-proportion-of-zeros">Differences in proportion of zero’s</h3>
+<p>Since we know know Poisson models can be expressed in terms of <span class="math inline">\(\lambda\)</span> and <span class="math inline">\(\pi\)</span>, given we set <span class="math inline">\(\pi = 0\)</span>, we can also use the following formula to compute the proportion of expected zero’s for each model as</p>
+<p><span class="math display">\[
+\Pr(y = 0) = \pi + (1 - \pi)  \exp(-\lambda),
+\]</span></p>
+<p>which just simplifies to <span class="math inline">\(\exp(-\lambda)\)</span> for the Poisson models. Starting with the <code>lambda_pi</code> data frame from above, here we compute that value for each level of <code>blinding</code> across all 6 models, compute the contrasts, summarize, and save the results as <code>z</code>. Then we display the <code>z</code> summaries.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb67"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a>z <span class="ot">&lt;-</span> lambda_pi <span class="sc">%&gt;%</span> </span>
+<span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">z =</span> pi <span class="sc">+</span> (<span class="dv">1</span> <span class="sc">-</span> pi) <span class="sc">*</span> <span class="fu">exp</span>(<span class="sc">-</span>lambda)) <span class="sc">%&gt;%</span> </span>
+<span id="cb67-3"><a href="#cb67-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(fit, id, blinding, .draw, z) <span class="sc">%&gt;%</span> </span>
+<span id="cb67-4"><a href="#cb67-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> blinding, <span class="at">values_from =</span> z) <span class="sc">%&gt;%</span> </span>
+<span id="cb67-5"><a href="#cb67-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">d =</span> <span class="st">`</span><span class="at">1</span><span class="st">`</span> <span class="sc">-</span> <span class="st">`</span><span class="at">0</span><span class="st">`</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb67-6"><a href="#cb67-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># first compute the contrast within each MCMC draw, by fit</span></span>
+<span id="cb67-7"><a href="#cb67-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(fit, .draw) <span class="sc">%&gt;%</span> </span>
+<span id="cb67-8"><a href="#cb67-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">d =</span> <span class="fu">mean</span>(d)) <span class="sc">%&gt;%</span> </span>
+<span id="cb67-9"><a href="#cb67-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(fit, d) <span class="sc">%&gt;%</span> </span>
+<span id="cb67-10"><a href="#cb67-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># now summarize the ATE across the MCMC draws</span></span>
+<span id="cb67-11"><a href="#cb67-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(fit) <span class="sc">%&gt;%</span> </span>
+<span id="cb67-12"><a href="#cb67-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">mean =</span> <span class="fu">mean</span>(d),</span>
+<span id="cb67-13"><a href="#cb67-13" aria-hidden="true" tabindex="-1"></a>            <span class="at">sd =</span> <span class="fu">sd</span>(d),</span>
+<span id="cb67-14"><a href="#cb67-14" aria-hidden="true" tabindex="-1"></a>            <span class="at">ll =</span> <span class="fu">quantile</span>(d, <span class="at">probs =</span> .<span class="dv">025</span>),</span>
+<span id="cb67-15"><a href="#cb67-15" aria-hidden="true" tabindex="-1"></a>            <span class="at">ul =</span> <span class="fu">quantile</span>(d, <span class="at">probs =</span> .<span class="dv">975</span>))</span>
+<span id="cb67-16"><a href="#cb67-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb67-17"><a href="#cb67-17" aria-hidden="true" tabindex="-1"></a><span class="co"># what?</span></span>
+<span id="cb67-18"><a href="#cb67-18" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(z)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 5
+  fit     mean     sd       ll    ul
+  &lt;chr&gt;  &lt;dbl&gt;  &lt;dbl&gt;    &lt;dbl&gt; &lt;dbl&gt;
+1 fit1  0.158  0.0656  0.0282  0.285
+2 fit2  0.0720 0.0362  0.00153 0.143
+3 fit3  0.175  0.0666  0.0417  0.300
+4 fit4  0.159  0.0642  0.0313  0.282
+5 fit5  0.0689 0.0362 -0.00466 0.138
+6 fit6  0.159  0.0657  0.0333  0.285</code></pre>
+</div>
+</div>
+<p>Here is the sample difference.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a>d_z <span class="ot">&lt;-</span> sarafoglou2023 <span class="sc">%&gt;%</span> </span>
+<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(blinding) <span class="sc">%&gt;%</span> </span>
+<span id="cb69-3"><a href="#cb69-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">z =</span> <span class="fu">mean</span>(deviation_count <span class="sc">==</span> <span class="dv">0</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb69-4"><a href="#cb69-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> blinding, <span class="at">values_from =</span> z) <span class="sc">%&gt;%</span> </span>
+<span id="cb69-5"><a href="#cb69-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">d =</span> <span class="st">`</span><span class="at">1</span><span class="st">`</span> <span class="sc">-</span> <span class="st">`</span><span class="at">0</span><span class="st">`</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb69-6"><a href="#cb69-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(d)</span>
+<span id="cb69-7"><a href="#cb69-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-8"><a href="#cb69-8" aria-hidden="true" tabindex="-1"></a><span class="co"># what?</span></span>
+<span id="cb69-9"><a href="#cb69-9" aria-hidden="true" tabindex="-1"></a>d_z</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.2239511</code></pre>
+</div>
+</div>
+<p>Now here are the summaries in a coefficient plot.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a>z <span class="sc">%&gt;%</span> </span>
+<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">fit =</span> <span class="fu">factor</span>(fit,</span>
+<span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a>                      <span class="at">levels =</span> <span class="fu">str_c</span>(<span class="st">"fit"</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>),</span>
+<span id="cb71-4"><a href="#cb71-4" aria-hidden="true" tabindex="-1"></a>                      <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"Poisson ANOVA"</span>, <span class="st">"ZIP ANOVA"</span>, <span class="st">"Distributional ZIP ANOVA"</span>,</span>
+<span id="cb71-5"><a href="#cb71-5" aria-hidden="true" tabindex="-1"></a>                                 <span class="st">"Poisson ANCOVA"</span>, <span class="st">"ZIP ANCOVA"</span>, <span class="st">"Distributional ZIP ANCOVA"</span>))) <span class="sc">%&gt;%</span> </span>
+<span id="cb71-6"><a href="#cb71-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb71-7"><a href="#cb71-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> mean, <span class="at">xmin =</span> ll, <span class="at">xmax =</span> ul, <span class="at">y =</span> fit)) <span class="sc">+</span></span>
+<span id="cb71-8"><a href="#cb71-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> d_z, <span class="at">linetype =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb71-9"><a href="#cb71-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_pointrange</span>() <span class="sc">+</span></span>
+<span id="cb71-10"><a href="#cb71-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">limits =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="fl">0.5</span>, <span class="fl">0.5</span>)) <span class="sc">+</span></span>
+<span id="cb71-11"><a href="#cb71-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="fu">expression</span>(Group<span class="sc">~</span>proportions<span class="sc">~</span>computed<span class="sc">~</span>with<span class="sc">~</span>pi<span class="sc">+</span>(<span class="dv">1</span><span class="sc">-</span>pi)<span class="sc">*</span><span class="fu">exp</span>(<span class="sc">-</span>lambda)),</span>
+<span id="cb71-12"><a href="#cb71-12" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="fu">expression</span>(tau[<span class="fu">Pr</span>(<span class="fu">italic</span>(Y)<span class="sc">==</span><span class="dv">0</span>)]),</span>
+<span id="cb71-13"><a href="#cb71-13" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb71-14"><a href="#cb71-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.y =</span> <span class="fu">element_text</span>(<span class="at">hjust =</span> <span class="dv">0</span>),</span>
+<span id="cb71-15"><a href="#cb71-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">panel.grid =</span> <span class="fu">element_blank</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="Sarafoglou-et-al--2023-_files/figure-html/unnamed-chunk-36-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Interestingly, this time the simple ZIP models differ from the other kinds of models. In all cases, it appears we should expect more zero’s for the analysis blinding group, though there’s considerable uncertainty about the magnitude of the difference.</p>
+</section>
+</section>
+<section id="other-extensions" class="level2">
+<h2 class="anchored" data-anchor-id="other-extensions">Other extensions</h2>
+<p>The ZIP model a fine strategy to have at your disposal when you have a lot of zero’s in your counts, and it seems like it was a decent fit for the <code>sarafoglou2023</code> data. We have even more options. For example, the zero-inflated negative binomial (ZINB) is a great choice if you have both extra zero’s and overdispersion. Hurdle models provide an alternative approach when all the non-zero counts are seen as part of a fundamentally different process than all the zero’s, and you can fit either hurdle Poisson (HP) or hurdle negative binomial (HNB) models. These options are all available in <strong>brms</strong> by setting <code>family = zero_inflated_negbinomial()</code>, <code>family = hurdle_poisson()</code> or <code>family = hurdle_negbinomial()</code>, and I’d even recommend trying these out on the <code>sarafoglou2023</code> data for practice.</p>
+<p>Do note that similar to the ZIP, the parameters in these three alternative models have complex relations with the population mean and variance. You can compute the means for each model with the following formulas:</p>
+<p><span class="math display">\[
+\begin{align*}
+\mathbb E(y_i)_\text{ZINB} &amp; = \mu (1 - \pi) \\
+\mathbb E(y_i)_\text{HP}   &amp; = \mu\frac{1 - \pi}{1 - \exp(-\mu)} \\
+\mathbb E(y_i)_\text{HNB} &amp; = \mu (1 - \pi) \left [1 - \left ( \frac{\phi}{\mu + \phi} \right )^\phi \right ]^{-1},
+\end{align*}
+\]</span></p>
+<p>where <span class="math inline">\(\pi\)</span> is the zero-inflation parameter for the ZINB, but stands for the total proportion of zero’s in the HP and HNB models, and the <span class="math inline">\(\phi\)</span> parameter is the typical <strong>brms</strong> precision parameter for the negative binomial likelihood. You can compute the variances with the formulas:</p>
+<p><span class="math display">\[
+\begin{align*}
+\mathbb{Var}(y_i)_\text{ZINB} &amp; = \mu (1 - \pi) (1 + (\pi + 1/\phi)\mu) \\
+\mathbb{Var}(y_i)_\text{HP}   &amp; = \left [ (\mu + \mu^2)\frac{1 - \pi}{1 - \exp(-\mu)}  \right ] - \left [ \mu \frac{1 - \pi}{1 - \exp(-\mu)} \right ]^2 \\
+\mathbb{Var}(y_i)_\text{HNB}  &amp; = \mu (1 - \pi) \left [1 - \left ( \frac{\phi}{\mu + \phi} \right )^\phi \right ]^{-1} \left \{ \frac{\phi + \mu (\phi + 1)}{\phi} - \mu (1 - \pi) \left [1 - \left ( \frac{\phi}{\mu + \phi} \right )^\phi \right ]^{-1}  \right \},
+\end{align*}
+\]</span></p>
+<p>which are admittedly baffling at first glance. This all just takes practice. If you’re curious, you can find these formulas scattered in the literature, such as in part in Feng (2021; <a href="https://doi.org/10.1186/s40488-021-00121-4">https://doi.org/10.1186/s40488-021-00121-4</a>), Zou et al (2021; <a href="https://doi.org/10.3390/e23091206">https://doi.org/10.3390/e23091206</a>) and the dissertation by Bhaktha (2018; <a href="https://etd.ohiolink.edu/apexprod/rws_etd/send_file/send?accession=osu1543573678017356&amp;disposition=inline">link here</a>), or more completely, but in a somewhat different format, in the text by Zuur et al (2009; <a href="https://link.springer.com/book/10.1007/978-0-387-87458-6"><em>Mixed Effects Models and Extensions in Ecology with R</em></a>).</p>
+</section>
+<section id="session-information" class="level2">
+<h2 class="anchored" data-anchor-id="session-information">Session information</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>R version 4.3.0 (2023-04-21)
+Platform: aarch64-apple-darwin20 (64-bit)
+Running under: macOS Ventura 13.4
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/lib/libRblas.0.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.11.0
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+time zone: America/Chicago
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] marginaleffects_0.12.0 patchwork_1.1.2        tidybayes_3.0.4       
+ [4] brms_2.19.0            Rcpp_1.0.10            lubridate_1.9.2       
+ [7] forcats_1.0.0          stringr_1.5.0          dplyr_1.1.2           
+[10] purrr_1.0.1            readr_2.1.4            tidyr_1.3.0           
+[13] tibble_3.2.1           ggplot2_3.4.2          tidyverse_2.0.0       
+
+loaded via a namespace (and not attached):
+  [1] tensorA_0.36.2       rstudioapi_0.14      jsonlite_1.8.5      
+  [4] magrittr_2.0.3       TH.data_1.1-2        estimability_1.4.1  
+  [7] farver_2.1.1         nloptr_2.0.3         rmarkdown_2.22      
+ [10] vctrs_0.6.3          minqa_1.2.5          base64enc_0.1-3     
+ [13] htmltools_0.5.5      distributional_0.3.2 StanHeaders_2.26.27 
+ [16] htmlwidgets_1.6.2    plyr_1.8.8           sandwich_3.0-2      
+ [19] emmeans_1.8.6        zoo_1.8-12           igraph_1.4.3        
+ [22] mime_0.12            lifecycle_1.0.3      pkgconfig_2.0.3     
+ [25] colourpicker_1.2.0   Matrix_1.5-4         R6_2.5.1            
+ [28] fastmap_1.1.1        collapse_1.9.6       shiny_1.7.4         
+ [31] numDeriv_2016.8-1.1  digest_0.6.31        colorspace_2.1-0    
+ [34] ps_1.7.5             crosstalk_1.2.0      projpred_2.6.0      
+ [37] labeling_0.4.2       fansi_1.0.4          timechange_0.2.0    
+ [40] abind_1.4-5          mgcv_1.8-42          compiler_4.3.0      
+ [43] bit64_4.0.5          withr_2.5.0          backports_1.4.1     
+ [46] inline_0.3.19        shinystan_2.6.0      gamm4_0.2-6         
+ [49] pkgbuild_1.4.1       MASS_7.3-58.4        gtools_3.9.4        
+ [52] loo_2.6.0            tools_4.3.0          httpuv_1.6.11       
+ [55] threejs_0.3.3        glue_1.6.2           callr_3.7.3         
+ [58] nlme_3.1-162         promises_1.2.0.1     grid_4.3.0          
+ [61] checkmate_2.2.0      reshape2_1.4.4       generics_0.1.3      
+ [64] gtable_0.3.3         tzdb_0.4.0           data.table_1.14.8   
+ [67] hms_1.1.3            utf8_1.2.3           pillar_1.9.0        
+ [70] ggdist_3.3.0         markdown_1.7         vroom_1.6.3         
+ [73] posterior_1.4.1      later_1.3.1          splines_4.3.0       
+ [76] lattice_0.21-8       survival_3.5-5       bit_4.0.5           
+ [79] tidyselect_1.2.0     miniUI_0.1.1.1       knitr_1.43          
+ [82] arrayhelpers_1.1-0   gridExtra_2.3        stats4_4.3.0        
+ [85] xfun_0.39            bridgesampling_1.1-2 matrixStats_1.0.0   
+ [88] DT_0.28              rstan_2.21.8         stringi_1.7.12      
+ [91] yaml_2.3.7           boot_1.3-28.1        evaluate_0.21       
+ [94] codetools_0.2-19     cli_3.6.1            RcppParallel_5.1.7  
+ [97] shinythemes_1.2.0    xtable_1.8-4         munsell_0.5.0       
+[100] processx_3.8.1       coda_0.19-4          svUnit_1.0.6        
+[103] parallel_4.3.0       rstantools_2.3.1     ellipsis_0.3.2      
+[106] prettyunits_1.1.1    dygraphs_1.1.1.6     bayesplot_1.10.0    
+[109] Brobdingnag_1.2-9    lme4_1.1-33          viridisLite_0.4.2   
+[112] mvtnorm_1.2-2        scales_1.2.1         xts_0.13.1          
+[115] insight_0.19.2       crayon_1.5.2         rlang_1.1.1         
+[118] multcomp_1.4-24      shinyjs_2.1.0       </code></pre>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
