@@ -11,7 +11,7 @@ knitr::opts_chunk$set(fig.retina = 2.5)
 options(width = 110)
 ```
 
-Sarafoglou et al (2023; [https://doi.org/10.1177/25152459221128319](https://doi.org/10.1177/25152459221128319)) used a 2-group design ($n$ = 61 and $n$ = 59). Their preregistration lives at [https://osf.io/2cdht](https://osf.io/2cdht). The team preregistered 4 specific hypothesis, and their fourth hypothesis (called "Hypothesis 4" in the paper) originally read:
+Sarafoglou et al (2023; [https://doi.org/10.1177/25152459221128319](https://doi.org/10.1177/25152459221128319)) used a posttest-only 2-group design ($n$ = 61 and $n$ = 59). Their preregistration lives at [https://osf.io/2cdht](https://osf.io/2cdht). The team preregistered 4 specific hypothesis, and their fourth hypothesis (called "Hypothesis 4" in the paper) originally read:
 
 > Analysis teams in the preregistration condition should (1) deviate more often from their planned analysis than analysis teams in the blinding condition and (2) when they deviate from their analysis plan, analysis teams in the preregistration condition should deviate on more items than analysis teams in the blinding condition. We will test this hypothesis against the null hypothesis that both groups (1) deviate the same number of times from their analysis plan and (2) when they deviate from their analysis plan they do so for the same number of items..
 
@@ -100,7 +100,7 @@ sarafoglou2023 %>%
 
 ## Models
 
-In this sketch, we'll be fitting 7 models to the data. Three models will follow an ANOVA specification, and another three will be their ANCOVA analogues. But before we go into ANOVA and ANCOVA mode, we'll first warm up with an unconditional ZIP model to familiarize ourselves with the parameters of the ZIP.
+In their preregistration, Sarafoglou and colleagues proposed zero-inflated Poisson (ZIP) models in their analysis plan for Hypothesis 4, and I agree that was a good strategy for these data. In this sketch we will fit 7 models to the data, 2 with the Poisson likelihood and 5 with the ZIP. Three models will follow an ANOVA specification, and another three will be their ANCOVA analogues. But before we go into ANOVA and ANCOVA mode, we'll first warm up with an unconditional ZIP model to familiarize ourselves with the parameters.
 
 ### ZIP warmup.
 
@@ -115,9 +115,9 @@ $$
 \end{align}
 $$
 
-where, because we have no predictor variables in the model, the two parameters $\lambda$ and $\pi$ are constants without $i$ subscripts. As with conventional Poisson models, we use the log link for $\lambda$, which is the `brm()` default. The $\beta_0$ parameter, then, is the intercept for $\lambda$ on the log scale. When you estimate $\pi$ without predictor variables, the `brm()` default is the identity link, which we've retained here. The third and fourth lines in the equation show the priors, which may seem oddly specific. Before we discuss the priors in detail, we should what the $\lambda$ and $\pi$ parameters mean for the ZIP distribution.
+where, because we have no predictor variables in the model, the two parameters $\lambda$ and $\pi$ are constants without $i$ subscripts. As with conventional Poisson models, we use the log link for $\lambda$, which is the `brm()` default. The $\beta_0$ parameter, then, is just $\lambda$ on the log scale. When you estimate $\pi$ without predictor variables, the `brm()` default is the identity link, which we've retained here. The third and fourth lines in the equation show the priors, which may seem oddly specific. Before we discuss the priors in detail, we should discuss what the $\lambda$ and $\pi$ parameters mean for the ZIP distribution.
 
-The $\lambda$ parameter in a simple Poisson distribution controls both the mean and the variance. However, the ZIP is a mixture of a Poisson count and a proportion of zero's in addition to what you would typically expect from a Poisson count with a given $\lambda$. The $\pi$ parameter, also sometimes called $\theta$ by the Stan team (https://mc-stan.org/docs/stan-users-guide/zero-inflated.html) or $z$ by Bürkner (https://cran.r-project.org/web/packages/brms/vignettes/brms_families.html#zero-inflated-and-hurdle-models), is the proportion of extra zero's/ As a consequence, the mean of the mixture distribution is not simply $\lambda$, but is defined as
+The $\lambda$ parameter in a simple Poisson distribution controls both the mean and the variance. However, the ZIP is a mixture of Poisson counts and a proportion of zero's *in addition* to what you would typically expect from a Poisson count variable with a given $\lambda$. The $\pi$ parameter, also sometimes called $\theta$ by the Stan team (https://mc-stan.org/docs/stan-users-guide/zero-inflated.html) or $z$ by Bürkner (https://cran.r-project.org/web/packages/brms/vignettes/brms_families.html#zero-inflated-and-hurdle-models), is the proportion of extra zero's. As a consequence, the mean of the mixture distribution is not simply $\lambda$, but is defined as
 
 $$
 \mathbb E(y_i) = \lambda (1 - \pi),
@@ -129,9 +129,9 @@ $$
 \mathbb{Var}(y_i) = \lambda (1 - \pi) (1 + \pi \lambda).
 $$
 
-Thus, when we set our priors for $\lambda$, we can't just base them on our expected value for our criterion variable. We need to account for the expected value for the proportion of zero's, too. Before we discuss our prior for $\lambda$, then, I think we should first discuss $\pi$.
+Thus, when we set our priors for $\lambda$, we can't just base them on our expected value for our criterion variable. We need to account for the expected value for the proportion of zero's, too. Therefore before we discuss our prior for $\lambda$, I think we should first discuss $\pi$.
 
-When I looked through the paper, preregistration and supporting materials from Sarafoglou and colleagues, it was not clear to me how many extra zero's they expected for `deviation_count`. This is a new topic in meta science, and I found the prior research generally unhelpful, too. But Sarafoglou colleagues were confident enough `deviation_count` would have extra zero's to justify planning on a ZIP model in their preregistration, we want a prior to assume some proportion greater than zero. The `brms()` default prior for this model is $\text{Beta}(1, 1)$, which is flat. My proposed $\text{Beta}(1, 4)$ prior has a mean of 0.2, and a wide spread around that mean. Here are those two priors in a plot.
+When I looked through the paper, preregistration and supporting materials from Sarafoglou and colleagues, it was not clear to me how many extra zero's they expected for `deviation_count`. The paper covered a new topic in meta science, and I found the prior research generally unhelpful, too. But since Sarafoglou colleagues were confident enough that `deviation_count` would have extra zero's that they felt justified planning on a ZIP model in their preregistration, I think we want our prior to assume some proportion meaningfully greater than zero. If you check with the `get_prior()` function, you'll see the `brm()` default prior for this model is $\text{Beta}(1, 1)$, which is flat across the $[0, 1]$ range. My proposed $\text{Beta}(1, 4)$ prior has a mean of 0.2, and a wide spread around that mean. Here are those two priors in a plot.
 
 ```{r, fig.width = 4, fig.height = 2.75}
 c(prior(beta(1, 1)),      # brms default
@@ -144,7 +144,7 @@ c(prior(beta(1, 1)),      # brms default
   scale_y_discrete(NULL, expand = expansion(add = 0.1))
 ```
 
-In case you didn't know, the mean of the beta distribution is  $\alpha / (\alpha + \beta)$, and the degree of *concentration* (aka *sample size*) around that mean can be expressed as $\alpha + \beta$. Thus, an alternative $\text{Beta}(10, 40)$ prior would have the same prior mean if 0.2, but with much greater concentration around that mean. Try it out in another plot like the one above and see.
+In case you didn't know, the mean of the beta distribution is  $\alpha / (\alpha + \beta)$, and the degree of *concentration* (aka *sample size*) around that mean can be expressed as $\alpha + \beta$. Thus, an alternative $\text{Beta}(10, 40)$ prior would have the same prior mean of 0.2, but with much greater concentration around that mean. Try it out in another plot like the one above and see.
 
 ```{r, eval = F, echo = F}
 c(prior(beta(1, 1)),        # brms default
@@ -157,7 +157,7 @@ c(prior(beta(1, 1)),        # brms default
   scale_y_discrete(NULL, expand = expansion(add = 0.1))
 ```
 
-Now we have settled on a prior for $\pi$, we're almost ready to discuss $\lambda$. Modelers used to the ZIP might be able to think in terms of $\lambda$ directly, but I suspect those newer to the ZIP will find it easier to think in terms of the mean of the criterion variable `deviation_count` as a whole. Much like with $\pi$, the prior literature on this meta-science topic is sparse. Given the authors in this study were already interested in meta-science and they were aware their analyses were going to be scrutinized by others, my guess is they would, on average, deviate infrequently from their analysis plans. For the sake of the example, let's suppose we expected an average value of 1 for `deviation_count`. With a little algebra, we can use the formula for $\mathbb E(y_i)$, above to compute $\lambda$ given fixed values for $\pi$ and $\mathbb E(y_i)$. Here's the computation in code.
+Now we have settled on a prior for $\pi$, we're almost ready to discuss $\lambda$. Modelers familiar with the ZIP might be able to think in terms of $\lambda$ directly, but I suspect those newer to the ZIP will find it easier to think in terms of the mean of the criterion variable `deviation_count` as a whole. Much like with $\pi$, the prior literature on this meta-science topic is sparse. Given the research teams who participated in this study were already interested in meta-science and they were aware their analyses were going to be scrutinized by others, my guess is they would, on average, deviate infrequently from their analysis plans. For the sake of the example, let's suppose we expected an average value of 1 for `deviation_count`. With a little algebra, we can use the formula for $\mathbb E(y_i)$, above, to compute $\lambda$ given fixed values for $\pi$ and $\mathbb E(y_i)$. Here's the computation in code.
 
 ```{r}
 m <- 1     # expected mean for deviation_count
@@ -177,8 +177,6 @@ $$
 $$
 
 If we want our mean of 1 and, say, a standard deviation of 1.5, here's what those equations look like in code.
-
-Here's what that looks like in code.
 
 ```{r}
 m <- 1.25  # desired mean for the ZIP lambda
@@ -296,17 +294,17 @@ p3 <- as_draws_df(fit0) %>%
   scale_x_continuous(expression(Pr(italic(y)==0)), limits = c(0, 1)) +
   scale_y_continuous(NULL, breaks = NULL)
 
-# combine and display
+# combine, entitle, and display
 p1 + p2 + p3 +
   plot_annotation(title = "How do the ZIP posteriors compare to the sample statistics?",
                   subtitle = "The dashed blue lines mark the sample statistics.")
 ```
 
-In the sections to come, you'll see how these exercises pay off when we want to make substantive inferences about the experimental conditions.
+Now we have a sense of how to fit and work with at simple ZIP model. In the case of this particular ZIP model, it looks like it did a pretty good job capturing the sample statistics, which seems reassuring. In the sections to come, you'll see how these exercises pay off when we want to make substantive inferences about the experimental conditions.
 
 ### ANOVA models.
 
-For the Poisson ANOVA, I propose the model
+In this section, we will fit three ANOVA models: a Poisson ANOVA, a ZIP ANOVA, and a distributional ZIP ANOVA. For the Poisson ANOVA, I propose the model
 
 $$
 \begin{align*}
@@ -346,9 +344,9 @@ prior(lognormal(-0.5893275, 1.085659)) %>%
   coord_cartesian(xlim = c(0, 9))
 ```
 
-As to the $\beta_1$ prior, $\text{Normal}(0, 0.5)$ is a generic weakly-regularizing distribution meant to rule out group differences much more than plus or minus 1 on the log scale.
+As to the $\beta_1$ prior, $\text{Normal}(0, 0.5)$ is a generic weakly-regularizing distribution meant to rule out group differences much more than plus or minus 1 on the log scale. Consider adjusting the $\sigma$ hyperparameter to make your model more or less conservative, as desired.
 
-The ZIP ANOVA of the model is of the form
+The ZIP ANOVA version of the model will follow the form
 
 $$
 \begin{align*}
@@ -360,9 +358,9 @@ $$
 \end{align*}
 $$
 
-where we have retained the same priors for $\beta_0$ and $\pi$ from the earlier unconditional ZIP model, and we have added the same $\text{Normal}(0, 0.5)$ prior for $\beta_1$ as in the Poisson ANOVA.
+where we have retained the same priors for $\beta_0$ and $\pi$ from the earlier unconditional ZIP model, and we have added the $\text{Normal}(0, 0.5)$ prior for $\beta_1$, just like in the Poisson ANOVA, above.
 
-We will also fit a distributional ZIP ANOVA model of the form
+Finally, our distributional ZIP ANOVA model will be of the form
 
 $$
 \begin{align*}
@@ -376,7 +374,7 @@ $$
 \end{align*}
 $$
 
-where $\pi$ now has an $i$ subscript indicating it can vary as a function of predictor variables. To ensure the $\pi_i$ only makes predictions within the 0-to-1 range, we use the logit link, which is the `brm()` default. To help differentiate the parameters in the $\pi$ model from those for the $\lambda_i$ model, we use $\beta$ coefficients for the latter, and $\gamma$ coefficients for the former.
+where $\pi$ now has an $i$ subscript indicating it can vary as a function of predictor variables. To ensure the $\pi_i$ submodel only makes predictions within the 0-to-1 range, we use the logit link, which is the `brm()` default. To help differentiate the parameters in the $\pi_i$ model from those for the $\lambda_i$ model, we use $\beta$ coefficients for the latter, and $\gamma$ coefficients for the former.
 
 When I set priors for the intercept of a typical logistic regression model, I like $\text{Normal}(0, 1.25)$ as a weakly-regularizing default, which is why we might consider it for $\gamma_0$ in a distributional ZIP model. However, our unconditional ZIP model used a $\text{Gamma}(1, 4)$ prior for $\pi$ on the identity scale, which was designed to reflect our admittedly vague theory that lower probabilities were more plausible than higher probabilities, with a prior mean at 0.2. I am not aware of an exact way to convert beta-distributed priors on the identity scale to normal-distributed priors on the log-odds scale. But after some iterating, the $\text{Normal}(-1.7, 1.1)$ looks like a good candidate. Here is a simulation of draws from the $\text{Normal}(0, 1.25)$ and $\text{Normal}(-1.7, 1.1)$ priors, transformed back onto the probability scale with the inverse logit link.
 
@@ -402,7 +400,7 @@ tibble(`normal(0, 1.25)`   = rnorm(n = n, mean = 0,    sd = 1.25),     # Solomon
   scale_y_discrete(NULL, expand = expansion(add = 0.1))
 ```
 
-When transformed back onto the probability space, my default $\text{Normal}(0, 1.25)$ prior for $\gamma_0$ is centered at 0.5, but extends across the full parameter space. However, the $\text{Normal}(-1.7, 1.1)$ looks remarkably similar to the $\text{Beta}(1, 4)$ prior in terms of gross shape, mean, and interquartile and 95% ranges.
+When transformed back onto the probability space, my default $\text{Normal}(0, 1.25)$ prior for $\gamma_0$ is centered at 0.5, but extends across the full parameter space. However, the $\text{Normal}(-1.7, 1.1)$ looks remarkably similar to the $\text{Beta}(1, 4)$ prior in terms of gross shape, mean, and interquartile and 95% ranges. This will be our approach.
 
 The $\text{Normal}(0, 1)$ prior for $\gamma_1$ is my default weakly-regularizing prior for non-intercept $\beta$ coefficients in logistic regression models, and I think it's a good option for $\gamma_1$ in the $\pi_i$ submodel of our distributional ZIP ANOVA. It will allow for moderately large group differences, but rule out outrageously large differences.
 
@@ -455,9 +453,11 @@ print(fit2)
 print(fit3)
 ```
 
+On the whole, the summary results look fine.
+
 ### ANCOVA models.
 
-For the Poisson ANCOVA, I propose the model
+The three models in this section will be the ANCOVA generalizations of the ANOVA models, above. For the Poisson ANCOVA, I propose the model
 
 $$
 \begin{align*}
@@ -468,7 +468,7 @@ $$
 \end{align*}
 $$
 
-where the two new coefficients $\beta_2$ and $\beta_3$ are for the standardized versions of our two baseline covariates, `tz` and `mz`. Both covariates receive the regularizing $\text{Normal}(0, 0.5)$, and the priors for all other parameters are the same as those in the ANOVA version of the model. We will follow the same basic convention for the ZIP ANCOVA and the distributional ZIP ANCOVA. Both will be the same as their ANOVA counterparts, but they will include the new parameters for the two baseline covariates, along with regularizing priors. Here's how to fit the models with `brm()`.
+where the two new coefficients $\beta_2$ and $\beta_3$ are for the standardized versions of our two baseline covariates, `tz` and `mz`. Both covariates receive the regularizing $\text{Normal}(0, 0.5)$ prior, and the priors for all other parameters are the same as those in the ANOVA version of the model. We will follow the same basic convention for the ZIP ANCOVA and the distributional ZIP ANCOVA. Both will be the same as their ANOVA counterparts, but they will include the new parameters for the two baseline covariates, along with regularizing priors. Here's how to fit the ANCOVA models with `brm()`.
 
 ```{r fit4}
 # Poisson ANCOVA
@@ -517,6 +517,8 @@ print(fit5)
 print(fit6)
 ```
 
+The model summaries look fine.
+
 ### Model comparison: Information criteria.
 
 We might compare the models by their LOO and WAIC estimates. First, we compute and save.
@@ -551,7 +553,7 @@ loo_compare(fit1, fit2, fit3, fit4, fit5, fit6, criterion = "loo") %>% print(sim
 loo_compare(fit1, fit2, fit3, fit4, fit5, fit6, criterion = "waic") %>% print(simplify = F)
 ```
 
-Within the ANOVA paradigm, the models got incrementally better as they became more complex, but the differences were pretty small. The same pattern emerged among the ANCOVA models. Taken as a whole, the ANCOVA models fared slightly worse than the simpler ANOVA models. If you look closely at the $\beta$ and $\gamma$ coefficients for the baseline covariates in the ANCOVA models, you'll see their magnitudes were generally pretty small, and fairly uncertain, which indicates the `tz` and `mz` variables were poor predictors for the criterion variable.
+Within the ANOVA paradigm, the models got incrementally better as they became more complex, but the differences were pretty small. The same pattern emerged among the ANCOVA models. Taken as a whole, the ANCOVA models fared slightly worse than the simpler ANOVA models. If you look closely at the $\beta$ and $\gamma$ coefficients for the baseline covariates in the ANCOVA models, you'll see their magnitudes were generally pretty small, and fairly uncertain, which indicates the `tz` and `mz` variables were poor predictors for the criterion variable. Not every baseline covariate is a winner, friends.
 
 ### Model comparison: Posterior-predictive checks.
 
@@ -608,7 +610,7 @@ bind_rows(
        y = "count") +
   theme(legend.background = element_blank(),
         legend.key.size = unit(0.13, 'in'),
-        legend.position = c(.85, .85)) +
+        legend.position = c(.85, .875)) +
   facet_wrap(~ group)
 ```
 
@@ -710,7 +712,7 @@ tau_ate %>%
   theme(axis.text.y = element_text(hjust = 0))
 ```
 
-Overall, they're all very similar.
+Overall, the estimates are all very similar across models. From a substantive perspective, analysis blinding tends to cause about one fewer analysis deviations in five, relative to the conventional preregistration approach. Does a reduction of about one in five seem like a lot to you? I'm not impressed, but without a benchmark, it seems hard to gauge.
 
 ### Differences in variance
 
@@ -720,7 +722,7 @@ $$
 \mathbb{Var}(y_i) = \lambda (1 - \pi) (1 + \pi \lambda).
 $$
 
-If you think of a conventional Poisson model as one for which $\pi = 0$, this formula can apply to Poisson models, too. If you follow the algebra, you'll see the equation then simplifies to $\lambda$:
+If you think of a conventional Poisson model as a ZIP for which $\pi = 0$, this formula can apply to Poisson models, too. If you follow the algebra, you'll see the equation then simplifies to $\lambda$:
 
 $$
 \begin{align*}
@@ -731,7 +733,7 @@ $$
 \end{align*}
 $$
 
-For this section, I think it will be easiest to take an `add_linpred_draws()` based workflow. As a first step, we'll define the predictor grid.
+I point this out because it will streamline our post-processing code. For this section, I think it will be easiest to take an `add_linpred_draws()` based workflow. As a first step, we'll define the predictor grid.
 
 ```{r}
 nd <- sarafoglou2023 %>% 
@@ -860,11 +862,11 @@ v %>%
   theme(axis.text.y = element_text(hjust = 0))
 ```
 
-The Poisson models are very confident about the variance differences. The ZIP model are less so.
+The Poisson models are very confident about the variance differences. The ZIP model are less so. This particular analysis might not catch your interest from a substantive perspective, but at the very least it's good to increase your awareness of your options.
 
 ### Differences in proportion of zero's
 
-Since we know know Poisson models can be expressed in terms of $\lambda$ and $\pi$, given we set $\pi = 0$, we can also use the following formula to compute the proportion of expected zero's for each model as
+Since we now know Poisson models can be expressed in terms of $\lambda$ *and* $\pi = 0$, we can also use the following formula to compute the proportion of expected zero's for all of our models as
 
 $$
 \Pr(y = 0) = \pi + (1 - \pi)  \exp(-\lambda),
@@ -893,7 +895,7 @@ z <- lambda_pi %>%
 print(z)
 ```
 
-Here is the sample difference.
+Here is the sample difference in the proportion of zero's.
 
 ```{r}
 d_z <- sarafoglou2023 %>% 
@@ -930,7 +932,7 @@ Interestingly, this time the simple ZIP models differ from the other kinds of mo
 
 ## Other extensions
 
-The ZIP model a fine strategy to have at your disposal when you have a lot of zero's in your counts, and it seems like it was a decent fit for the `sarafoglou2023` data. We have even more options. For example, the zero-inflated negative binomial (ZINB) is a great choice if you have both extra zero's and overdispersion. Hurdle models provide an alternative approach when all the non-zero counts are seen as part of a fundamentally different process than all the zero's, and you can fit either hurdle Poisson (HP) or hurdle negative binomial (HNB) models. These options are all available in **brms** by setting `family = zero_inflated_negbinomial()`, `family = hurdle_poisson()` or `family = hurdle_negbinomial()`, and I'd even recommend trying these out on the `sarafoglou2023` data for practice.
+The ZIP model a fine strategy to have at your disposal when you have a lot of zero's in your counts, and it seems like it was a decent fit for the `sarafoglou2023` data. We have even more options, such as zero-inflated negative binomial (ZINB) models when you have both extra zero's and overdispersion. Hurdle models provide an alternative approach when all the non-zero counts are seen as part of a fundamentally different process than all the zero's, and you can fit either hurdle Poisson (HP) or hurdle negative binomial (HNB) models. These options are all available in **brms** by setting `family = zero_inflated_negbinomial()`, `family = hurdle_poisson()` or `family = hurdle_negbinomial()`, and I'd even recommend trying these out on the `sarafoglou2023` data for practice.
 
 Do note that similar to the ZIP, the parameters in these three alternative models have complex relations with the population mean and variance. You can compute the means for each model with the following formulas:
 
