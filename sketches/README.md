@@ -1,6 +1,6 @@
 # Sketches
 
-These files contain content sketches. They aren’t necessarily full chapters or sections, but they do contain the origins of the sections and chapters that will eventually define the book.
+These files contain content sketches. They aren't necessarily full chapters or sections, but they do contain the origins of the sections and chapters that will eventually define the book.
 
 ## TOC
 
@@ -11,6 +11,7 @@ These files contain content sketches. They aren’t necessarily full chapters or
 | Clarke et al (2021) | Posttest-only 2 X 2 factorial design |
 | Coker et al (2009) | Multivariate single-case ABAB design |
 | Coyne et al (2022) | Solomon 4-group design |
+| Gaffney et al (2022) | Between-person 5 X 4 factorial design |
 | Kessler et al (2022) | Within-person 2 X 2 X 2 factorial design |
 | Lai et al (2016) | Solomon 26-group design |
 | Lai et al (2016), vivid counterstereotypic scenario versus control | Solomon 4-group design |
