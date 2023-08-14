@@ -1,0 +1,466 @@
+---
+title: "Clarke et al (2021) temp"
+subtitle: "Posttest-only 2 X 2 factorial design"
+author: "A Solomon Kurz"
+date: "`r format(Sys.Date())`"
+output: github_document
+---
+
+```{r, echo = F}
+knitr::opts_chunk$set(fig.retina = 2.5)
+options(width = 110)
+```
+
+## Health warning labels for alcoholic beverages
+
+Clarke and colleagues (2021; https://doi.org/10.1111/add.15072) reported the results from a posttest-only randomized experiment with a $2 \times 2$ factorial design to explore the impact of health warning labels (HWLs) on a alcohol-selection task. The authors made their data available on the OSF at https://osf.io/pr8zu/ (see the `Alcohol study 2 full dataset.xlsx` file in the `Study 2 folder`).
+
+Load a reformatted version of the data and the primary **R** packages.
+
+```{r, message = F, warning = F}
+# packages
+library(tidyverse)
+library(brms)
+library(tidybayes)
+library(patchwork)
+
+# load the data
+load(file = "data/clarke2021.rda")
+
+# what is this?
+print(clarke2021)
+```
+
+Clarke and colleagues recruited UK adults who consumed beer or wine at least one a week, with help from a market research agency (https://www.dynata.com/). The sample was designed to resemble the general UK adult population by age and gender. After consent, $N = 6{,}087$ participants were randomized into one of four conditions. After $n = 63$ dropped out (evenly dispersed across conditions), the four experimental groups and their sample sizes were:
+
+* a no-HWL control ($n = 1510$),
+* an image-only HWL group ($n = 1502$),
+* a text-only HWL group ($n = 1511$), and
+* an image-and-text HWL group ($n = 1501$).
+
+Here are those counts reproduced from the `clarke2021` data.
+
+```{r}
+clarke2021 %>% 
+  count(group, hwl)
+```
+
+The four experimental groups are also described with the `image` and `text` dummy variables. 
+
+```{r}
+clarke2021 %>% 
+  distinct(hwl, image, text)
+```
+
+After random assignment, participants viewed images of 6 alcoholic and 6 non-alcoholic drinks. The orders were randomized by participant and the labels on the drinks varied based on the experimental condition. After viewing all 12 images, participant were asked to choose which drink they would like to consume. Though Clarke and colleagues collected data on a variety of outcomes, their primary outcome was whether participants selected an alcoholic or non-alcoholic beverage. The `alcohol` column shows whether participants chose the alcoholic (`alcohol == 1`) or non-alcoholic (`alcohol == 0`) beverage.
+
+The data file also contains the background variables `age` and `gender` (coded `"Male"`, `"Female"`, `"Other"`, and `"Prefer not to say"`). There is also a substantive covariate of interest, `audit`, which is the sum score for the AUDIT-C, a brief screening tool for alcohol use (Bush et al., 1998; https://doi.org/10.1001/archinte.158.16.1789). We will have more to say about the AUDIT, later.
+
+## EDA
+
+### Sample statistics.
+
+Here are the sample statistics for the selection task, by group.
+
+```{r}
+clarke2021 %>% 
+  group_by(group, hwl) %>% 
+  summarise(`n chose alcoholic beverage` = sum(alcohol),
+            total = n(),
+            `%` = 100 * mean(alcohol))
+```
+
+### Look at the data.
+
+It might be nice to look at those statistics in a lollipop plot.
+
+```{r, fig.width = 6, fig.height = 2}
+clarke2021 %>% 
+  group_by(hwl) %>% 
+  summarise(`n chose alcoholic beverage` = sum(alcohol),
+            p = mean(alcohol),
+            n = n()) %>% 
+  mutate(label = str_c(`n chose alcoholic beverage`, "/", n)) %>% 
+  
+  ggplot(aes(x = p, y = hwl)) +
+  geom_point(size = 3) +
+  geom_linerange(aes(xmin = 0, xmax = p)) +
+  geom_text(aes(label = label, hjust = 0),
+            nudge_x = .02, size = 3) +
+  scale_x_continuous("proportion choosing alcohol (by HWL label)", 
+                     labels = c("0", ".25", ".5", ".75", "1"),
+                     expand = c(0, 0), limits = 0:1) +
+  labs(y = NULL) +
+  theme(axis.text.y = element_text(hjust = 0),
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank())
+```
+
+We want a statistical framework that will allow us to make high-quality population inferences from those proportions.
+
+## Model framework
+
+As the data are binary, a single-level binomial framework will handle them well. One could handle the factorial design in a number of ways. For simplicity, and a nod to convention, we'll use the two dummy variables and their interaction in the model formula. For the sake of pedagogy, we will consider two models. Then first will be a simple model that only includes the experimental variables as predictors. The second model will add a covariate to improve efficiency.
+
+### The simple experimental model.
+
+If we describe `alcohol` as varying across $i$ rows, we can describe the data with the two dummy variables and their interaction as
+
+$$
+\begin{align*}
+\text{alcohol}_i          & \sim \operatorname{Binomial}(\text{total}_i, p_i) \\
+\operatorname{logit}(p_i) & = \beta_0 + \beta_1 \text{image}_i + \beta_2 \text{text}_i + \beta_3 \text{image}_i \text{text}_i \\
+\beta_0, \dots, \beta_3   & \sim \mathcal N(0, 1).
+\end{align*}
+$$
+
+To constrain the conditional probabilities $p_i$ to within the $(0, 1)$ range, we use the conventional logit link. Given our two dummy variables `image` and `text`, $\beta_0$ captures the expected value for the reference category, the no-HWL control condition. $\beta_1$ captures the difference for the image-only HWL condition and $\beta_2$ captures the difference for the text-only HWL condition, both relative to the no-HWL control. Thus, $\beta_3$ is the interaction between the two dummies and the difference between the image-and-text HWL condition, relative to control, is captured by the combination of $\beta_1$, $\beta_2$, and $\beta_3$.
+
+In their introduction (p. 42), Clarke and colleagues described the prior literature on HWL for alcoholic beverages as scant, with small-$n$ studies which had somewhat contradictory findings. In this case, we might adopt a simple weakly-regularizing approach, rather than basing the priors on the findings of any specific study. By setting the prior for the control condition ($\beta_0$) to $\mathcal N(0, 1)$, we are centering the prior mass on the probability scale to .5, with a liberal 95% percentile range from about .12 to .88.
+
+```{r}
+set.seed(1)
+
+# prior scale
+tibble(log_odds = rnorm(n = 1e5, mean = 0, sd = 1)) %>% 
+  # probability scale
+  mutate(probability = inv_logit_scaled(log_odds)) %>% 
+  pivot_longer(everything()) %>% 
+  # summarize
+  group_by(name) %>% 
+  mean_qi(value) %>% 
+  mutate_if(is.double, round, digits = 2)
+```
+
+The other $\beta$ parameters share the $\mathcal N(0, 1)$ prior, which gently centers the group differences from control to zero, but easily allows for large differences.
+
+Here's how to fit the model with `brm()`.
+
+```{r fit1}
+fit1 <- brm(
+  data = clarke2021,
+  family = binomial,
+  alcohol | trials(1) ~ 0 + Intercept + image + text + image:text,
+  prior = c(prior(normal(0, 1), class = b)),
+  cores = 4, seed = 1,
+  # file = "fits/fit1.clarke2021"
+)
+```
+
+Check the summary.
+
+```{r}
+summary(fit1)
+```
+
+With the way we have used dummy variables in the model, $\beta_1$ and $\beta_2$ both return odds ratios for the image-only and text-only conditions, relative to the no HWL control. Just exponentiate.
+
+```{r}
+fixef(fit1)[2:3, -2] %>% exp()
+```
+
+As it is an interaction term, it is difficult to interpret the $\beta_3$ posterior directly. However, researchers who like the NHST approach may appreciate how one can use the 95% intervals for the parameter to test the statistical significance of the interaction term.
+
+However, one can work directly with the posterior draws from `fit1` to hand-compute odds ratios or any other contrasts among the conditions, as desired. To my mind, the `brms::fitted()` function provides the easiest method for wrangling the posterior. To give a sense, here we use `fitted()` to compute the log-odds for each condition, and then convert the log-odds to probabilities.
+
+```{r}
+# define the new data
+nd <- clarke2021 %>% 
+  distinct(group, hwl, image, text)
+
+# compute the fitted draws
+f1 <- fitted(fit1,
+            newdata = nd,
+            summary = F) %>% 
+  # wrangle
+  data.frame() %>% 
+  set_names(nd %>% pull(group)) %>% 
+  mutate(draw = 1:n()) %>% 
+  pivot_longer(-draw, names_to = "group", values_to = "p") %>% 
+  mutate(group = as.double(group)) %>% 
+  left_join(nd, by = "group")
+
+# what is this?
+glimpse(f1)
+```
+
+Now we have our fitted draws in an nicely-formatted `f` object, we can display the conditional probabilities in a coefficient plot.
+
+```{r}
+p1 <- f1 %>%
+  ggplot(aes(x = p, y = hwl)) +
+  stat_pointinterval(.width = .95, size = 1.5, point_size = 2.5) +
+  scale_x_continuous("probability of choosing alcohol", 
+                     labels = c("0", ".25", ".5", ".75", "1"),
+                     expand = c(0, 0), limits = 0:1) +
+  labs(title = "Population estimates (by HWL)",
+       y = NULL) +
+  theme(axis.text.y = element_text(hjust = 0),
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank())
+```
+
+With aid from the `tidybayes::compare_levels()` function, it's easy to compute all pairwise effect sizes as probability contrasts and then display the results in a coefficient plot.
+
+```{r}
+# for the y-axis labels
+contrast_levels <- c("image only \u2212 control", "text only \u2212 control", "image and text \u2212 control", "text only \u2212 image only", "image and text \u2212 image only", "image and text \u2212 text only")
+
+# wrangle
+p2 <- f1 %>% 
+  compare_levels(p, by = hwl, draw_indices = c("draw", "fit")) %>% 
+  mutate(hwl = str_replace(hwl, "-", "\u2212")) %>% 
+  mutate(hwl = factor(hwl, levels = contrast_levels))  %>% 
+  
+  # plot!
+  ggplot(aes(x = p, y = hwl)) +
+  stat_pointinterval(.width = .95, size = 1.5, point_size = 2.5) +
+  scale_x_continuous("difference in probability of choosing alcohol", 
+                     labels = c("-.5", "-.25", "0", ".25", ".5"),
+                     limits = c(-0.5, 0.5)) +
+  labs(title = "Pairwise contrasts among HWLs",
+       y = NULL) +
+  theme(axis.text.y = element_text(hjust = 0),
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank())
+```
+
+Here we combine the two sub plots, add an overall title, and display the results.
+
+```{r, fig.width = 9, fig.height = 4.75}
+p1 / p2 + 
+  plot_annotation(title = "Health warning labels (HWLs) reduce alcoholic beverage selection, compared to a no-HWL control.") +
+  plot_layout(heights = c(2, 3))
+```
+
+If you would prefer the contrasts in the lower plot to be in the risk-ratio metric (i.e., probability a divided by probability b), you could set `compare_levels(fun = `/`)` within the workflow.
+
+```{r, eval = F, echo = F}
+# for the y-axis labels
+contrast_levels <- c("image only / control", "text only / control", "image and text / control", "text only / image only", "image and text / image only", "image and text / text only")
+
+f1 %>% 
+  compare_levels(p, by = hwl, draw_indices = c("draw", "fit"), fun = `/`) %>% 
+  mutate(hwl = factor(hwl, levels = contrast_levels))  %>% 
+  
+  # plot!
+  ggplot(aes(x = p, y = hwl)) +
+  stat_pointinterval(.width = .95, size = 1.5, point_size = 2.5) +
+  scale_x_continuous("probability ratios for choosing alcohol",
+                     breaks = c(0.5, 1, 1.5, 2),
+                     labels = c("0.5", "1", "1.5", "2"),
+                     limits = c(0.5, 2)) +
+  labs(title = "Pairwise contrasts among HWLs",
+       y = NULL) +
+  theme(axis.text.y = element_text(hjust = 0),
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank())
+```
+
+### The baseline covariate model.
+
+When possible, it is generally a good idea to include one or more baseline covariates in the model, even when modeling data from a randomized trial. Baseline with strong covariances with the dependent variable will tend to increase the efficiency of the estimates (i.e., reduce the posterior standard deviations of the effect sizes).
+
+Sadly, the `clarke2021` data set does not contain a high-quality baseline covariate to add to the model. Ideally, would use the the sum score from the AUDIT-C, which should be a strong predictor of whether participants chose alcohol. However, the *Procedure* subsection of Clarke et al's *Method* clarifies that participants completed the AUDIT-C after randomization and after the selection task. Thus, `audit` is a post-treatment variable, and it is generally a bad idea to condition on post-treatment variables. However, for the sake of pedagogy, we're going to ignore that detail and condition on the AUDIT-C scores anyway. It will help make a broader point about logistic regression. But be warned: Clarke and colleagues did the correct thing in the paper. They analyzed their primary outcome without conditioning on the AUDIT-C. We are bending the rules to make a different point.
+
+To help with interpretation, we'll standardize the `audit` variable and name the results as `auditz`.
+
+```{r}
+clarke2021 <- clarke2021 %>% 
+  mutate(auditz = (audit - mean(audit)) / sd(audit))
+```
+
+With out off-label standardized covariate in hand, we can define the new model as
+
+$$
+\begin{align*}
+\text{alcohol}_i          & \sim \operatorname{Binomial}(\text{total}_i, p_i) \\
+\operatorname{logit}(p_i) & = \beta_0 + \beta_1 \text{image}_i + \beta_2 \text{text}_i + \beta_3 \text{image}_i \text{text}_i + \beta_4 \text{auditz}_i \\
+\beta_0, \dots, \beta_4   & \sim \mathcal N(0, 1),
+\end{align*}
+$$
+
+where $\beta_4$ now captures the covariance between `auditz` and the dependent variable. For simplicity, we extend the weakly-regularizing $\mathcal N(0, 1)$ prior to $\beta_4$.
+
+Here's how to fit the model with `brm()`.
+
+```{r fit2}
+fit2 <- brm(
+  data = clarke2021,
+  family = binomial,
+  alcohol | trials(1) ~ 0 + Intercept + image + text + image:text + auditz,
+  prior = c(prior(normal(0, 1), class = b)),
+  cores = 4, seed = 1,
+  # file = "fits/fit1.clarke2021"
+)
+
+fit3 <- brm(
+  data = clarke2021,
+  family = binomial,
+  alcohol | trials(1) ~ 0 + Intercept + image + text + image:text + auditz + gender,
+  prior = c(prior(normal(0, 1), class = b)),
+  cores = 4, seed = 1,
+  # file = "fits/fit1.clarke2021"
+)
+```
+
+Check the summary.
+
+```{r}
+summary(fit2)
+summary(fit3)
+```
+
+### Parameter comparison.
+
+We might want to compare the parameters of the two models with a coefficient plot.
+
+```{r, fig.width = 9, fig.height = 2}
+bind_rows(
+  fixef(fit1) %>% data.frame() %>% rownames_to_column("beta") %>% mutate(fit = "fit1"),
+  fixef(fit2) %>% data.frame() %>% rownames_to_column("beta") %>% mutate(fit = "fit2")
+) %>% 
+  mutate(beta = factor(beta, levels = c("Intercept", "image", "text", "image:text", "auditz"))) %>% 
+  
+  ggplot(aes(x = Estimate, xmin = Q2.5, xmax = Q97.5, y = beta, color = fit)) +
+  geom_pointinterval(position = position_dodge(width = -0.5)) +
+  scale_color_viridis_d(NULL, option = "B", begin = .1, end = .5, direction = -1) +
+  labs(x = "coefficient",
+       y = NULL) +
+  theme(axis.text.y = element_text(hjust = 0),
+        panel.grid = element_blank())
+```
+
+Given the magnitude of the $\beta$ parameter for `auditz`, it might be surprising how the remaining $\beta$ parameters from `fit2` do not appear to have narrower 95% interval widths than their analogues from `fit1`. Though you would expect that kind of improvement from a Gaussian model, you would not from a binomial model. In fact, adding a covariate will typically *increase* the posterior standard deviations, not decrease them. We might inspect the posterior $\textit{SD}$'s between the two models to see.
+
+```{r}
+bind_rows(
+  fixef(fit1) %>% data.frame() %>% rownames_to_column("beta") %>% mutate(fit = "fit1"),
+  fixef(fit2) %>% data.frame() %>% rownames_to_column("beta") %>% mutate(fit = "fit2")
+) %>% 
+  select(beta, fit, Est.Error) %>% 
+  pivot_wider(names_from = fit, values_from = Est.Error)
+```
+
+In all cases, the posterior $\textit{SD}$'s were larger in `fit2`, the model with the covariate. This is a consequence of the noncollapsibility issue with logistic regression. However, the model did benefit from the `auditz` covariate. We just have to use the marginal means approach. 
+
+```{r}
+nd <- clarke2021 %>% 
+  expand(nesting(id, auditz),
+         group = 1:4) %>% 
+  left_join(clarke2021 %>% distinct(group, text, image, hwl),
+            by = "group") %>% 
+  mutate(cid = 1:n())
+
+f1 <- fitted(fit1,
+             newdata = nd,
+             summary = F) %>%
+  data.frame() %>% 
+  set_names(nd %>% pull(cid)) %>% 
+  mutate(draw = 1:n()) %>% 
+  pivot_longer(-draw, names_to = "cid", values_to = "p") %>% 
+  mutate(cid = as.double(cid)) %>% 
+  left_join(nd %>% select(cid, id, group, hwl), by = "cid")
+```
+
+```{r}
+f2 <- fitted(fit2,
+             newdata = nd,
+             summary = F) %>% 
+  data.frame() %>% 
+  set_names(nd %>% pull(cid)) %>% 
+  mutate(draw = 1:n()) %>% 
+  pivot_longer(-draw, names_to = "cid", values_to = "p") %>% 
+  mutate(cid = as.double(cid)) %>% 
+  left_join(nd %>% select(cid, id, group, hwl), by = "cid")
+```
+
+
+
+```{r}
+# compute the marginal means and save the results as mm
+mm <- bind_rows(f1, f2) %>%
+  mutate(fit = rep(c("fit1", "fit2"), each = nrow(f1))) %>% 
+  group_by(draw, hwl, fit) %>% 
+  summarise(p = mean(p)) 
+
+# make and save the plot
+p3 <- mm %>%
+  ggplot(aes(x = p, y = hwl, color = fit)) +
+  stat_pointinterval(.width = .95, size = 1.5, point_size = 2.5,
+                     position = position_dodge(width = -0.7)) +
+  scale_color_viridis_d(NULL, option = "B", begin = .1, end = .5, direction = -1) +
+  scale_x_continuous("probability of choosing alcohol", 
+                     labels = c("0", ".25", ".5", ".75", "1"),
+                     expand = c(0, 0), limits = 0:1) +
+  labs(title = "Population estimates (by HWL)",
+       y = NULL) +
+  theme(axis.text.y = element_text(hjust = 0),
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank())
+```
+
+
+
+
+
+```{r}
+# for the y-axis labels
+contrast_levels <- c("image only \u2212 control", "text only \u2212 control", "image and text \u2212 control", "text only \u2212 image only", "image and text \u2212 image only", "image and text \u2212 text only")
+
+# wrangle
+cs <- bind_rows(f1, f2) %>%
+  mutate(fit = rep(c("fit1", "fit2"), each = nrow(f1))) %>% 
+  group_by(draw, hwl, fit) %>% 
+  summarise(p = mean(p))%>% 
+  compare_levels(p, by = hwl, draw_indices = c("draw", "fit")) %>% 
+  mutate(hwl = str_replace(hwl, "-", "\u2212")) %>% 
+  mutate(hwl = factor(hwl, levels = contrast_levels)) 
+
+# make and save the plot
+p4 <- cs %>% 
+  ggplot(aes(x = p, y = hwl, color = fit)) +
+  stat_pointinterval(.width = .95, size = 1.5, point_size = 2.5,
+                     position = position_dodge(width = -0.7)) +
+  scale_color_viridis_d(NULL, option = "B", begin = .1, end = .5, direction = -1) +
+  scale_x_continuous("difference in probability of choosing alcohol", 
+                     labels = c("-.5", "-.25", "0", ".25", ".5"),
+                     limits = c(-0.5, 0.5)) +
+  labs(title = "Pairwise contrasts among HWLs",
+       y = NULL) +
+  theme(axis.text.y = element_text(hjust = 0),
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank())
+```
+
+Here we combine the two sub plots, add an overall title, and display the results.
+
+```{r, fig.width = 9, fig.height = 4.75}
+p3 / p4 + 
+  plot_annotation(title = "Health warning labels (HWLs) reduce alcoholic beverage selection, compared to a no-HWL control.") +
+  plot_layout(heights = c(2, 3), guides = "collect")
+```
+
+
+```{r}
+mm %>% 
+  group_by(hwl, fit) %>% 
+  summarise(sd = sd(p) %>% round(digits = 5)) %>% 
+  pivot_wider(names_from = fit, values_from = sd)
+```
+
+```{r}
+cs %>% 
+  group_by(hwl, fit) %>% 
+  summarise(sd = sd(p) %>% round(digits = 5)) %>% 
+  pivot_wider(names_from = fit, values_from = sd) %>% 
+  rename(contrast = hwl)
+```
+
+
+## Session info
+
+```{r}
+sessionInfo()
+```
+
